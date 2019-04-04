@@ -52,6 +52,37 @@ void Ospf::initialize(int stage)
     if (stage == INITSTAGE_ROUTING_PROTOCOLS) {
         ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
         rt = getModuleFromPar<IIpv4RoutingTable>(par("routingTableModule"), this);
+        rt6 = getModuleFromPar<Ipv6RoutingTable>(par("routingTableModule6"), this);
+
+
+        InterfaceEntry * myInterface;
+        myInterface = (ift->getInterfaceByName("eth0"));
+        const char *addr6c = "4444:100:0:100::1/64";
+
+        std::string add6 = addr6c;
+       std::string prefix6 = add6.substr(0, add6.find("/"));
+
+        int prefLength;
+        Ipv6Address address6;
+        if (!(address6.tryParseAddrWithPrefix(addr6c, prefLength)))
+             throw cRuntimeError("Cannot parse Ipv6 address: '%s", addr6c);
+
+        address6 = Ipv6Address(prefix6.c_str());
+
+        Ipv6InterfaceData::AdvPrefix p;
+        p.prefix = address6;
+        p.prefixLength = prefLength;
+
+        Ipv6Route *route = new Ipv6Route(p.prefix.getPrefix(prefLength), p.prefixLength, IRoute::IFACENETMASK);
+
+
+       route->setInterface(myInterface);
+       route->setExpiryTime(SIMTIME_ZERO);
+       route->setMetric(0);
+       route->setAdminDist(Ipv6Route::dDirectlyConnected);
+
+       rt6->addRoutingProtocolRoute(route);
+
         isUp = isNodeUp();
         if (isUp)
             createOspfRouter();

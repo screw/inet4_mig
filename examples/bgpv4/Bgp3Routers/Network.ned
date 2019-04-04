@@ -4,6 +4,7 @@ package inet.examples.bgpv4.Bgp3Routers;
 import inet.common.misc.ThruputMeteringChannel;
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
 import inet.node.bgp.BgpRouter;
+import inet.node.bgp.BgpRouter6;
 import inet.node.ethernet.EtherSwitch;
 import inet.node.inet.StandardHost;
 import inet.node.ospfv2.OspfRouter;
@@ -32,7 +33,7 @@ network BGPTest
             gates:
                 pppg[4];
         }
-        C: BgpRouter {
+        C: BgpRouter6 {
             parameters:
                 @display("p=775,330");
             gates:

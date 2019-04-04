@@ -28,6 +28,10 @@
 #include "inet/routing/ospfv2/router/OspfRouter.h"
 #include "inet/common/lifecycle/ILifecycle.h"
 
+#include "inet/networklayer/ipv6/Ipv6InterfaceData.h"
+#include "inet/networklayer/contract/ipv6/Ipv6Address.h"
+#include "inet/networklayer/ipv6/Ipv6RoutingTable.h"
+
 namespace inet {
 
 namespace ospf {
@@ -39,6 +43,7 @@ class Ospf : public cSimpleModule, public ILifecycle
 {
   private:
     IIpv4RoutingTable *rt = nullptr;
+    Ipv6RoutingTable *rt6 = nullptr;
     IInterfaceTable *ift = nullptr;
     bool isUp = false;
     Router *ospfRouter = nullptr;    // root object of the OSPF data structure

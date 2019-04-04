@@ -129,6 +129,7 @@ simple Ospf like IOspf
     parameters:
         string interfaceTableModule;
         string routingTableModule;
+        string routingTableModule6;
         xml ospfConfig; // xml containing the full OSPF AS configuration
 
         // default values for attributes of interface xml entries:
