@@ -15,6 +15,8 @@
 #include "inet/networklayer/ipv6/Ipv6RoutingTable.h"
 #include "inet/networklayer/ipv6/Ipv6Route.h"
 
+#include "inet/ansa/ospfv3/process/OSPFv3Instance.h"
+#include "inet/ansa/ospfv3/process/OSPFv3Area.h"
 #include "inet/ansa/ospfv3/OSPFv3Timers.h"
 #include "inet/ansa/ospfv3/process/OSPFv3RoutingTableEntry.h"
 #include "inet/ansa/ospfv3/OSPFv3Common.h"
@@ -35,13 +37,13 @@ class INET_API OSPFv3Process : protected cListener, public cSimpleModule
     OSPFv3Process();
     virtual ~OSPFv3Process();
     int getProcessID() const {return this->processID;};
-//    IPv4Address getRouterID(){return this->routerID;};
-//    bool isActivated(){return this->isActive;};
+    Ipv4Address getRouterID(){return this->routerID;};
+    bool isActivated(){return this->isActive;};
     void activateProcess();
-//    void setTimer(cMessage* msg, double delay);
-//    void clearTimer(cMessage* msg){this->cancelEvent(msg);}
-//    OSPFv3Instance* getInstanceById(int instanceId);
-//    void addInstance(OSPFv3Instance* newInstance);
+    void setTimer(cMessage* msg, double delay);
+    void clearTimer(cMessage* msg){this->cancelEvent(msg);}
+    OSPFv3Instance* getInstanceById(int instanceId);
+    void addInstance(OSPFv3Instance* newInstance);
 //    void sendPacket(OSPFv3Packet *packet, IPv6Address destination, const char* ifName, short hopLimit = 1);
 //    OSPFv3LSA* findLSA(LSAKeyType lsaKey, IPv4Address areaID, int instanceID);
 //    bool floodLSA(OSPFv3LSA* lsa, IPv4Address areaID=IPv4Address::UNSPECIFIED_ADDRESS, OSPFv3Interface* intf=nullptr, OSPFv3Neighbor* neighbor=nullptr);
@@ -70,8 +72,8 @@ class INET_API OSPFv3Process : protected cListener, public cSimpleModule
     void handleTimer(cMessage* msg);
 
   private:
-//    std::vector<OSPFv3Instance*> instances;
-//    std::map<int, OSPFv3Instance*> instancesById;
+    std::vector<OSPFv3Instance*> instances;
+    std::map<int, OSPFv3Instance*> instancesById;
     int processID;
     Ipv4Address routerID;
     bool isActive=false;
@@ -84,7 +86,7 @@ class INET_API OSPFv3Process : protected cListener, public cSimpleModule
     virtual void initialize(int stage) override;
     virtual void handleMessage(cMessage* msg) override;
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
-//    void parseConfig(cXMLElement* areaConfig);
+    void parseConfig(cXMLElement* areaConfig);
 
 
     //backbone area structure

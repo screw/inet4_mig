@@ -34,6 +34,7 @@ module Ospfv3Router extends Router
         *.routingTableModule6 = "^.ipv6.routingTable";
 //        bool hasOSPFv3 = default(true);
 		hasOSPFv3 = true;
+		xml configData = default(xmldoc("config.xml"));
         
    	submodules:
 //       ospfv3: OSPFv3Routing if hasOSPFv3 {
