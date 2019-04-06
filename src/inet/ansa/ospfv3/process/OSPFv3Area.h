@@ -4,9 +4,9 @@
 #include <omnetpp.h>
 #include "inet/common/INETDefs.h"
 #include "inet/networklayer/contract/ipv4/Ipv4Address.h"
-//#include "inet/ansa/ospfv3/interface/OSPFv3Interface.h" MIGRACIA LG
+#include "inet/ansa/ospfv3/interface/OSPFv3Interface.h"
 #include "inet/ansa/ospfv3/OSPFv3Packet_m.h"
-//#include "inet/ansa/ospfv3/process/OSPFv3LSA.h"
+#include "inet/ansa/ospfv3/process/OSPFv3LSA.h"
 #include "inet/ansa/ospfv3/process/OSPFv3Process.h"
 #include "inet/ansa/ospfv3/process/OSPFv3RoutingTableEntry.h"
 //#include "inet/ansa/ospfv3/neighbor/OSPFv3Neighbor.h"
@@ -33,8 +33,8 @@ class INET_API OSPFv3Area : public cObject
     virtual ~OSPFv3Area();
     Ipv4Address getAreaID() const {return this->areaID;}
     OSPFv3AreaType getAreaType() const {return this->areaType;}
-//    bool hasInterface(std::string);
-//    void addInterface(OSPFv3Interface*);
+    bool hasInterface(std::string);
+    void addInterface(OSPFv3Interface*);
     void init();
     void debugDump();
 //    void ageDatabase();
@@ -44,23 +44,23 @@ class INET_API OSPFv3Area : public cObject
 //    void setExternalRoutingCapability(bool capable){this->externalRoutingCapability=capable;}
 //    void setStubDefaultCost(int newCost){this->stubDefaultCost=newCost;}
 //    void setTransitCapability(bool capable){this->transitCapability=capable;}
-//    OSPFv3Interface* getInterfaceById(int id);
-//    OSPFv3Interface* getNetworkLSAInterface(Ipv4Address id);
-//    OSPFv3Interface* getInterfaceByIndex(int id);
+    OSPFv3Interface* getInterfaceById(int id);
+    OSPFv3Interface* getNetworkLSAInterface(Ipv4Address id);
+    OSPFv3Interface* getInterfaceByIndex(int id);
 //    bool getExternalRoutingCapability(){return this->externalRoutingCapability;}
 //    int getStubDefaultCost(){return this->stubDefaultCost;}
 //    bool getTransitCapability(){return this->transitCapability;}
-//    OSPFv3Interface* findVirtualLink(Ipv4Address routerID);
+    OSPFv3Interface* findVirtualLink(Ipv4Address routerID);
 //
-//    OSPFv3Interface* getInterface(int i) const {return this->interfaceList.at(i);}
-//    OSPFv3Interface* getInterfaceByIndex (Ipv4Address address);
-//    int getInterfaceCount() const {return this->interfaceList.size();}
+    OSPFv3Interface* getInterface(int i) const {return this->interfaceList.at(i);}
+    OSPFv3Interface* getInterfaceByIndex (Ipv4Address address);
+    int getInterfaceCount() const {return this->interfaceList.size();}
 //    OSPFv3LSA* getLSAbyKey(LSAKeyType lsaKey);
 
-//    void addAddressRange(IPv6AddressRange addressRange, bool advertise);
-//    bool hasAddressRange(IPv6AddressRange addressRange) const;
-//    void addAddressRange(Ipv4AddressRange addressRange, bool advertise);
-//    bool hasAddressRange(Ipv4AddressRange addressRange) const;
+    void addAddressRange(Ipv6AddressRange addressRange, bool advertise);
+    bool hasAddressRange(Ipv6AddressRange addressRange) const;
+    void addAddressRange(Ipv4AddressRange addressRange, bool advertise);
+    bool hasAddressRange(Ipv4AddressRange addressRange) const;
 
 
     /* ROUTER LSA */
@@ -142,7 +142,7 @@ class INET_API OSPFv3Area : public cObject
 //    void removeFromAllRetransmissionLists(LSAKeyType lsaKey);
 //    bool isOnAnyRetransmissionList(LSAKeyType lsaKey) const;
 //    bool hasAnyNeighborInStates(int states) const;
-//    bool hasAnyPassiveInterface() const;
+    bool hasAnyPassiveInterface() const;
 
 
 //    void calculateShortestPathTree(std::vector<OSPFv3RoutingTableEntry* >& newTableIPv6, std::vector<OSPFv3IPv4RoutingTableEntry* >& newTableIPv4);
@@ -181,17 +181,17 @@ class INET_API OSPFv3Area : public cObject
 
     Ipv4Address areaID;
     OSPFv3AreaType areaType;
-//    std::vector<OSPFv3Interface*> interfaceList;//associated router interfaces
-//
-//    //address ranges - networks where router within this area have a direct connection
-//    std::vector<IPv6AddressRange> IPv6areaAddressRanges;
-//    std::map<IPv6AddressRange, bool> IPv6advertiseAddressRanges;
-//    std::vector<Ipv4AddressRange> IPv4areaAddressRanges;
-//    std::map<Ipv4AddressRange, bool> IPv4advertiseAddressRanges;
-//
-//    std::map<std::string, OSPFv3Interface*> interfaceByName;//interfaces by ids
-//    std::map<int, OSPFv3Interface*> interfaceById;
-//    std::map<int, OSPFv3Interface*> interfaceByIndex;
+    std::vector<OSPFv3Interface*> interfaceList;//associated router interfaces
+
+    //address ranges - networks where router within this area have a direct connection
+    std::vector<Ipv6AddressRange> IPv6areaAddressRanges;
+    std::map<Ipv6AddressRange, bool> IPv6advertiseAddressRanges;
+    std::vector<Ipv4AddressRange> IPv4areaAddressRanges;
+    std::map<Ipv4AddressRange, bool> IPv4advertiseAddressRanges;
+
+    std::map<std::string, OSPFv3Interface*> interfaceByName;//interfaces by ids
+    std::map<int, OSPFv3Interface*> interfaceById;
+    std::map<int, OSPFv3Interface*> interfaceByIndex;
     int instanceType;
     OSPFv3Instance* containingInstance;
     bool externalRoutingCapability;

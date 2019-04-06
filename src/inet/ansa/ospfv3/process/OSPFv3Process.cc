@@ -125,7 +125,7 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
         const char* deadInterval = nullptr;
         const char* interfaceCost = nullptr;
         const char* interfaceType = nullptr;
-     //   OSPFv3Interface::OSPFv3InterfaceType interfaceTypeNum;    MIGRACIA LG
+        OSPFv3Interface::OSPFv3InterfaceType interfaceTypeNum;
         bool passiveInterface = false;
 
 
@@ -186,7 +186,7 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
                 if(interfaceOptions.size()>1)
                     throw cRuntimeError("Multiple InterfaceType value is configured for interface %s", interfaceName);
 
-              /*  if(interfaceOptions.size()!=0){       MIGRACIA LG
+                if(interfaceOptions.size()!=0){
                     interfaceType = interfaceOptions.at(0)->getNodeValue();
                     if(strcmp(interfaceType, "Broadcast")==0)
                         interfaceTypeNum = OSPFv3Interface::BROADCAST_TYPE;
@@ -202,7 +202,7 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
                         interfaceTypeNum = OSPFv3Interface::UNKNOWN_TYPE;
                 }
                 else
-                    throw cRuntimeError("Interface type needs to be specified for interface %s", interfaceName);*/
+                    throw cRuntimeError("Interface type needs to be specified for interface %s", interfaceName);
 
                 //find out whether the interface is passive
                 interfaceOptions = (*instIt)->getElementsByTagName("PassiveInterface");
@@ -286,7 +286,7 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
                     else
                         area = instance->getAreaById(areaIP);
 
-                  /*  if(!area->hasInterface(std::string(interfaceName))) {
+                    if(!area->hasInterface(std::string(interfaceName))) {
                         OSPFv3Interface* newInterface = new OSPFv3Interface(interfaceName, this->containingModule, this, interfaceTypeNum, passiveInterface);
                         if(helloInterval!=nullptr)
                             newInterface->setHelloInterval(atoi(helloInterval));
@@ -308,7 +308,7 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
                         newInterface->setArea(area);
 
                         // parse IPv6 adresses and add them into area's addressRanges and into interface IP addresses
-                       cXMLElementList ipAddrList = (*interfaceIt)->getElementsByTagName("IPv6Address");
+                       cXMLElementList ipAddrList = (*interfaceIt)->getElementsByTagName("Ipv6Address");
                         for (auto & ipv6Rec : ipAddrList) {
                                const char * addr6c = ipv6Rec->getNodeValue();
 
@@ -318,19 +318,19 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
                                //IPv6InterfaceData * intfData6 = myInterface->ipv6Data(); LG
 
                                int prefLength;
-                               IPv6Address address6;
+                               Ipv6Address address6;
                                if (!(address6.tryParseAddrWithPrefix(addr6c, prefLength)))
                                     throw cRuntimeError("Cannot parse Ipv6 address: '%s", addr6c);
                    //                std::cout << "parsed prefix = " << prefLength << std::endl;
 
-                               address6 = IPv6Address(prefix6.c_str());
+                               address6 = Ipv6Address(prefix6.c_str());
 
-                               IPv6InterfaceData::AdvPrefix p;
+                               Ipv6InterfaceData::AdvPrefix p;
                                p.prefix = address6;
                                p.prefixLength = prefLength;
 //                               intfData6->addAdvPrefix(p);
 
-                               IPv6AddressRange ipv6addRange;
+                               Ipv6AddressRange ipv6addRange;
                                ipv6addRange.prefix = address6; //add only network prefix
                                ipv6addRange.prefixLength = prefLength;
                                area->addAddressRange(ipv6addRange, true); //TODO:  add tag Advertise and exclude link-local (?)
@@ -368,7 +368,7 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
                         std::cout <<  myInterface->info();
                         std::cout << "\n&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n";
 
-//                        IPv6Address *addr = new IPv6Address();
+//                        Ipv6Address *addr = new Ipv6Address();
 //                        int prefixlen;
 //                        for(auto ipIt=ipAddrList.begin(); ipIt!=ipAddrList.end(); ipIt++)
 //                        {
@@ -378,13 +378,13 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
 //                            std::cout << "PO PREVOLANI : " << addr->str()  <<  "  "  << prefixlen << endl;
 //
 //                            // add to area's addressRange
-//                            IPv6AddressRange addressRange;
+//                            Ipv6AddressRange addressRange;
 //                            addressRange.prefix = addr->getPrefix(prefixlen); //add only network prefix
 //                            addressRange.prefixLength = prefixlen;
 //                            area->addAddressRange(addressRange, true); //TODO:  add tag Advertise and exclude link-local (?)
 //
 //                            // add to interface's IPv6 addresses
-//                            IPv6AddressRange intAddress;
+//                            Ipv6AddressRange intAddress;
 //                            intAddress.prefix = *addr;
 //                            intAddress.prefixLength = prefixlen;
 //                            newInterface->addInterfaceAddress(intAddress);
@@ -394,7 +394,7 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
 
                         std::cout << "I am " << this->getOwner()->getOwner()->getName() << " on int " << newInterface->getInterfaceLLIP() << " with area " << area->getAreaID() << endl;
                         area->addInterface(newInterface);
-                    }*/
+                    }
                 }
             }
         }
@@ -425,7 +425,7 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
 //} // ageDatabase
 //
 ///// for IPv6 AF
-//bool OSPFv3Process::hasAddressRange(const IPv6AddressRange& addressRange) const
+//bool OSPFv3Process::hasAddressRange(const Ipv6AddressRange& addressRange) const
 //{
 //    long instanceCount = instances.size();
 //    for (long i = 0; i < instanceCount; i++)
@@ -646,9 +646,11 @@ void OSPFv3Process::addInstance(OSPFv3Instance* newInstance)
         this->instancesById[newInstance->getInstanceID()]=newInstance;
     }
 }
-//
-//void OSPFv3Process::sendPacket(OSPFv3Packet *packet, IPv6Address destination, const char* ifName, short hopLimit)
-//{
+
+void OSPFv3Process::sendPacket(OSPFv3Packet *packet, Ipv6Address destination, const char* ifName, short hopLimit)
+{
+    // MIGRACIA LG pouzi kod pod metodou
+}
 //    InterfaceEntry *ie = this->ift->getInterfaceByName(ifName);
 //
 //    IPv6InterfaceData *ipv6int = ie->ipv6Data();
@@ -968,7 +970,7 @@ void OSPFv3Process::addInstance(OSPFv3Instance* newInstance)
 //                        EV_DEBUG << "tu ma stopni \n";
 //                    }*/
 //
-//    //                IPv6Route(IPv6Address destPrefix, int prefixLength, SourceType sourceType)
+//    //                IPv6Route(Ipv6Address destPrefix, int prefixLength, SourceType sourceType)
 //
 //    //                routingTable[i]->getOptionalCapabilities()
 //    //                routingTable[i]->getArea()
@@ -982,7 +984,7 @@ void OSPFv3Process::addInstance(OSPFv3Instance* newInstance)
 //    //                route->setPrefixLength( routingTable[i]->getPrefixLength());
 //    //                route->setSourceType(   routingTable[i]->getSourceType());
 //
-//                    if (routingTableIPv6[i]->getNextHop(0).hopAddress != IPv6Address::UNSPECIFIED_ADDRESS)
+//                    if (routingTableIPv6[i]->getNextHop(0).hopAddress != Ipv6Address::UNSPECIFIED_ADDRESS)
 //                    {
 //                        IPv6Route *route = new IPv6Route(routingTableIPv6[i]->getDestinationAsGeneric().toIPv6(), routingTableIPv6[i]->getPrefixLength(), routingTableIPv6[i]->getSourceType());
 //                        route->setNextHop   (   routingTableIPv6[i]->getNextHop(0).hopAddress);

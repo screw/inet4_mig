@@ -41,7 +41,7 @@ class INET_API OSPFv3Instance : public cObject
 //    Ipv4Address getNewInterAreaPrefixLinkStateID();
 //    void subtractInterAreaPrefixLinkStateID();
 //    void processPacket(OSPFv3Packet* packet);
-//    int getUniqueId(){return OSPFv3IfIndex++;}
+    int getUniqueId(){return OSPFv3IfIndex++;}
     int getAreaCount(){return this->areas.size();}
 //    void removeFromAllRetransmissionLists(LSAKeyType lsaKey);
 

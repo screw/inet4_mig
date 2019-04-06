@@ -44,10 +44,10 @@ class INET_API OSPFv3Process : protected cListener, public cSimpleModule
     void clearTimer(cMessage* msg){this->cancelEvent(msg);}
     OSPFv3Instance* getInstanceById(int instanceId);
     void addInstance(OSPFv3Instance* newInstance);
-//    void sendPacket(OSPFv3Packet *packet, IPv6Address destination, const char* ifName, short hopLimit = 1);
-//    OSPFv3LSA* findLSA(LSAKeyType lsaKey, IPv4Address areaID, int instanceID);
-//    bool floodLSA(OSPFv3LSA* lsa, IPv4Address areaID=IPv4Address::UNSPECIFIED_ADDRESS, OSPFv3Interface* intf=nullptr, OSPFv3Neighbor* neighbor=nullptr);
-//    bool installLSA(OSPFv3LSA *lsa, int instanceID, IPv4Address areaID=IPv4Address::UNSPECIFIED_ADDRESS, OSPFv3Interface* intf=nullptr);
+    void sendPacket(OSPFv3Packet *packet, Ipv6Address destination, const char* ifName, short hopLimit = 1);
+//    OSPFv3LSA* findLSA(LSAKeyType lsaKey, Ipv4Address areaID, int instanceID);
+//    bool floodLSA(OSPFv3LSA* lsa, Ipv4Address areaID=Ipv4Address::UNSPECIFIED_ADDRESS, OSPFv3Interface* intf=nullptr, OSPFv3Neighbor* neighbor=nullptr);
+//    bool installLSA(OSPFv3LSA *lsa, int instanceID, Ipv4Address areaID=Ipv4Address::UNSPECIFIED_ADDRESS, OSPFv3Interface* intf=nullptr);
 //    void rebuildRoutingTable();
 //    void calculateASExternalRoutes(std::vector<OSPFv3RoutingTableEntry* > newTableIPv6, std::vector<OSPFv3IPv4RoutingTableEntry* > newTableIPv4);
 
@@ -59,8 +59,8 @@ class INET_API OSPFv3Process : protected cListener, public cSimpleModule
      * input address , false otherwise.
      * @param addressRange [in] The IPv6 address  to look for.
      */
-//    bool hasAddressRange(const IPv6AddressRange& addressRange) const;
-//    bool hasAddressRange(const IPv4AddressRange& addressRange) const;
+//    bool hasAddressRange(const Ipv6AddressRange& addressRange) const;
+//    bool hasAddressRange(const Ipv4AddressRange& addressRange) const;
 
   public:
     IInterfaceTable* ift = nullptr;

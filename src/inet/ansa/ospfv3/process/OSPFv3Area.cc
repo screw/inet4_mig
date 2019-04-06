@@ -15,7 +15,7 @@ OSPFv3Area::OSPFv3Area(Ipv4Address areaID, OSPFv3Instance* parent, OSPFv3AreaTyp
     this->areaType = type;
 //    this->spfTreeRoot = nullptr; MIGRACIA LG
 
-//    WATCH_PTRVECTOR(this->interfaceList);
+    WATCH_PTRVECTOR(this->interfaceList);
 }
 
 OSPFv3Area::~OSPFv3Area()
@@ -29,14 +29,14 @@ void OSPFv3Area::init()
     else
         v6 = false;
 
-//    for(auto it=this->interfaceList.begin(); it!=this->interfaceList.end(); it++)
-//    {
-//        (*it)->setInterfaceIndex(this->getInstance()->getUniqueId());
-//        this->interfaceByIndex[(*it)->getInterfaceIndex()]=(*it);
-//        (*it)->processEvent(OSPFv3Interface::INTERFACE_UP_EVENT);
-//    }
+    for(auto it=this->interfaceList.begin(); it!=this->interfaceList.end(); it++)
+    {
+        (*it)->setInterfaceIndex(this->getInstance()->getUniqueId());
+        this->interfaceByIndex[(*it)->getInterfaceIndex()]=(*it);
+        (*it)->processEvent(OSPFv3Interface::INTERFACE_UP_EVENT);
+    }
 
-//    OSPFv3IntraAreaPrefixLSA* prefixLsa = this->originateIntraAreaPrefixLSA();
+//    OSPFv3IntraAreaPrefixLSA* prefixLsa = this->originateIntraAreaPrefixLSA();        MIGRACIA LG
 //    EV_DEBUG << "Creating InterAreaPrefixLSA from IntraAreaPrefixLSA\n";
 //    this->installIntraAreaPrefixLSA(prefixLsa);                 // INTRA !!!
 //
@@ -44,54 +44,54 @@ void OSPFv3Area::init()
 //        this->originateDefaultInterAreaPrefixLSA(this);
 }
 
-//bool OSPFv3Area::hasInterface(std::string interfaceName)
-//{
-//    std::map<std::string, OSPFv3Interface*>::iterator interfaceIt = this->interfaceByName.find(interfaceName);
-//    if(interfaceIt == this->interfaceByName.end())
-//        return false;
-//
-//    return true;
-//}//hasArea
-//
-//OSPFv3Interface* OSPFv3Area::getInterfaceById(int id)
-//{
-//    std::map<int, OSPFv3Interface*>::iterator interfaceIt = this->interfaceById.find(id);
-//    if(interfaceIt == this->interfaceById.end())
-//        return nullptr;
-//
-//    return interfaceIt->second;
-//}//getInterfaceById
-//
-//OSPFv3Interface* OSPFv3Area::getNetworkLSAInterface(Ipv4Address id)
-//{
-//
-//    for (auto it=this->interfaceList.begin(); it!=this->interfaceList.end(); it++)
-//    {
-//        if (Ipv4Address((*it)->getInterfaceId()) == id)
-//            return (*it);
-//    }
-//
-//    return nullptr;
-//
-//}//getInterfaceById
-//
-//OSPFv3Interface* OSPFv3Area::getInterfaceByIndex(int id)
-//{
-//    std::map<int, OSPFv3Interface*>::iterator interfaceIt = this->interfaceByIndex.find(id);
-//    if(interfaceIt == this->interfaceByIndex.end())
-//        return nullptr;
-//
-//    return interfaceIt->second;
-//}//getInterfaceByIndex
-//
-//void OSPFv3Area::addInterface(OSPFv3Interface* newInterface)
-//{
-//    this->interfaceList.push_back(newInterface);
-//    this->interfaceByName[newInterface->getIntName()]=newInterface;
-//    this->interfaceById[newInterface->getInterfaceId()]=newInterface;
-//}//addArea
-//
-//OSPFv3Interface* OSPFv3Area::findVirtualLink(Ipv4Address routerID)
+bool OSPFv3Area::hasInterface(std::string interfaceName)
+{
+    std::map<std::string, OSPFv3Interface*>::iterator interfaceIt = this->interfaceByName.find(interfaceName);
+    if(interfaceIt == this->interfaceByName.end())
+        return false;
+
+    return true;
+}//hasArea
+
+OSPFv3Interface* OSPFv3Area::getInterfaceById(int id)
+{
+    std::map<int, OSPFv3Interface*>::iterator interfaceIt = this->interfaceById.find(id);
+    if(interfaceIt == this->interfaceById.end())
+        return nullptr;
+
+    return interfaceIt->second;
+}//getInterfaceById
+
+OSPFv3Interface* OSPFv3Area::getNetworkLSAInterface(Ipv4Address id)
+{
+
+    for (auto it=this->interfaceList.begin(); it!=this->interfaceList.end(); it++)
+    {
+        if (Ipv4Address((*it)->getInterfaceId()) == id)
+            return (*it);
+    }
+
+    return nullptr;
+
+}//getInterfaceById
+
+OSPFv3Interface* OSPFv3Area::getInterfaceByIndex(int id)
+{
+    std::map<int, OSPFv3Interface*>::iterator interfaceIt = this->interfaceByIndex.find(id);
+    if(interfaceIt == this->interfaceByIndex.end())
+        return nullptr;
+
+    return interfaceIt->second;
+}//getInterfaceByIndex
+
+void OSPFv3Area::addInterface(OSPFv3Interface* newInterface)
+{
+    this->interfaceList.push_back(newInterface);
+    this->interfaceByName[newInterface->getIntName()]=newInterface;
+    this->interfaceById[newInterface->getInterfaceId()]=newInterface;
+}//addArea
+
+//OSPFv3Interface* OSPFv3Area::findVirtualLink(Ipv4Address routerID)    MIGRACIA LG
 //{
 //    int interfaceNum = this->interfaceList.size();
 //    for (int i = 0; i < interfaceNum; i++) {
@@ -103,20 +103,20 @@ void OSPFv3Area::init()
 //    }
 //    return nullptr;
 //}
-//
-//OSPFv3Interface* OSPFv3Area::getInterfaceByIndex(Ipv4Address LinkStateID)
-//{
-//    int interfaceNum = interfaceList.size();
-//    for (int i = 0; i < interfaceNum; i++) {
-//        if ((interfaceList[i]->getType() != OSPFv3Interface::VIRTUAL_TYPE) &&
-//            (Ipv4Address(interfaceList[i]->getInterfaceIndex()) == LinkStateID ))
-//        {
-//            return interfaceList[i];
-//        }
-//    }
-//    return nullptr;
-//}
-//
+
+OSPFv3Interface* OSPFv3Area::getInterfaceByIndex(Ipv4Address LinkStateID)
+{
+    int interfaceNum = interfaceList.size();
+    for (int i = 0; i < interfaceNum; i++) {
+        if ((interfaceList[i]->getType() != OSPFv3Interface::VIRTUAL_TYPE) &&
+            (Ipv4Address(interfaceList[i]->getInterfaceIndex()) == LinkStateID ))
+        {
+            return interfaceList[i];
+        }
+    }
+    return nullptr;
+}
+
 //OSPFv3LSAHeader* OSPFv3Area::findLSA(LSAKeyType lsaKey)     //asi skor hladas getLSAbyKey
 //{
 //
@@ -889,7 +889,7 @@ void OSPFv3Area::init()
 //}//floodLSA
 //
 //
-////bool OSPFv3Area::isLocalAddress(IPv6Address address) const
+////bool OSPFv3Area::isLocalAddress(Ipv6Address address) const
 ////{
 ////    long interfaceCount = interfaceList.size();
 ////    for (long i = 0; i < interfaceCount; i++) {
@@ -1219,7 +1219,7 @@ void OSPFv3Area::init()
 //        newLsa->setPrefix(defaultPref);
 //    }
 //    else{
-//        IPv6Address defaultPref = IPv6Address("::");
+//        Ipv6Address defaultPref = Ipv6Address("::");
 //        newLsa->setPrefix(defaultPref);
 //    }
 //    toArea->installInterAreaPrefixLSA(newLsa);
@@ -1383,12 +1383,12 @@ void OSPFv3Area::init()
 //                }
 //                else
 //                {
-//                    IPv6Address ipv6 = ipv6int->getAddress(i);
-//    //              IPv6Address ipv6 = ipv6int->getAdvPrefix(i).prefix;
+//                    Ipv6Address ipv6 = ipv6int->getAddress(i);
+//    //              Ipv6Address ipv6 = ipv6int->getAdvPrefix(i).prefix;
 //                    if(ipv6.isGlobal()) {//Only all the global prefixes belong to the Intra-Area-Prefix LSA
 //                        OSPFv3LSAPrefix *prefix = new OSPFv3LSAPrefix();
 //                        prefix->prefixLen = 64;
-//    //                  prefix->prefixLen=ipv6int->getAdvPrefix(i).prefixLength;//TODO - this will never work until the prefix can be gathered from IPv6Address
+//    //                  prefix->prefixLen=ipv6int->getAdvPrefix(i).prefixLength;//TODO - this will never work until the prefix can be gathered from Ipv6Address
 //                        prefix->metric=1;
 //                        prefix->addressPrefix=ipv6.getPrefix(prefix->prefixLen);
 //
@@ -1468,12 +1468,12 @@ void OSPFv3Area::init()
 //        }
 //        else
 //        {
-//            IPv6Address ipv6 = ipv6int->getAddress(i);
-//        //        IPv6Address ipv6 = ipv6int->getAdvPrefix(i).prefix;
+//            Ipv6Address ipv6 = ipv6int->getAddress(i);
+//        //        Ipv6Address ipv6 = ipv6int->getAdvPrefix(i).prefix;
 //            if(ipv6.isGlobal()) {//Only all the global prefixes belong to the Intra-Area-Prefix LSA
 //                OSPFv3LSAPrefix *prefix = new OSPFv3LSAPrefix();
 //                prefix->prefixLen= 64;
-//        //            prefix->prefixLen=ipv6int->getAdvPrefix(i).prefixLength;//TODO - this will never work until the prefix can be gathered from IPv6Address
+//        //            prefix->prefixLen=ipv6int->getAdvPrefix(i).prefixLength;//TODO - this will never work until the prefix can be gathered from Ipv6Address
 //                prefix->metric=1;
 //                prefix->addressPrefix=ipv6.getPrefix(prefix->prefixLen);
 //
@@ -1624,11 +1624,11 @@ void OSPFv3Area::init()
 //            {
 //                for (int prefR = 0; prefR < prefLSA->getPrefixesArraySize(); prefR++)
 //                {
-//                    IPv6Address netPref = lsa->getPrefixes(prefN).addressPrefix.toIPv6();
+//                    Ipv6Address netPref = lsa->getPrefixes(prefN).addressPrefix.toIPv6();
 //                    short netPrefixLen = lsa->getPrefixes(prefN).prefixLen;
 //                    if(prefLSA->getReferencedLSType() == ROUTER_LSA)
 //                    {
-//                        IPv6Address routerPref = prefLSA->getPrefixes(prefR).addressPrefix.toIPv6();
+//                        Ipv6Address routerPref = prefLSA->getPrefixes(prefR).addressPrefix.toIPv6();
 //                        short routerPrefixLen = prefLSA->getPrefixes(prefR).prefixLen;
 //
 //                        // if router recieve LSA type 9 from DR with IPv6 which roter have stored aj LSType 1, delete this old LSA and install new one
@@ -1642,7 +1642,7 @@ void OSPFv3Area::init()
 //                    }
 //                    else if(prefLSA->getReferencedLSType() == NETWORK_LSA)
 //                    {
-//                        IPv6Address routerPref = prefLSA->getPrefixes(prefR).addressPrefix.toIPv6();
+//                        Ipv6Address routerPref = prefLSA->getPrefixes(prefR).addressPrefix.toIPv6();
 //                        short routerPrefixLen = prefLSA->getPrefixes(prefR).prefixLen;
 //
 //                        if((routerPref.getPrefix(routerPrefixLen) == netPref.getPrefix(netPrefixLen)) &&
@@ -1681,11 +1681,11 @@ void OSPFv3Area::init()
 //            if(prefLSA->getReferencedLSType() == NETWORK_LSA) {
 //                for (int prefR = 0; prefR < lsa->getPrefixesArraySize(); prefR++) //prefixes of incoming LSA
 //                {
-//                    IPv6Address routerPref = lsa->getPrefixes(prefR).addressPrefix.toIPv6();
+//                    Ipv6Address routerPref = lsa->getPrefixes(prefR).addressPrefix.toIPv6();
 //                    short routerPrefixLen = lsa->getPrefixes(prefR).prefixLen;
 //                    for (int prefN = 0; prefN < prefLSA->getPrefixesArraySize(); prefN++) //prefixes of stored LSA
 //                    {
-//                        IPv6Address netPref = prefLSA->getPrefixes(prefN).addressPrefix.toIPv6();
+//                        Ipv6Address netPref = prefLSA->getPrefixes(prefN).addressPrefix.toIPv6();
 //                        short netPrefixLen = prefLSA->getPrefixes(prefN).prefixLen;
 //                        if(routerPref.getPrefix(routerPrefixLen) == netPref.getPrefix(netPrefixLen)) {
 //                            EV_DEBUG << "Came LSA type 9 with referenced prefix of LSType 1, have one with LSType 2, doing nothing\n"; //TODO: This become relevant when there will be support for active changing of type of link
@@ -1960,115 +1960,115 @@ void OSPFv3Area::init()
 //
 //    return nullptr;
 //}
-//
-//// add created address range into list of area's address ranges
-//void OSPFv3Area::addAddressRange(IPv6AddressRange addressRange, bool advertise)
-//{
-//    int addressRangeNum = IPv6areaAddressRanges.size();
-//    bool found = false;
-//    bool erased = false;
-//
-//    for (int i = 0; i < addressRangeNum; i++) {
-//        IPv6AddressRange curRange = IPv6areaAddressRanges[i];
-//        if (curRange.contains(addressRange)) {    // contains or same
-//            found = true;
-//            if (IPv6advertiseAddressRanges[curRange] != advertise) {
-//                throw cRuntimeError("Inconsistent advertise settings for %s and %s address ranges in area %s",
-//                        addressRange.str().c_str(), curRange.str().c_str(), areaID.str(false).c_str());
-//            }
-//        }
-//        else if (addressRange.contains(curRange)) {
-//            if (IPv6advertiseAddressRanges[curRange] != advertise) {
-//                throw cRuntimeError("Inconsistent advertise settings for %s and %s address ranges in area %s",
-//                        addressRange.str().c_str(), curRange.str().c_str(), areaID.str(false).c_str());
-//            }
-//            IPv6advertiseAddressRanges.erase(curRange);
-//            IPv6areaAddressRanges[i] = NULL_IPV6ADDRESSRANGE;
-//            erased = true;
-//        }
-//    }
-//    if (erased && found) // the found entry contains new entry and new entry contains erased entry ==> the found entry also contains the erased entry
-//        throw cRuntimeError("Model error: bad contents in areaAddressRanges vector");
-//    if (erased) {
-//        auto it = IPv6areaAddressRanges.begin();
-//        while (it != IPv6areaAddressRanges.end()) {
-//            if (*it == NULL_IPV6ADDRESSRANGE)
-//                it = IPv6areaAddressRanges.erase(it);
-//            else
-//                it++;
-//        }
-//    }
-//    if (!found) {
-//        IPv6areaAddressRanges.push_back(addressRange);
-//        IPv6advertiseAddressRanges[addressRange] = advertise;
-//    }
-//}
-//
-//bool OSPFv3Area::hasAddressRange(IPv6AddressRange addressRange) const
-//{
-//    int addressRangeNum = IPv6areaAddressRanges.size();
-//    for (int i = 0; i < addressRangeNum; i++) {
-//        if (IPv6areaAddressRanges[i] == addressRange) {
-//            return true;
-//        }
-//    }
-//    return false;
-//}
-//
-//// same check but for IPv4
-//void OSPFv3Area::addAddressRange(Ipv4AddressRange addressRange, bool advertise)
-//{
-//    int addressRangeNum = IPv4areaAddressRanges.size();
-//    bool found = false;
-//    bool erased = false;
-//
-//    for (int i = 0; i < addressRangeNum; i++) {
-//        Ipv4AddressRange curRange = IPv4areaAddressRanges[i];
-//        if (curRange.contains(addressRange)) {    // contains or same
-//            found = true;
-//            if (IPv4advertiseAddressRanges[curRange] != advertise) {
-//                throw cRuntimeError("Inconsistent advertise settings for %s and %s address ranges in area %s",
-//                        addressRange.str().c_str(), curRange.str().c_str(), areaID.str(false).c_str());
-//            }
-//        }
-//        else if (addressRange.contains(curRange)) {
-//            if (IPv4advertiseAddressRanges[curRange] != advertise) {
-//                throw cRuntimeError("Inconsistent advertise settings for %s and %s address ranges in area %s",
-//                        addressRange.str().c_str(), curRange.str().c_str(), areaID.str(false).c_str());
-//            }
-//            IPv4advertiseAddressRanges.erase(curRange);
-//            IPv4areaAddressRanges[i] = NULL_IPV4ADDRESSRANGE;
-//            erased = true;
-//        }
-//    }
-//    if (erased && found) // the found entry contains new entry and new entry contains erased entry ==> the found entry also contains the erased entry
-//        throw cRuntimeError("Model error: bad contents in IPv4areaAddressRanges vector");
-//    if (erased) {
-//        auto it = IPv4areaAddressRanges.begin();
-//        while (it != IPv4areaAddressRanges.end()) {
-//            if (*it == NULL_IPV4ADDRESSRANGE)
-//                it = IPv4areaAddressRanges.erase(it);
-//            else
-//                it++;
-//        }
-//    }
-//    if (!found) {
-//        IPv4areaAddressRanges.push_back(addressRange);
-//        IPv4advertiseAddressRanges[addressRange] = advertise;
-//    }
-//}
-//
-//bool OSPFv3Area::hasAddressRange(Ipv4AddressRange addressRange) const
-//{
-//    int addressRangeNum = IPv4areaAddressRanges.size();
-//    for (int i = 0; i < addressRangeNum; i++) {
-//        if (IPv4areaAddressRanges[i] == addressRange) {
-//            return true;
-//        }
-//    }
-//    return false;
-//}
-//
+
+// add created address range into list of area's address ranges
+void OSPFv3Area::addAddressRange(Ipv6AddressRange addressRange, bool advertise)
+{
+    int addressRangeNum = IPv6areaAddressRanges.size();
+    bool found = false;
+    bool erased = false;
+
+    for (int i = 0; i < addressRangeNum; i++) {
+        Ipv6AddressRange curRange = IPv6areaAddressRanges[i];
+        if (curRange.contains(addressRange)) {    // contains or same
+            found = true;
+            if (IPv6advertiseAddressRanges[curRange] != advertise) {
+                throw cRuntimeError("Inconsistent advertise settings for %s and %s address ranges in area %s",
+                        addressRange.str().c_str(), curRange.str().c_str(), areaID.str(false).c_str());
+            }
+        }
+        else if (addressRange.contains(curRange)) {
+            if (IPv6advertiseAddressRanges[curRange] != advertise) {
+                throw cRuntimeError("Inconsistent advertise settings for %s and %s address ranges in area %s",
+                        addressRange.str().c_str(), curRange.str().c_str(), areaID.str(false).c_str());
+            }
+            IPv6advertiseAddressRanges.erase(curRange);
+            IPv6areaAddressRanges[i] = NULL_IPV6ADDRESSRANGE;
+            erased = true;
+        }
+    }
+    if (erased && found) // the found entry contains new entry and new entry contains erased entry ==> the found entry also contains the erased entry
+        throw cRuntimeError("Model error: bad contents in areaAddressRanges vector");
+    if (erased) {
+        auto it = IPv6areaAddressRanges.begin();
+        while (it != IPv6areaAddressRanges.end()) {
+            if (*it == NULL_IPV6ADDRESSRANGE)
+                it = IPv6areaAddressRanges.erase(it);
+            else
+                it++;
+        }
+    }
+    if (!found) {
+        IPv6areaAddressRanges.push_back(addressRange);
+        IPv6advertiseAddressRanges[addressRange] = advertise;
+    }
+}
+
+bool OSPFv3Area::hasAddressRange(Ipv6AddressRange addressRange) const
+{
+    int addressRangeNum = IPv6areaAddressRanges.size();
+    for (int i = 0; i < addressRangeNum; i++) {
+        if (IPv6areaAddressRanges[i] == addressRange) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// same check but for IPv4
+void OSPFv3Area::addAddressRange(Ipv4AddressRange addressRange, bool advertise)
+{
+    int addressRangeNum = IPv4areaAddressRanges.size();
+    bool found = false;
+    bool erased = false;
+
+    for (int i = 0; i < addressRangeNum; i++) {
+        Ipv4AddressRange curRange = IPv4areaAddressRanges[i];
+        if (curRange.contains(addressRange)) {    // contains or same
+            found = true;
+            if (IPv4advertiseAddressRanges[curRange] != advertise) {
+                throw cRuntimeError("Inconsistent advertise settings for %s and %s address ranges in area %s",
+                        addressRange.str().c_str(), curRange.str().c_str(), areaID.str(false).c_str());
+            }
+        }
+        else if (addressRange.contains(curRange)) {
+            if (IPv4advertiseAddressRanges[curRange] != advertise) {
+                throw cRuntimeError("Inconsistent advertise settings for %s and %s address ranges in area %s",
+                        addressRange.str().c_str(), curRange.str().c_str(), areaID.str(false).c_str());
+            }
+            IPv4advertiseAddressRanges.erase(curRange);
+            IPv4areaAddressRanges[i] = NULL_IPV4ADDRESSRANGE;
+            erased = true;
+        }
+    }
+    if (erased && found) // the found entry contains new entry and new entry contains erased entry ==> the found entry also contains the erased entry
+        throw cRuntimeError("Model error: bad contents in IPv4areaAddressRanges vector");
+    if (erased) {
+        auto it = IPv4areaAddressRanges.begin();
+        while (it != IPv4areaAddressRanges.end()) {
+            if (*it == NULL_IPV4ADDRESSRANGE)
+                it = IPv4areaAddressRanges.erase(it);
+            else
+                it++;
+        }
+    }
+    if (!found) {
+        IPv4areaAddressRanges.push_back(addressRange);
+        IPv4advertiseAddressRanges[addressRange] = advertise;
+    }
+}
+
+bool OSPFv3Area::hasAddressRange(Ipv4AddressRange addressRange) const
+{
+    int addressRangeNum = IPv4areaAddressRanges.size();
+    for (int i = 0; i < addressRangeNum; i++) {
+        if (IPv4areaAddressRanges[i] == addressRange) {
+            return true;
+        }
+    }
+    return false;
+}
+
 //RouterLSA *OSPFv3Area::findRouterLSA(Ipv4Address routerID)
 //{
 //    for (auto it=this->routerLSAList.begin(); it!=this->routerLSAList.end(); it++)
@@ -2705,13 +2705,13 @@ void OSPFv3Area::init()
 //                            cout << "SOM ZA TYM FOKIN DESTINATION TYPE\n";
 //                            OSPFv3RoutingTableEntry *entry = nullptr;
 //                            unsigned long routeCount = newTableIPv6.size();
-//                            IPv6Address longestMatch(IPv6Address::UNSPECIFIED_ADDRESS);
+//                            Ipv6Address longestMatch(Ipv6Address::UNSPECIFIED_ADDRESS);
 //
 //                            for (int rt = 0; rt < routeCount; rt++) {
 //                                EV_DEBUG << "for (i = 0; i < routeCount; i++)\n";
 //                                if (newTableIPv6[rt]->getDestinationType() == OSPFv3RoutingTableEntry::NETWORK_DESTINATION) {
 //                                    OSPFv3RoutingTableEntry *routingEntry = newTableIPv6[rt];
-//                                    IPv6Address entryAddress = routingEntry->getDestPrefix();
+//                                    Ipv6Address entryAddress = routingEntry->getDestPrefix();
 //
 //                                    if (entryAddress == destinationID.toIPv6())
 //                                    {
@@ -2735,7 +2735,7 @@ void OSPFv3Area::init()
 //                            if ((entry == nullptr) || (overWrite)) {
 //                                if (entry == nullptr) {
 //                                    EV_DEBUG << "v Area destinationID = " << destinationID << "\n";
-//            //                      OSPFv3RoutingTableEntry(IInterfaceTable *ift, IPv6Address destPrefix, int prefixLength, SourceType sourceType)
+//            //                      OSPFv3RoutingTableEntry(IInterfaceTable *ift, Ipv6Address destPrefix, int prefixLength, SourceType sourceType)
 //                                    entry = new OSPFv3RoutingTableEntry(this->getInstance()->ift, destinationID.toIPv6(), prefixLen, IRoute::OSPF);
 //                                }
 //                                entry->setLinkStateOrigin(networkLSA);
@@ -2790,7 +2790,7 @@ void OSPFv3Area::init()
 //                            if ((entry == nullptr) || (overWrite)) {
 //                                if (entry == nullptr) {
 //                                    EV_DEBUG << "v Area destinationID = " << destinationID << "\n";
-//            //                      OSPFv3RoutingTableEntry(IInterfaceTable *ift, IPv6Address destPrefix, int prefixLength, SourceType sourceType)
+//            //                      OSPFv3RoutingTableEntry(IInterfaceTable *ift, Ipv6Address destPrefix, int prefixLength, SourceType sourceType)
 //                                    entry = new OSPFv3IPv4RoutingTableEntry(this->getInstance()->ift, destinationID.toIPv4(), prefixLen, IRoute::OSPF);
 //                                }
 //                                entry->setLinkStateOrigin(networkLSA);
@@ -2927,7 +2927,7 @@ void OSPFv3Area::init()
 //    sameOrWorseCost.clear();
 //
 //    long routeCount = newTable.size();
-//    IPv6AddressRange destination;
+//    Ipv6AddressRange destination;
 //    destination.prefix = interAreaPrefixLSA.getPrefix().toIPv6();
 //    destination.prefixLength = interAreaPrefixLSA.getPrefixLen();
 //
@@ -3069,7 +3069,7 @@ void OSPFv3Area::init()
 //        unsigned short entryCost,
 //        const OSPFv3RoutingTableEntry& borderRouterEntry) const
 //{
-//    IPv6AddressRange destination;
+//    Ipv6AddressRange destination;
 //
 //    destination.prefix = interAreaPrefixLSA.getPrefix().toIPv6();
 //    destination.prefixLength = interAreaPrefixLSA.getPrefixLen();
@@ -3162,7 +3162,7 @@ void OSPFv3Area::init()
 //        if (this->getInstance()->getAddressFamily() == IPV6INSTANCE)
 //        {
 //            unsigned long routeCount = newTableIPv6.size();
-//            IPv6AddressRange destination;
+//            Ipv6AddressRange destination;
 //
 //            // get Prefix and Prefix length from LSA 3
 //            destination.prefix = currentLSA->getPrefix().toIPv6();
@@ -3633,7 +3633,7 @@ void OSPFv3Area::init()
 //
 //                            nextHop.ifIndex = interfaceList[i]->getInterfaceId();
 //                            if (v6)
-//                                nextHop.hopAddress = IPv6Address::UNSPECIFIED_ADDRESS;    //TODO revise it!
+//                                nextHop.hopAddress = Ipv6Address::UNSPECIFIED_ADDRESS;    //TODO revise it!
 //                            else
 //                                nextHop.hopAddress = Ipv4Address::UNSPECIFIED_ADDRESS;
 //
@@ -3749,7 +3749,7 @@ void OSPFv3Area::init()
 //        unsigned long routeCount = newTableIPv6.size();
 //        char lsaType = currentHeader.getLsaType();
 //        OSPFv3RoutingTableEntry *destinationEntry = nullptr;
-//        IPv6AddressRange destination;
+//        Ipv6AddressRange destination;
 //
 //        destination.prefix = currentLSA->getPrefix().toIPv6(); //from LSA type 3
 //        destination.prefixLength = currentLSA->getPrefixLen();
@@ -4034,9 +4034,8 @@ void OSPFv3Area::init()
 
 void OSPFv3Area::debugDump()
 {
-    EV_DEBUG << "MIGRATION IN PROCESS LG\n";
-//    for(auto it=this->interfaceList.begin(); it!=this->interfaceList.end(); it++)
-//        EV_DEBUG << "\t\tinterface id: " << (*it)->getIntName() << "\n";
+    for(auto it=this->interfaceList.begin(); it!=this->interfaceList.end(); it++)
+        EV_DEBUG << "\t\tinterface id: " << (*it)->getIntName() << "\n";
 
 }//debugDump
 //
@@ -4114,9 +4113,9 @@ void OSPFv3Area::debugDump()
 //                out << ipv4addr.str() << "/" << (int)(*it)->getPrefixLen() << endl;
 //            }
 //            else if(this->getInstance()->getAddressFamily()==IPV6INSTANCE) {
-//                IPv6Address ipv6addr = addrPref.toIPv6();
+//                Ipv6Address ipv6addr = addrPref.toIPv6();
 //                ipv6addr = ipv6addr.getPrefix((*it)->getPrefixLen());
-//                if(ipv6addr == IPv6Address::UNSPECIFIED_ADDRESS)
+//                if(ipv6addr == Ipv6Address::UNSPECIFIED_ADDRESS)
 //                    out << "::/0" << endl; //TODO - this needs to be changed to the actual length
 //                else
 //                    out << ipv6addr.str() << "/" << (int)(*it)->getPrefixLen() << endl;
