@@ -32,8 +32,11 @@ module OSPFv3 like IOspfv3
     gates:
 //        input ipv6In @labels(OSPFv3Packet/up);
 //        output ipv6Out @labels(OSPFv3Packet/down);
-        input networkLayerIn @labels(OSPFv3Packet/up);
-        output networkLayerOut @labels(OSPFv3Packet/down);
+
+        input networkLayerIn @labels(Ipv6ControlInfo/up);
+        output networkLayerOut @labels(Ipv6ControlInfo/down);
+//        input networkLayerIn @labels(OSPFv3Packet/up);					bolo predtym, ked Hello pakety sa nedostaly z IPv6 vyssie
+//        output networkLayerOut @labels(OSPFv3Packet/down);
 
     submodules:
         OSPFv3Splitter: OSPFv3Splitter {

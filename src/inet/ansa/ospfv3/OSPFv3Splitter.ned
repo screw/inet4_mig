@@ -9,8 +9,10 @@ simple OSPFv3Splitter{
         string routingTableModule;
         string routingTableModule6;
     gates:
-        input ipIn @labels(OSPFv3Packet/up);
-        output ipOut @labels(OSPFv3Packet/down);
+        input ipIn @labels(Ipv6ControlInfo/up);
+        output ipOut @labels(Ipv6ControlInfo/down);
+//        input ipIn @labels(OSPFv3Packet/up);
+//        output ipOut @labels(OSPFv3Packet/down);
         input processIn[];
         output processOut[];
 }

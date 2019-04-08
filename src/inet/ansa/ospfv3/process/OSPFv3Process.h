@@ -27,6 +27,14 @@
 #include "inet/networklayer/ipv6/Ipv6RoutingTable.h"
 
 
+#include "inet/common/ProtocolTag_m.h"
+#include "inet/linklayer/common/InterfaceTag_m.h"
+#include "inet/networklayer/common/HopLimitTag_m.h"
+#include "inet/networklayer/common/L3AddressTag_m.h"
+#include "inet/common/packet/Packet.h"
+#include "inet/networklayer/icmpv6/Icmpv6Header_m.h"
+
+
 namespace inet{
 
 class OSPFv3Instance;
@@ -44,11 +52,11 @@ class INET_API OSPFv3Process : protected cListener, public cSimpleModule
     void clearTimer(cMessage* msg){this->cancelEvent(msg);}
     OSPFv3Instance* getInstanceById(int instanceId);
     void addInstance(OSPFv3Instance* newInstance);
-    void sendPacket(OSPFv3Packet *packet, Ipv6Address destination, const char* ifName, short hopLimit = 1);
+    void sendPacket(Packet *packet, Ipv6Address destination, const char* ifName, short hopLimit = 1);
 //    OSPFv3LSA* findLSA(LSAKeyType lsaKey, Ipv4Address areaID, int instanceID);
 //    bool floodLSA(OSPFv3LSA* lsa, Ipv4Address areaID=Ipv4Address::UNSPECIFIED_ADDRESS, OSPFv3Interface* intf=nullptr, OSPFv3Neighbor* neighbor=nullptr);
 //    bool installLSA(OSPFv3LSA *lsa, int instanceID, Ipv4Address areaID=Ipv4Address::UNSPECIFIED_ADDRESS, OSPFv3Interface* intf=nullptr);
-//    void rebuildRoutingTable();
+    void rebuildRoutingTable();
 //    void calculateASExternalRoutes(std::vector<OSPFv3RoutingTableEntry* > newTableIPv6, std::vector<OSPFv3IPv4RoutingTableEntry* > newTableIPv4);
 
 //    void ageDatabase();

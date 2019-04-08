@@ -20,13 +20,13 @@ network v3_2_routers
             thruputDisplayFormat = "#N";
         }
     submodules:
-        configurator: Ipv4NetworkConfigurator {
-            parameters:
-                config = xml("<config>"+
-                            "<interface among='Router1 Router2' address='10.10.10.x' netmask='255.255.255.0' />"+
-                            "</config>");
-                @display("p=147,54");
-        }
+//        configurator: Ipv4NetworkConfigurator {
+//            parameters:
+//                config = xml("<config>"+
+//                            "<interface among='Router1 Router2' address='10.10.10.x' netmask='255.255.255.0' />"+
+//                            "</config>");
+//                @display("p=147,54");
+//        }
         Router1: Ospfv3Router {
             parameters:
                 @display("p=90,154");
@@ -38,6 +38,13 @@ network v3_2_routers
                 @display("p=244,97");
             gates:
                 ethg[1];
+        }
+        configurator: Ipv4NetworkConfigurator {
+            @display("p=50,20;is=s");
+         	config = xmldoc("IPv4Config.xml");
+            addStaticRoutes = false;
+            addDefaultRoutes = false;
+            addSubnetRoutes = false;
         }
 
     connections:

@@ -2,7 +2,7 @@
 #define __ANSA_OSPFV3INTERFACESTATEDOWN_H_
 
 #include "inet/ansa/ospfv3/interface/OSPFv3InterfaceState.h"
-//#include "inet/ansa/ospfv3/interface/OSPFv3InterfaceStateWaiting.h"   MIGRACIA LG
+#include "inet/ansa/ospfv3/interface/OSPFv3InterfaceStateWaiting.h"
 #include <omnetpp.h>
 #include <string>
 #include "inet/common/INETDefs.h"

@@ -11,8 +11,10 @@
 #include "inet/networklayer/contract/IInterfaceTable.h"
 #include "inet/ansa/ospfv3/OSPFv3Packet_m.h"
 #include "inet/ansa/ospfv3/process/OSPFv3Area.h"
-//#include "inet/ansa/ospfv3/neighbor/OSPFv3Neighbor.h" MIGRACIA LG
+#include "inet/ansa/ospfv3/neighbor/OSPFv3Neighbor.h"
 #include "inet/ansa/ospfv3/process/OSPFv3LSA.h"
+
+#include "inet/common/packet/Packet.h"
 
 
 namespace inet{
@@ -121,7 +123,7 @@ class INET_API OSPFv3Interface : public cObject
     int getInterfaceCost() const {return this->interfaceCost;}
     int getInterfaceId() const {return this->interfaceId;}
     int getInterfaceIndex() const {return this->interfaceIndex;}
-//    int getNeighborCount() const {return this->neighbors.size();}
+    int getNeighborCount() const {return this->neighbors.size();}
     int getInterfaceMTU() const;
     int getInterfaceIndex(){return this->interfaceIndex;}
     Ipv6Address getInterfaceLLIP() const {return this->interfaceLLIP;}
@@ -129,7 +131,7 @@ class INET_API OSPFv3Interface : public cObject
     Ipv4Address getTransitAreaID() const { return this->transitAreaID; }
 
     OSPFv3InterfaceType getType() const {return this->interfaceType;}
-//    OSPFv3Neighbor* getNeighbor(int i){return this->neighbors.at(i);}     MIGRACIA LG
+    OSPFv3Neighbor* getNeighbor(int i){return this->neighbors.at(i);}
     Ipv6Address getDesignatedIP() const {return this->DesignatedRouterIP;}
     Ipv6Address getBackupIP() const {return this->BackupRouterIP;}
     Ipv4Address getDesignatedID() const {return this->DesignatedRouterID;}
@@ -149,27 +151,27 @@ class INET_API OSPFv3Interface : public cObject
     void changeState(OSPFv3InterfaceState* currentState, OSPFv3InterfaceState* newState);
     OSPFv3Interface::OSPFv3InterfaceFAState getState() const;
 
-    void processHelloPacket(OSPFv3Packet* packet);
+    void processHelloPacket(Packet* packet);
     void processDDPacket(OSPFv3Packet* packet);
-//    bool preProcessDDPacket(OSPFv3DatabaseDescription *ddPacket, OSPFv3Neighbor* neighbor, bool inExchangeStart);
-//    void processLSR(OSPFv3Packet* packet, OSPFv3Neighbor* neighbor);
+    bool preProcessDDPacket(OSPFv3DatabaseDescription *ddPacket, OSPFv3Neighbor* neighbor, bool inExchangeStart);
+    void processLSR(OSPFv3Packet* packet, OSPFv3Neighbor* neighbor);
     OSPFv3LSUpdate* prepareLSUHeader();
     OSPFv3LSUpdate* prepareUpdatePacket(OSPFv3LSA *lsa, OSPFv3LSUpdate* updatePacket);
-//    void processLSU(OSPFv3Packet* packet, OSPFv3Neighbor* neighbor);
-//    void processLSAck(OSPFv3Packet* packet, OSPFv3Neighbor* neighbor);
-//    bool floodLSA(OSPFv3LSA* lsa, OSPFv3Interface* interface=nullptr, OSPFv3Neighbor* neighbor=nullptr); MIGRACIA LG
+    void processLSU(OSPFv3Packet* packet, OSPFv3Neighbor* neighbor);
+    void processLSAck(OSPFv3Packet* packet, OSPFv3Neighbor* neighbor);
+    bool floodLSA(OSPFv3LSA* lsa, OSPFv3Interface* interface=nullptr, OSPFv3Neighbor* neighbor=nullptr);
     void removeFromAllRetransmissionLists(LSAKeyType lsaKey);
     bool isOnAnyRetransmissionList(LSAKeyType lsaKey) const;
     bool hasAnyNeighborInStates(int states) const;
     void ageTransmittedLSALists();
 
-    OSPFv3HelloPacket* prepareHello();
+    Packet* prepareHello();
 
-//    OSPFv3Neighbor* getNeighborById(Ipv4Address neighborId);          MIGRACIA LG
-//    void addNeighbor(OSPFv3Neighbor*);
+    OSPFv3Neighbor* getNeighborById(Ipv4Address neighborId);
+    void addNeighbor(OSPFv3Neighbor*);
 
-//    std::string info() const override;
-//    std::string detailedInfo() const override;
+    std::string info() const override;
+    std::string detailedInfo() const override;
     void acknowledgeLSA(OSPFv3LSAHeader& lsaHeader, AcknowledgementFlags ackFlags, Ipv4Address routerID);
 
 
@@ -223,8 +225,8 @@ class INET_API OSPFv3Interface : public cObject
     OSPFv3Interface::OSPFv3InterfaceType interfaceType;
 
     std::vector<Ipv6AddressRange> interfaceAddresses; // List of link prefixes
-//    std::vector<OSPFv3Neighbor*> neighbors;                                       MIGRACIA LG
-//    std::map<Ipv4Address, OSPFv3Neighbor*> neighborsById;                         MIGRACIA LG
+    std::vector<OSPFv3Neighbor*> neighbors;
+    std::map<Ipv4Address, OSPFv3Neighbor*> neighborsById;
     std::map<Ipv6Address, std::list<OSPFv3LSAHeader> > delayedAcknowledgements;
     std::map<Ipv4Address, LinkLSA *> linkLSAsByID;
 
@@ -251,7 +253,7 @@ class INET_API OSPFv3Interface : public cObject
 inline std::ostream& operator<<(std::ostream& ostr, const OSPFv3Interface& interface)
 {
     ostr << "MIGRATION IN PROCESS\n";
-//    ostr << interface.detailedInfo();
+    ostr << interface.detailedInfo();
     return ostr;
 }
 

@@ -1,5 +1,7 @@
 #include "inet/ansa/ospfv3/process/OSPFv3Process.h"
 
+
+
 namespace inet{
 
 Define_Module(OSPFv3Process);
@@ -79,28 +81,52 @@ void OSPFv3Process::handleMessage(cMessage* msg)
     {
         this->handleTimer(msg);
     }
-  /*  else      MIGRACIA LG
+    else
     {
-        OSPFv3Packet* packet = check_and_cast<OSPFv3Packet*>(msg);
+        Packet *pk = check_and_cast<Packet *>(msg);
+        const auto& packet = pk->peekAtFront<OSPFv3Packet>();
+
+        auto protocol = pk->getTag<PacketProtocolTag>()->getProtocol();     //check if this is ICMPv6 msg
+        if (protocol == &Protocol::icmpv6) {
+           EV_ERROR << "ICMPv6 error received -- discarding\n";
+           delete msg;
+       }
+
         if(packet->getRouterID()==this->getRouterID()) //is it this router who originated the message?
             delete msg;
         else {
-            IPv6ControlInfo *ctlInfo = dynamic_cast<IPv6ControlInfo*>(packet->getControlInfo());
-            if(ctlInfo!=nullptr) {
-                OSPFv3Instance* instance = this->getInstanceById(packet->getInstanceID());
-                if(instance == nullptr){//Is there an instance with this number?
-                    EV_DEBUG << "Instance with this ID not found, dropping\n";
-                    //delete msg;//TODO - some warning??
-                }
-                else {
-                    instance->processPacket(packet);
-                }
+            OSPFv3Instance* instance = this->getInstanceById(packet->getInstanceID());
+            if(instance == nullptr){//Is there an instance with this number?
+                EV_DEBUG << "Instance with this ID not found, dropping\n";
+                delete msg;//TODO - some warning??
             }
             else {
-                delete msg;
+                instance->processPacket(pk);
             }
         }
-    }*/
+    }
+//    else
+//    {
+//        OSPFv3Packet* packet = check_and_cast<OSPFv3Packet*>(msg);
+//        if(packet->getRouterID()==this->getRouterID()) //is it this router who originated the message?
+//            delete msg;
+//        else {
+//            IPv6ControlInfo *ctlInfo = dynamic_cast<IPv6ControlInfo*>(packet->getControlInfo());
+//            if(ctlInfo!=nullptr) {
+//                OSPFv3Instance* instance = this->getInstanceById(packet->getInstanceID());
+//                if(instance == nullptr){//Is there an instance with this number?
+//                    EV_DEBUG << "Instance with this ID not found, dropping\n";
+//                    //delete msg;//TODO - some warning??
+//                }
+//                else {
+//                    instance->processPacket(packet);
+//                }
+//            }
+//            else {
+//                delete msg;
+//            }
+//        }
+//    }
 }//handleMessage
 //
 void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
@@ -472,19 +498,19 @@ void OSPFv3Process::handleTimer(cMessage* msg)
             this->debugDump();
         break;
 
-//        case HELLO_TIMER:
-//        {
-//            OSPFv3Interface* interface;
-//            if(!(interface=reinterpret_cast<OSPFv3Interface*>(msg->getContextPointer())))
-//            {
-//                //TODO - error
-//            }
-//            else {
-//                EV_DEBUG << "Process received msg, sending event HELLO_TIMER_EVENT\n";
-//                interface->processEvent(OSPFv3Interface::HELLO_TIMER_EVENT);
-//            }
-//        }
-//        break;
+        case HELLO_TIMER:
+        {
+            OSPFv3Interface* interface;
+            if(!(interface=reinterpret_cast<OSPFv3Interface*>(msg->getContextPointer())))
+            {
+                //TODO - error
+            }
+            else {
+                EV_DEBUG << "Process received msg, sending event HELLO_TIMER_EVENT\n";
+                interface->processEvent(OSPFv3Interface::HELLO_TIMER_EVENT);
+            }
+        }
+        break;
 //
 //        case WAIT_TIMER:
 //        {
@@ -647,13 +673,31 @@ void OSPFv3Process::addInstance(OSPFv3Instance* newInstance)
     }
 }
 
-void OSPFv3Process::sendPacket(OSPFv3Packet *packet, Ipv6Address destination, const char* ifName, short hopLimit)
+void OSPFv3Process::sendPacket(Packet *packet, Ipv6Address destination, const char* ifName, short hopLimit)
 {
-    // MIGRACIA LG pouzi kod pod metodou
-}
-//    InterfaceEntry *ie = this->ift->getInterfaceByName(ifName);
-//
-//    IPv6InterfaceData *ipv6int = ie->ipv6Data();
+
+
+    InterfaceEntry *ie = this->ift->getInterfaceByName(ifName);
+    Ipv6InterfaceData *ipv6int = ie->ipv6Data();
+
+    packet->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::ospf);
+    packet->addTagIfAbsent<InterfaceReq>()->setInterfaceId(ie->getInterfaceId());
+    packet->addTagIfAbsent<L3AddressReq>()->setDestAddress(destination);
+    packet->addTagIfAbsent<L3AddressReq>()->setSrcAddress(ipv6int->getLinkLocalAddress());
+    packet->addTagIfAbsent<HopLimitReq>()->setHopLimit(hopLimit);
+    const auto& ospfPacket = packet->peekAtFront<OSPFv3Packet>();
+
+    switch (ospfPacket->getType())
+    {
+           case HELLO_PACKET:
+           {
+               packet->setName("OSPFv3_HelloPacket");
+
+               const auto& helloPacket = packet->peekAtFront<OSPFv3HelloPacket>();
+//               printHelloPacket(helloPacket.get(), destination, outputIfIndex);
+           }
+
+    }
 //    IPv6ControlInfo *ipv6ControlInfo = new IPv6ControlInfo();
 //    ipv6ControlInfo->setProtocol(IP_PROT_OSPF);
 //    ipv6ControlInfo->setHopLimit(hopLimit);
@@ -661,12 +705,13 @@ void OSPFv3Process::sendPacket(OSPFv3Packet *packet, Ipv6Address destination, co
 //    ipv6ControlInfo->setSourceAddress(ipv6int->getLinkLocalAddress());
 //    ipv6ControlInfo->setDestinationAddress(destination);
 //    ipv6ControlInfo->setInterfaceId(ie->getInterfaceId());
-//
-//    packet->setByteLength(packet->getByteLength()+54);//This is for the IPv6 Header and Ethernet Header
-//
+
+//    packet->setByteLength(packet->getByteLength()+54);//This is for the IPv6 Header and Ethernet Header   JA NEVIEM , TOTO TU BYT ASI NEMA
+
 //    packet->setControlInfo(ipv6ControlInfo);
-//    this->send(packet, "splitterOut");
-//}//sendPacket
+    packet->addTagIfAbsent<DispatchProtocolReq>()->setProtocol(&Protocol::ipv6);
+    this->send(packet, "splitterOut");
+}//sendPacket
 //
 //
 //OSPFv3LSA* OSPFv3Process::findLSA(LSAKeyType lsaKey, Ipv4Address areaID, int instanceID)
@@ -833,6 +878,10 @@ void OSPFv3Process::sendPacket(OSPFv3Packet *packet, Ipv6Address destination, co
 //    EV_DEBUG << "Calculating AS External Routes\n";
 //}
 //
+void OSPFv3Process::rebuildRoutingTable()
+{
+    EV_DEBUG << "VOLAM PROCESS REBUILD ROUTING TABLE\n";
+}
 //void OSPFv3Process::rebuildRoutingTable()
 //{
 //    unsigned long instanceCount = this->instances.size();

@@ -14,8 +14,10 @@
 #include "inet/ansa/ospfv3/process/OSPFv3Area.h"
 #include "inet/ansa/ospfv3/OSPFv3Common.h"
 #include "inet/ansa/ospfv3/OSPFv3Packet_m.h"
-//#include "inet/ansa/ospfv3/neighbor/OSPFv3Neighbor.h" MIGRACIA LG
-//#include "inet/ansa/ospfv3/interface/OSPFv3Interface.h" MIGRACIA LG
+#include "inet/ansa/ospfv3/neighbor/OSPFv3Neighbor.h"
+#include "inet/ansa/ospfv3/interface/OSPFv3Interface.h"
+
+#include "inet/common/packet/Packet.h"
 
 
 namespace inet{
@@ -38,14 +40,14 @@ class INET_API OSPFv3Instance : public cObject
     OSPFv3Area* getAreaById(Ipv4Address areaId);
     OSPFv3Area* getArea(int i){return this->areas.at(i);}
     void debugDump();
-//    Ipv4Address getNewInterAreaPrefixLinkStateID();
-//    void subtractInterAreaPrefixLinkStateID();
-//    void processPacket(OSPFv3Packet* packet);
+    Ipv4Address getNewInterAreaPrefixLinkStateID();
+    void subtractInterAreaPrefixLinkStateID();
+    void processPacket(Packet* pk);
     int getUniqueId(){return OSPFv3IfIndex++;}
     int getAreaCount(){return this->areas.size();}
-//    void removeFromAllRetransmissionLists(LSAKeyType lsaKey);
+    void removeFromAllRetransmissionLists(LSAKeyType lsaKey);
 
-//    std::string detailedInfo() const override;
+    std::string detailedInfo() const override;
 
   public:
     IInterfaceTable* ift = nullptr;

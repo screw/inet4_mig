@@ -23,6 +23,6 @@ moduleinterface IOspfv3
     parameters:
         @display("i=block/network");
     gates:
-        input networkLayerIn;
-        output networkLayerOut;
+        input networkLayerIn @labels(Ipv6ControlInfo/up);
+        output networkLayerOut @labels(Ipv6ControlInfo/down);
 }

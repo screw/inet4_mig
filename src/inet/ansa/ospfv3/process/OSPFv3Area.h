@@ -9,7 +9,7 @@
 #include "inet/ansa/ospfv3/process/OSPFv3LSA.h"
 #include "inet/ansa/ospfv3/process/OSPFv3Process.h"
 #include "inet/ansa/ospfv3/process/OSPFv3RoutingTableEntry.h"
-//#include "inet/ansa/ospfv3/neighbor/OSPFv3Neighbor.h"
+#include "inet/ansa/ospfv3/neighbor/OSPFv3Neighbor.h"
 
 
 namespace inet{
@@ -37,25 +37,25 @@ class INET_API OSPFv3Area : public cObject
     void addInterface(OSPFv3Interface*);
     void init();
     void debugDump();
-//    void ageDatabase();
+    void ageDatabase();
     int getInstanceType(){return this->instanceType;};
     void setiInstanceType(int type){this->instanceType = type;};
     OSPFv3Instance* getInstance() const {return this->containingInstance;};
-//    void setExternalRoutingCapability(bool capable){this->externalRoutingCapability=capable;}
-//    void setStubDefaultCost(int newCost){this->stubDefaultCost=newCost;}
-//    void setTransitCapability(bool capable){this->transitCapability=capable;}
+    void setExternalRoutingCapability(bool capable){this->externalRoutingCapability=capable;}
+    void setStubDefaultCost(int newCost){this->stubDefaultCost=newCost;}
+    void setTransitCapability(bool capable){this->transitCapability=capable;}
     OSPFv3Interface* getInterfaceById(int id);
     OSPFv3Interface* getNetworkLSAInterface(Ipv4Address id);
     OSPFv3Interface* getInterfaceByIndex(int id);
-//    bool getExternalRoutingCapability(){return this->externalRoutingCapability;}
-//    int getStubDefaultCost(){return this->stubDefaultCost;}
-//    bool getTransitCapability(){return this->transitCapability;}
+    bool getExternalRoutingCapability(){return this->externalRoutingCapability;}
+    int getStubDefaultCost(){return this->stubDefaultCost;}
+    bool getTransitCapability(){return this->transitCapability;}
     OSPFv3Interface* findVirtualLink(Ipv4Address routerID);
 //
     OSPFv3Interface* getInterface(int i) const {return this->interfaceList.at(i);}
     OSPFv3Interface* getInterfaceByIndex (Ipv4Address address);
     int getInterfaceCount() const {return this->interfaceList.size();}
-//    OSPFv3LSA* getLSAbyKey(LSAKeyType lsaKey);
+    OSPFv3LSA* getLSAbyKey(LSAKeyType lsaKey);
 
     void addAddressRange(Ipv6AddressRange addressRange, bool advertise);
     bool hasAddressRange(Ipv6AddressRange addressRange) const;
@@ -64,21 +64,21 @@ class INET_API OSPFv3Area : public cObject
 
 
     /* ROUTER LSA */
-//    RouterLSA* originateRouterLSA();//this originates one router LSA for one area
-//    int getRouterLSACount(){return this->routerLSAList.size();}
-//    RouterLSA* getRouterLSA(int i){return this->routerLSAList.at(i);}
-//    RouterLSA* getRouterLSAbyKey(LSAKeyType lsaKey);
-//    bool installRouterLSA(OSPFv3RouterLSA *lsa);
-//    bool updateRouterLSA(RouterLSA* currentLsa, OSPFv3RouterLSA* newLsa);
-//    bool routerLSADiffersFrom(OSPFv3RouterLSA* currentLsa, OSPFv3RouterLSA* newLsa);
-//    Ipv4Address getNewRouterLinkStateID();
-//    Ipv4Address getRouterLinkStateID(){return this->routerLsID;}
-//    uint32_t getCurrentRouterSequence(){return this->routerLSASequenceNumber;}
-//    void incrementRouterSequence(){this->routerLSASequenceNumber++;}
-//    RouterLSA* findRouterLSAByID(Ipv4Address linkStateID);
-//    RouterLSA* findRouterLSA(Ipv4Address routerID);
-//    void deleteRouterLSA(int index);
-//    void addRouterLSA(RouterLSA* newLSA){this->routerLSAList.push_back(newLSA);}
+    RouterLSA* originateRouterLSA();//this originates one router LSA for one area
+    int getRouterLSACount(){return this->routerLSAList.size();}
+    RouterLSA* getRouterLSA(int i){return this->routerLSAList.at(i);}
+    RouterLSA* getRouterLSAbyKey(LSAKeyType lsaKey);
+    bool installRouterLSA(OSPFv3RouterLSA *lsa);
+    bool updateRouterLSA(RouterLSA* currentLsa, OSPFv3RouterLSA* newLsa);
+    bool routerLSADiffersFrom(OSPFv3RouterLSA* currentLsa, OSPFv3RouterLSA* newLsa);
+    Ipv4Address getNewRouterLinkStateID();
+    Ipv4Address getRouterLinkStateID(){return this->routerLsID;}
+    uint32_t getCurrentRouterSequence(){return this->routerLSASequenceNumber;}
+    void incrementRouterSequence(){this->routerLSASequenceNumber++;}
+    RouterLSA* findRouterLSAByID(Ipv4Address linkStateID);
+    RouterLSA* findRouterLSA(Ipv4Address routerID);
+    void deleteRouterLSA(int index);
+    void addRouterLSA(RouterLSA* newLSA){this->routerLSAList.push_back(newLSA);}
 //
 //    /*NETWORK LSA */
 //    void addNetworkLSA(NetworkLSA* newLSA){this->networkLSAList.push_back(newLSA);}
@@ -136,45 +136,45 @@ class INET_API OSPFv3Area : public cObject
 //    IntraAreaPrefixLSA* findIntraAreaPrefixLSAByReference(LSAKeyType lsaKey);
 //    IntraAreaPrefixLSA* IntraAreaPrefixLSAAlreadyExists(OSPFv3IntraAreaPrefixLSA *newLsa);
 
-//    OSPFv3LSAHeader* findLSA(LSAKeyType lsaKey);
-//    bool floodLSA(OSPFv3LSA* lsa, OSPFv3Interface* interface=nullptr, OSPFv3Neighbor* neighbor=nullptr);
+    OSPFv3LSAHeader* findLSA(LSAKeyType lsaKey);
+    bool floodLSA(OSPFv3LSA* lsa, OSPFv3Interface* interface=nullptr, OSPFv3Neighbor* neighbor=nullptr);
 //
-//    void removeFromAllRetransmissionLists(LSAKeyType lsaKey);
-//    bool isOnAnyRetransmissionList(LSAKeyType lsaKey) const;
-//    bool hasAnyNeighborInStates(int states) const;
+    void removeFromAllRetransmissionLists(LSAKeyType lsaKey);
+    bool isOnAnyRetransmissionList(LSAKeyType lsaKey) const;
+    bool hasAnyNeighborInStates(int states) const;
     bool hasAnyPassiveInterface() const;
 
 
-//    void calculateShortestPathTree(std::vector<OSPFv3RoutingTableEntry* >& newTableIPv6, std::vector<OSPFv3IPv4RoutingTableEntry* >& newTableIPv4);
-//    void calculateInterAreaRoutes(std::vector<OSPFv3RoutingTableEntry* >& newTable, std::vector<OSPFv3IPv4RoutingTableEntry* >& newTableIPv4);
-//
-//    std::vector<NextHop> *calculateNextHops(OSPFv3SPFVertex* destination, OSPFv3SPFVertex *parent) const;
-//    std::vector<NextHop> *calculateNextHops(OSPFv3LSA *destination, OSPFv3LSA *parent) const;
-//
-//    void addRouterEntry(RouterLSA* routerLSA, LSAKeyType lsaKey, std::vector<OSPFv3RoutingTableEntry *>& newTableIPv6, std::vector<OSPFv3IPv4RoutingTableEntry *>& newTableIPv4 );
-//    bool findSameOrWorseCostRoute(const std::vector<OSPFv3RoutingTableEntry *>& newTable, // TODO >  PRE IPV4 SPRAVIT SAMOSTATNU METODU
-//            const InterAreaPrefixLSA& interAreaPrefixLSA,
-//            unsigned short currentCost,
-//            bool& destinationInRoutingTable,
-//            std::list<OSPFv3RoutingTableEntry *>& sameOrWorseCost) const;
-//    bool findSameOrWorseCostRoute(const std::vector<OSPFv3IPv4RoutingTableEntry *>& newTable,
-//            const InterAreaPrefixLSA& interAreaPrefixLSA,
-//            unsigned short currentCost,
-//            bool& destinationInRoutingTable,
-//            std::list<OSPFv3IPv4RoutingTableEntry *>& sameOrWorseCost) const;
-//    OSPFv3RoutingTableEntry *createRoutingTableEntryFromInterAreaPrefixLSA(const InterAreaPrefixLSA& interAreaPrefixLSA,
-//            unsigned short entryCost,
-//            const OSPFv3RoutingTableEntry& borderRouterEntry) const;
-//    OSPFv3IPv4RoutingTableEntry *createRoutingTableEntryFromInterAreaPrefixLSA(const InterAreaPrefixLSA& interAreaPrefixLSA,
-//            unsigned short entryCost,
-//            const OSPFv3IPv4RoutingTableEntry& borderRouterEntry) const;
-//    void recheckInterAreaPrefixLSAs(std::vector<OSPFv3RoutingTableEntry* >& newTableIPv6);
-//    void recheckInterAreaPrefixLSAs(std::vector<OSPFv3IPv4RoutingTableEntry* >& newTableIPv4);
-//    bool hasLink(OSPFv3LSA *fromLSA, OSPFv3LSA *toLSA) const;
-//
-//    std::string detailedInfo() const override;
-//
-//    void setSpfTreeRoot(RouterLSA* routerLSA){spfTreeRoot = routerLSA;};
+    void calculateShortestPathTree(std::vector<OSPFv3RoutingTableEntry* >& newTableIPv6, std::vector<OSPFv3IPv4RoutingTableEntry* >& newTableIPv4);
+    void calculateInterAreaRoutes(std::vector<OSPFv3RoutingTableEntry* >& newTable, std::vector<OSPFv3IPv4RoutingTableEntry* >& newTableIPv4);
+
+    std::vector<NextHop> *calculateNextHops(OSPFv3SPFVertex* destination, OSPFv3SPFVertex *parent) const;
+    std::vector<NextHop> *calculateNextHops(OSPFv3LSA *destination, OSPFv3LSA *parent) const;
+
+    void addRouterEntry(RouterLSA* routerLSA, LSAKeyType lsaKey, std::vector<OSPFv3RoutingTableEntry *>& newTableIPv6, std::vector<OSPFv3IPv4RoutingTableEntry *>& newTableIPv4 );
+    bool findSameOrWorseCostRoute(const std::vector<OSPFv3RoutingTableEntry *>& newTable, // TODO >  PRE IPV4 SPRAVIT SAMOSTATNU METODU
+            const InterAreaPrefixLSA& interAreaPrefixLSA,
+            unsigned short currentCost,
+            bool& destinationInRoutingTable,
+            std::list<OSPFv3RoutingTableEntry *>& sameOrWorseCost) const;
+    bool findSameOrWorseCostRoute(const std::vector<OSPFv3IPv4RoutingTableEntry *>& newTable,
+            const InterAreaPrefixLSA& interAreaPrefixLSA,
+            unsigned short currentCost,
+            bool& destinationInRoutingTable,
+            std::list<OSPFv3IPv4RoutingTableEntry *>& sameOrWorseCost) const;
+    OSPFv3RoutingTableEntry *createRoutingTableEntryFromInterAreaPrefixLSA(const InterAreaPrefixLSA& interAreaPrefixLSA,
+            unsigned short entryCost,
+            const OSPFv3RoutingTableEntry& borderRouterEntry) const;
+    OSPFv3IPv4RoutingTableEntry *createRoutingTableEntryFromInterAreaPrefixLSA(const InterAreaPrefixLSA& interAreaPrefixLSA,
+            unsigned short entryCost,
+            const OSPFv3IPv4RoutingTableEntry& borderRouterEntry) const;
+    void recheckInterAreaPrefixLSAs(std::vector<OSPFv3RoutingTableEntry* >& newTableIPv6);
+    void recheckInterAreaPrefixLSAs(std::vector<OSPFv3IPv4RoutingTableEntry* >& newTableIPv4);
+    bool hasLink(OSPFv3LSA *fromLSA, OSPFv3LSA *toLSA) const;
+
+    std::string detailedInfo() const override;
+
+    void setSpfTreeRoot(RouterLSA* routerLSA){spfTreeRoot = routerLSA;};
 
   private:
     bool v6; // for IPv6 AF is this set to true, for IPv4 to false
@@ -198,30 +198,30 @@ class INET_API OSPFv3Area : public cObject
     int stubDefaultCost;
     bool transitCapability;
 
-//    std::map<Ipv4Address, RouterLSA *> routerLSAsByID;
-//    std::map<Ipv4Address, NetworkLSA *> networkLSAsByID;
-//    std::map<Ipv4Address, InterAreaPrefixLSA *> interAreaPrefixLSAByID;
-//    std::map<Ipv4Address, IntraAreaPrefixLSA *> intraAreaPrefixLSAByID;
+    std::map<Ipv4Address, RouterLSA *> routerLSAsByID;
+    std::map<Ipv4Address, NetworkLSA *> networkLSAsByID;
+    std::map<Ipv4Address, InterAreaPrefixLSA *> interAreaPrefixLSAByID;
+    std::map<Ipv4Address, IntraAreaPrefixLSA *> intraAreaPrefixLSAByID;
 
-//    std::vector<RouterLSA* > routerLSAList;
-//    Ipv4Address routerLsID = Ipv4Address::UNSPECIFIED_ADDRESS;
-//    uint32_t routerLSASequenceNumber = 1;
-//
-//    std::vector<NetworkLSA* > networkLSAList;
-//    Ipv4Address networkLsID = Ipv4Address::UNSPECIFIED_ADDRESS;
-//    uint32_t networkLSASequenceNumber = 1;
-//
-//    std::vector<InterAreaPrefixLSA* > interAreaPrefixLSAList;
-//    uint32_t interAreaPrefixLSASequenceNumber = 1;
-//
-//    std::vector<IntraAreaPrefixLSA*> intraAreaPrefixLSAList;
-//    Ipv4Address intraAreaPrefixLsID = (Ipv4Address) 1; //in simulaiton, zero print as <unspec>
-//    uint32_t intraAreaPrefixLSASequenceNumber = 1;
-//
-//    Ipv4Address netIntraAreaPrefixLsID = Ipv4Address::UNSPECIFIED_ADDRESS;
-//    uint32_t netIntraAreaPrefixLSASequenceNumber = 1;
+    std::vector<RouterLSA* > routerLSAList;
+    Ipv4Address routerLsID = Ipv4Address::UNSPECIFIED_ADDRESS;
+    uint32_t routerLSASequenceNumber = 1;
 
-//    RouterLSA* spfTreeRoot=nullptr;
+    std::vector<NetworkLSA* > networkLSAList;
+    Ipv4Address networkLsID = Ipv4Address::UNSPECIFIED_ADDRESS;
+    uint32_t networkLSASequenceNumber = 1;
+
+    std::vector<InterAreaPrefixLSA* > interAreaPrefixLSAList;
+    uint32_t interAreaPrefixLSASequenceNumber = 1;
+
+    std::vector<IntraAreaPrefixLSA*> intraAreaPrefixLSAList;
+    Ipv4Address intraAreaPrefixLsID = (Ipv4Address) 1; //in simulaiton, zero print as <unspec>
+    uint32_t intraAreaPrefixLSASequenceNumber = 1;
+
+    Ipv4Address netIntraAreaPrefixLsID = Ipv4Address::UNSPECIFIED_ADDRESS;
+    uint32_t netIntraAreaPrefixLSASequenceNumber = 1;
+
+    RouterLSA* spfTreeRoot=nullptr;
     //list of summary lsas
     //shortest path tree
 
@@ -230,7 +230,7 @@ class INET_API OSPFv3Area : public cObject
 inline std::ostream& operator<<(std::ostream& ostr, const OSPFv3Area& area)
 {
     ostr << "MIGRATION IN THE PROCESS";
-//    ostr << area.detailedInfo();
+    ostr << area.detailedInfo();
     return ostr;
 }
 

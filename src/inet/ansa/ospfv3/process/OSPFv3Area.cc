@@ -91,18 +91,18 @@ void OSPFv3Area::addInterface(OSPFv3Interface* newInterface)
     this->interfaceById[newInterface->getInterfaceId()]=newInterface;
 }//addArea
 
-//OSPFv3Interface* OSPFv3Area::findVirtualLink(Ipv4Address routerID)    MIGRACIA LG
-//{
-//    int interfaceNum = this->interfaceList.size();
-//    for (int i = 0; i < interfaceNum; i++) {
-//        if ((interfaceList.at(i)->getType() == OSPFv3Interface::VIRTUAL_TYPE) &&
-//            (interfaceList.at(i)->getNeighborById(routerID) != nullptr))
-//        {
-//            return interfaceList.at(i);
-//        }
-//    }
-//    return nullptr;
-//}
+OSPFv3Interface* OSPFv3Area::findVirtualLink(Ipv4Address routerID)
+{
+    int interfaceNum = this->interfaceList.size();
+    for (int i = 0; i < interfaceNum; i++) {
+        if ((interfaceList.at(i)->getType() == OSPFv3Interface::VIRTUAL_TYPE) &&
+            (interfaceList.at(i)->getNeighborById(routerID) != nullptr))
+        {
+            return interfaceList.at(i);
+        }
+    }
+    return nullptr;
+}
 
 OSPFv3Interface* OSPFv3Area::getInterfaceByIndex(Ipv4Address LinkStateID)
 {
@@ -664,193 +664,193 @@ OSPFv3Interface* OSPFv3Area::getInterfaceByIndex(Ipv4Address LinkStateID)
 //    Area border routers originate a single summary-LSA for each
 //    known inter-area destination.  AS boundary routers originate a
 //    single AS-external-LSA for each known AS external destination.*/
-//RouterLSA* OSPFv3Area::originateRouterLSA()
-//{
-//    EV_DEBUG << "Originating RouterLSA (Router-LSA)\n";
-//    cout << "////////////// " <<  this->getInstance()->getProcess()->getRouterID() << " originate Router LSA ///////////" << endl;
-//    RouterLSA *routerLSA = new RouterLSA;
-//    OSPFv3LSAHeader& lsaHeader = routerLSA->getHeader();
-//    long interfaceCount = this->interfaceList.size();
-//    OSPFv3Options lsOptions;
-//    memset(&lsOptions, 0, sizeof(OSPFv3Options));
-//
-//    //First set the LSA Header
-//    lsaHeader.setLsaAge(0);
-//    //The LSA Type is 0x2001
-//    lsaHeader.setLsaType(ROUTER_LSA);
-//    lsaHeader.setLinkStateID(this->getInstance()->getProcess()->getRouterID());
-//    lsaHeader.setAdvertisingRouter(this->getInstance()->getProcess()->getRouterID());
-//    lsaHeader.setLsaSequenceNumber(this->getCurrentRouterSequence()); // TODO: toto tu bolo povodne, ale v ospfv2 je makro na initial seq num LG
-//   // lsaHeader.setLsaSequenceNumber(INITIAL_SEQUENCE_NUMBER);
-//    this->incrementRouterSequence();
-//
-//    if(this->getInstance()->getAreaCount()>1)
-//        routerLSA->setBBit(true);
-//    //TODO - set options
-//
-//    for(int i=0; i<interfaceCount; i++)
-//    {
-//        OSPFv3Interface* intf = this->interfaceList.at(i);
-//
-//        if (intf->getState() == OSPFv3Interface::INTERFACE_STATE_DOWN ||
-//                !intf->hasAnyNeighborInStates(OSPFv3Neighbor::INIT_STATE)) {
-//            continue;
-//        }
-//
-//        OSPFv3RouterLSABody routerLSABody;
-//        memset(&routerLSABody, 0, sizeof(OSPFv3RouterLSABody)); //FIXME : this sometimes makes first router LSA msgs not valid.
-//
-//        switch(intf->getType())
-//        {
-//            case OSPFv3Interface::POINTTOPOINT_TYPE:
-//            {
-//                for (int nei = 0; nei < intf->getNeighborCount(); nei++)
-//                {
-//
-//                    OSPFv3Neighbor *neighbor =  intf->getNeighbor(nei);
-//                    EV_DEBUG << "neighbor state = " << neighbor->getState() << "\n";
-//
-//                    if ((neighbor != nullptr) && (neighbor->getState() == OSPFv3Neighbor::FULL_STATE))
-//                    {
-//                        routerLSABody.type=POINT_TO_POINT;
-//
-//                        routerLSABody.interfaceID = intf->getInterfaceId();      // davam ID mojho interface
-//                        routerLSABody.metric = 1;//TODO - correct this
-//
-//                        routerLSABody.neighborInterfaceID = neighbor->getNeighborInterfaceID();
-//                        routerLSABody.neighborRouterID = neighbor->getNeighborID();
-//
-//                        routerLSA->setRoutersArraySize(i+1);
-//                        routerLSA->setRouters(i, routerLSABody);
-//                    }
-//
-//                }
-//            }
-//                break;
-//
-//            case OSPFv3Interface::BROADCAST_TYPE:
-//            {
-//                routerLSABody.type=TRANSIT_NETWORK;
-//                OSPFv3Neighbor *DRouter =intf->getNeighborById(intf->getDesignatedID());
-//
-//                if ( ((DRouter != nullptr) && (DRouter->getState() == OSPFv3Neighbor::FULL_STATE)) ||
-//                        (intf->getDesignatedID() == this->getInstance()->getProcess()->getRouterID())
-//                         )
-//                {
-//                    routerLSABody.interfaceID = intf->getInterfaceId();      // id of interface
-//                    routerLSABody.metric = 1;
-//
-//                    routerLSABody.neighborInterfaceID = intf->getDesignatedIntID();
-//                    routerLSABody.neighborRouterID = intf->getDesignatedID();
-//
-//                    routerLSA->setRoutersArraySize(i+1);
-//                    routerLSA->setRouters(i, routerLSABody);
-//                }
-//            }
-//                break;
-//
-//            case OSPFv3Interface::VIRTUAL_TYPE:
-//                routerLSABody.type=VIRTUAL_LINK;
-//                break;
-//
-//        }
-//    }
-//
-//    return routerLSA;
-//}//originateRouterLSA
-//
-//
-//RouterLSA* OSPFv3Area::getRouterLSAbyKey(LSAKeyType LSAKey)
-//{
-//    EV_DEBUG << "GET ROUTER LSA BY KEY  \n";
-//    for (auto it=this->routerLSAList.begin(); it!=this->routerLSAList.end(); it++)
-//    {
-//        EV_DEBUG << "FOR, routerLSAList size: " << this->routerLSAList.size() << "\n";
-//        if(((*it)->getHeader().getAdvertisingRouter() == LSAKey.advertisingRouter) && (*it)->getHeader().getLinkStateID() == LSAKey.linkStateID) {
-//            return (*it);
-//        }
-//    }
-//
-//    return nullptr;
-//}//getRouterLSAByKey
-//
-////add LSA message into list of all router-LSA for this area
-//bool OSPFv3Area::installRouterLSA(OSPFv3RouterLSA *lsa)
-//{
-//    LSAKeyType lsaKey;
-//    lsaKey.linkStateID = lsa->getHeader().getLinkStateID();
-//    lsaKey.advertisingRouter = lsa->getHeader().getAdvertisingRouter();
-//    lsaKey.LSType = lsa->getHeader().getLsaType();
-//
-//    RouterLSA* lsaInDatabase = (RouterLSA*)this->getLSAbyKey(lsaKey);
-//    if (lsaInDatabase != nullptr) {
-//        this->removeFromAllRetransmissionLists(lsaKey);
-//        return this->updateRouterLSA(lsaInDatabase, lsa);
-//    }
-//    else {
-//        RouterLSA* lsaCopy = new RouterLSA(*lsa);
-//        EV_DEBUG << "RouterLSA was added to routerLSAList\n";
-//        this->routerLSAList.push_back(lsaCopy);
-//        return true;
-//    }
-//}//installRouterLSA
-//
-//
-//bool OSPFv3Area::updateRouterLSA(RouterLSA* currentLsa, OSPFv3RouterLSA* newLsa)
-//{
-//    bool different = routerLSADiffersFrom(currentLsa, newLsa);
-//    (*currentLsa) = (*newLsa);
-//    currentLsa->resetInstallTime();
-//    currentLsa->getHeader().setLsaAge(0);//reset the age
-//    if (different) {
-////        clearNextHops();//TODO
-//        return true;
-//    }
-//    else {
-//        return false;
-//    }
-//}//updateRouterLSA
-//
-//
-//bool OSPFv3Area::routerLSADiffersFrom(OSPFv3RouterLSA* currentLsa, OSPFv3RouterLSA* newLsa)
-//{
-//    const OSPFv3LSAHeader& thisHeader = currentLsa->getHeader();
-//    const OSPFv3LSAHeader& lsaHeader = newLsa->getHeader();
-//    bool differentHeader = (((thisHeader.getLsaAge() == MAX_AGE) && (lsaHeader.getLsaAge() != MAX_AGE)) ||
-//                            ((thisHeader.getLsaAge() != MAX_AGE) && (lsaHeader.getLsaAge() == MAX_AGE)) ||
-//                            (thisHeader.getLsaLength() != lsaHeader.getLsaLength()));
-//    bool differentBody = false;
-//
-//    if (!differentHeader) {
-//        differentBody = ((currentLsa->getNtBit() != newLsa->getNtBit()) ||
-//                         (currentLsa->getEBit() != newLsa->getEBit()) ||
-//                         (currentLsa->getBBit() != newLsa->getBBit()) ||
-//                         (currentLsa->getVBit() != newLsa->getVBit()) ||
-//                         (currentLsa->getXBit() != newLsa->getXBit()) ||
-//                         (currentLsa->getRoutersArraySize() != newLsa->getRoutersArraySize()));
-//
-//        if (!differentBody) {
-//            unsigned int routersCount = currentLsa->getRoutersArraySize();
-//            for (unsigned int i = 0; i < routersCount; i++) {
-//                auto thisRouter = currentLsa->getRouters(i);
-//                auto lsaRouter = newLsa->getRouters(i);
-//                bool differentLink = ((thisRouter.type != lsaRouter.type) ||
-//                                      (thisRouter.metric != lsaRouter.metric) ||
-//                                      (thisRouter.interfaceID != lsaRouter.interfaceID) ||
-//                                      (thisRouter.neighborInterfaceID != lsaRouter.neighborInterfaceID) ||
-//                                      (thisRouter.neighborRouterID != lsaRouter.neighborRouterID));
-//
-//                if (differentLink) {
-//                    differentBody = true;
-//                    break;
-//                }
-//            }
-//        }
-//    }
-//
-//    return differentHeader || differentBody;
-//}//routerLSADiffersFrom
-//
+RouterLSA* OSPFv3Area::originateRouterLSA()
+{
+    EV_DEBUG << "Originating RouterLSA (Router-LSA)\n";
+    cout << "////////////// " <<  this->getInstance()->getProcess()->getRouterID() << " originate Router LSA ///////////" << endl;
+    RouterLSA *routerLSA = new RouterLSA;
+    OSPFv3LSAHeader& lsaHeader = routerLSA->getHeaderForUpdate();
+    long interfaceCount = this->interfaceList.size();
+    OSPFv3Options lsOptions;
+    memset(&lsOptions, 0, sizeof(OSPFv3Options));
+
+    //First set the LSA Header
+    lsaHeader.setLsaAge(0);
+    //The LSA Type is 0x2001
+    lsaHeader.setLsaType(ROUTER_LSA);
+    lsaHeader.setLinkStateID(this->getInstance()->getProcess()->getRouterID());
+    lsaHeader.setAdvertisingRouter(this->getInstance()->getProcess()->getRouterID());
+    lsaHeader.setLsaSequenceNumber(this->getCurrentRouterSequence()); // TODO: toto tu bolo povodne, ale v ospfv2 je makro na initial seq num LG
+   // lsaHeader.setLsaSequenceNumber(INITIAL_SEQUENCE_NUMBER);
+    this->incrementRouterSequence();
+
+    if(this->getInstance()->getAreaCount()>1)
+        routerLSA->setBBit(true);
+    //TODO - set options
+
+    for(int i=0; i<interfaceCount; i++)
+    {
+        OSPFv3Interface* intf = this->interfaceList.at(i);
+
+        if (intf->getState() == OSPFv3Interface::INTERFACE_STATE_DOWN ||
+                !intf->hasAnyNeighborInStates(OSPFv3Neighbor::INIT_STATE)) {
+            continue;
+        }
+
+        OSPFv3RouterLSABody routerLSABody;
+        memset(&routerLSABody, 0, sizeof(OSPFv3RouterLSABody)); //FIXME : this sometimes makes first router LSA msgs not valid.
+
+        switch(intf->getType())
+        {
+            case OSPFv3Interface::POINTTOPOINT_TYPE:
+            {
+                for (int nei = 0; nei < intf->getNeighborCount(); nei++)
+                {
+
+                    OSPFv3Neighbor *neighbor =  intf->getNeighbor(nei);
+                    EV_DEBUG << "neighbor state = " << neighbor->getState() << "\n";
+
+                    if ((neighbor != nullptr) && (neighbor->getState() == OSPFv3Neighbor::FULL_STATE))
+                    {
+                        routerLSABody.type=POINT_TO_POINT;
+
+                        routerLSABody.interfaceID = intf->getInterfaceId();      // davam ID mojho interface
+                        routerLSABody.metric = 1;//TODO - correct this
+
+                        routerLSABody.neighborInterfaceID = neighbor->getNeighborInterfaceID();
+                        routerLSABody.neighborRouterID = neighbor->getNeighborID();
+
+                        routerLSA->setRoutersArraySize(i+1);
+                        routerLSA->setRouters(i, routerLSABody);
+                    }
+
+                }
+            }
+                break;
+
+            case OSPFv3Interface::BROADCAST_TYPE:
+            {
+                routerLSABody.type=TRANSIT_NETWORK;
+                OSPFv3Neighbor *DRouter =intf->getNeighborById(intf->getDesignatedID());
+
+                if ( ((DRouter != nullptr) && (DRouter->getState() == OSPFv3Neighbor::FULL_STATE)) ||
+                        (intf->getDesignatedID() == this->getInstance()->getProcess()->getRouterID())
+                         )
+                {
+                    routerLSABody.interfaceID = intf->getInterfaceId();      // id of interface
+                    routerLSABody.metric = 1;
+
+                    routerLSABody.neighborInterfaceID = intf->getDesignatedIntID();
+                    routerLSABody.neighborRouterID = intf->getDesignatedID();
+
+                    routerLSA->setRoutersArraySize(i+1);
+                    routerLSA->setRouters(i, routerLSABody);
+                }
+            }
+                break;
+
+            case OSPFv3Interface::VIRTUAL_TYPE:
+                routerLSABody.type=VIRTUAL_LINK;
+                break;
+
+        }
+    }
+
+    return routerLSA;
+}//originateRouterLSA
+
+
+RouterLSA* OSPFv3Area::getRouterLSAbyKey(LSAKeyType LSAKey)
+{
+    EV_DEBUG << "GET ROUTER LSA BY KEY  \n";
+    for (auto it=this->routerLSAList.begin(); it!=this->routerLSAList.end(); it++)
+    {
+        EV_DEBUG << "FOR, routerLSAList size: " << this->routerLSAList.size() << "\n";
+        if(((*it)->getHeader().getAdvertisingRouter() == LSAKey.advertisingRouter) && (*it)->getHeader().getLinkStateID() == LSAKey.linkStateID) {
+            return (*it);
+        }
+    }
+
+    return nullptr;
+}//getRouterLSAByKey
+
+//add LSA message into list of all router-LSA for this area
+bool OSPFv3Area::installRouterLSA(OSPFv3RouterLSA *lsa)
+{
+    LSAKeyType lsaKey;
+    lsaKey.linkStateID = lsa->getHeader().getLinkStateID();
+    lsaKey.advertisingRouter = lsa->getHeader().getAdvertisingRouter();
+    lsaKey.LSType = lsa->getHeader().getLsaType();
+
+    RouterLSA* lsaInDatabase = (RouterLSA*)this->getLSAbyKey(lsaKey);
+    if (lsaInDatabase != nullptr) {
+        this->removeFromAllRetransmissionLists(lsaKey);
+        return this->updateRouterLSA(lsaInDatabase, lsa);
+    }
+    else {
+        RouterLSA* lsaCopy = new RouterLSA(*lsa);
+        EV_DEBUG << "RouterLSA was added to routerLSAList\n";
+        this->routerLSAList.push_back(lsaCopy);
+        return true;
+    }
+}//installRouterLSA
+
+
+bool OSPFv3Area::updateRouterLSA(RouterLSA* currentLsa, OSPFv3RouterLSA* newLsa)
+{
+    bool different = routerLSADiffersFrom(currentLsa, newLsa);
+    (*currentLsa) = (*newLsa);
+    currentLsa->resetInstallTime();
+    currentLsa->getHeaderForUpdate().setLsaAge(0);//reset the age
+    if (different) {
+//        clearNextHops();//TODO
+        return true;
+    }
+    else {
+        return false;
+    }
+}//updateRouterLSA
+
+
+bool OSPFv3Area::routerLSADiffersFrom(OSPFv3RouterLSA* currentLsa, OSPFv3RouterLSA* newLsa)
+{
+    const OSPFv3LSAHeader& thisHeader = currentLsa->getHeader();
+    const OSPFv3LSAHeader& lsaHeader = newLsa->getHeader();
+    bool differentHeader = (((thisHeader.getLsaAge() == MAX_AGE) && (lsaHeader.getLsaAge() != MAX_AGE)) ||
+                            ((thisHeader.getLsaAge() != MAX_AGE) && (lsaHeader.getLsaAge() == MAX_AGE)) ||
+                            (thisHeader.getLsaLength() != lsaHeader.getLsaLength()));
+    bool differentBody = false;
+
+    if (!differentHeader) {
+        differentBody = ((currentLsa->getNtBit() != newLsa->getNtBit()) ||
+                         (currentLsa->getEBit() != newLsa->getEBit()) ||
+                         (currentLsa->getBBit() != newLsa->getBBit()) ||
+                         (currentLsa->getVBit() != newLsa->getVBit()) ||
+                         (currentLsa->getXBit() != newLsa->getXBit()) ||
+                         (currentLsa->getRoutersArraySize() != newLsa->getRoutersArraySize()));
+
+        if (!differentBody) {
+            unsigned int routersCount = currentLsa->getRoutersArraySize();
+            for (unsigned int i = 0; i < routersCount; i++) {
+                auto thisRouter = currentLsa->getRouters(i);
+                auto lsaRouter = newLsa->getRouters(i);
+                bool differentLink = ((thisRouter.type != lsaRouter.type) ||
+                                      (thisRouter.metric != lsaRouter.metric) ||
+                                      (thisRouter.interfaceID != lsaRouter.interfaceID) ||
+                                      (thisRouter.neighborInterfaceID != lsaRouter.neighborInterfaceID) ||
+                                      (thisRouter.neighborRouterID != lsaRouter.neighborRouterID));
+
+                if (differentLink) {
+                    differentBody = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    return differentHeader || differentBody;
+}//routerLSADiffersFrom
+
 //void OSPFv3Area::deleteRouterLSA(int index) {
 //    RouterLSA *delRouter = this->routerLSAList.at(index);
 //    OSPFv3LSAHeader &routerHeader = delRouter->getHeader();
@@ -871,76 +871,76 @@ OSPFv3Interface* OSPFv3Area::getInterfaceByIndex(Ipv4Address LinkStateID)
 //
 //    this->routerLSAList.erase(this->routerLSAList.begin()+index);
 //}
-//
-//bool OSPFv3Area::floodLSA(OSPFv3LSA* lsa, OSPFv3Interface* interface, OSPFv3Neighbor* neighbor)
+
+bool OSPFv3Area::floodLSA(OSPFv3LSA* lsa, OSPFv3Interface* interface, OSPFv3Neighbor* neighbor)
+{
+    EV_DEBUG << "Flooding from Area to all interfaces\n";
+    std::cout << this->getInstance()->getProcess()->getRouterID() << " - FLOOD LSA AREA!!" << endl;
+    bool floodedBackOut = false;
+    long interfaceCount = this->interfaceList.size();
+
+    for (long i = 0; i < interfaceCount; i++) {
+        if (interfaceList.at(i)->floodLSA(lsa, interface, neighbor)) {
+            floodedBackOut = true;
+        }
+    }
+
+    return floodedBackOut;
+}//floodLSA
+
+
+//bool OSPFv3Area::isLocalAddress(Ipv6Address address) const
 //{
-//    EV_DEBUG << "Flooding from Area to all interfaces\n";
-//    std::cout << this->getInstance()->getProcess()->getRouterID() << " - FLOOD LSA AREA!!" << endl;
-//    bool floodedBackOut = false;
-//    long interfaceCount = this->interfaceList.size();
-//
+//    long interfaceCount = interfaceList.size();
 //    for (long i = 0; i < interfaceCount; i++) {
-//        if (interfaceList.at(i)->floodLSA(lsa, interface, neighbor)) {
-//            floodedBackOut = true;
-//        }
-//    }
-//
-//    return floodedBackOut;
-//}//floodLSA
-//
-//
-////bool OSPFv3Area::isLocalAddress(Ipv6Address address) const
-////{
-////    long interfaceCount = interfaceList.size();
-////    for (long i = 0; i < interfaceCount; i++) {
-////        if (interfaceList[i]->getInterfaceIP() == address) {
-////            return true;
-////        }
-////    }
-////    return false;
-////}
-//
-//bool OSPFv3Area::hasAnyNeighborInStates(int states) const
-//{
-//    long interfaceCount = this->interfaceList.size();
-//    for (long i = 0; i < interfaceCount; i++)
-//    {
-//        if (interfaceList.at(i)->hasAnyNeighborInStates(states))
-//            return true;
-//    }
-//    return false;
-//}
-//
-//bool OSPFv3Area::hasAnyPassiveInterface() const
-//{
-//    long interfaceCount = this->interfaceList.size();
-//    for (long i = 0; i < interfaceCount; i++)
-//    {
-//        if (interfaceList.at(i)->isInterfacePassive())
-//            return true;
-//    }
-//    return false;
-//}
-//
-//void OSPFv3Area::removeFromAllRetransmissionLists(LSAKeyType lsaKey)
-//{
-//    long interfaceCount = this->interfaceList.size();
-//    for (long i = 0; i < interfaceCount; i++) {
-//        this->interfaceList.at(i)->removeFromAllRetransmissionLists(lsaKey);
-//    }
-//}
-//
-//bool OSPFv3Area::isOnAnyRetransmissionList(LSAKeyType lsaKey) const
-//{
-//    long interfaceCount = this->interfaceList.size();
-//    for (long i = 0; i < interfaceCount; i++) {
-//        if (interfaceList.at(i)->isOnAnyRetransmissionList(lsaKey)) {
+//        if (interfaceList[i]->getInterfaceIP() == address) {
 //            return true;
 //        }
 //    }
 //    return false;
 //}
-//
+
+bool OSPFv3Area::hasAnyNeighborInStates(int states) const
+{
+    long interfaceCount = this->interfaceList.size();
+    for (long i = 0; i < interfaceCount; i++)
+    {
+        if (interfaceList.at(i)->hasAnyNeighborInStates(states))
+            return true;
+    }
+    return false;
+}
+
+bool OSPFv3Area::hasAnyPassiveInterface() const
+{
+    long interfaceCount = this->interfaceList.size();
+    for (long i = 0; i < interfaceCount; i++)
+    {
+        if (interfaceList.at(i)->isInterfacePassive())
+            return true;
+    }
+    return false;
+}
+
+void OSPFv3Area::removeFromAllRetransmissionLists(LSAKeyType lsaKey)
+{
+    long interfaceCount = this->interfaceList.size();
+    for (long i = 0; i < interfaceCount; i++) {
+        this->interfaceList.at(i)->removeFromAllRetransmissionLists(lsaKey);
+    }
+}
+
+bool OSPFv3Area::isOnAnyRetransmissionList(LSAKeyType lsaKey) const
+{
+    long interfaceCount = this->interfaceList.size();
+    for (long i = 0; i < interfaceCount; i++) {
+        if (interfaceList.at(i)->isOnAnyRetransmissionList(lsaKey)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 ////------------------------------------- Network LSA --------------------------------------//
 //NetworkLSA* OSPFv3Area::originateNetworkLSA(OSPFv3Interface* interface)
 //{
@@ -1881,85 +1881,85 @@ OSPFv3Interface* OSPFv3Area::getInterfaceByIndex(Ipv4Address LinkStateID)
 //    return nullptr;
 //}
 //
-//OSPFv3LSA* OSPFv3Area::getLSAbyKey(LSAKeyType LSAKey)
-//{
-//    switch(LSAKey.LSType){
-//    case ROUTER_LSA:
-//        for (auto it=this->routerLSAList.begin(); it!=this->routerLSAList.end(); it++)
-//        {
-//            if(((*it)->getHeader().getAdvertisingRouter() == LSAKey.advertisingRouter) && (*it)->getHeader().getLinkStateID() == LSAKey.linkStateID) {
-//                return (*it);
-//            }
-//        }
-//
-//        break;
-//
-//    case NETWORK_LSA:
-//        for (auto it=this->networkLSAList.begin(); it!=this->networkLSAList.end(); it++)
-//        {
-//            if(((*it)->getHeader().getAdvertisingRouter() == LSAKey.advertisingRouter) && (*it)->getHeader().getLinkStateID() == LSAKey.linkStateID) {
-//                return (*it);
-//            }
-//        }
-//
-//        break;
-//
-//    case INTER_AREA_PREFIX_LSA:
-//        for (auto it=this->interAreaPrefixLSAList.begin(); it!=this->interAreaPrefixLSAList.end(); it++)
-//        {
-//            if(((*it)->getHeader().getAdvertisingRouter() == LSAKey.advertisingRouter) && (*it)->getHeader().getLinkStateID() == LSAKey.linkStateID) {
-//                return (*it);
-//            }
-//        }
-//
-//        break;
-//
-//    case INTER_AREA_ROUTER_LSA:
-//        for (auto it=this->routerLSAList.begin(); it!=this->routerLSAList.end(); it++)
-//        {
-//            if(((*it)->getHeader().getAdvertisingRouter() == LSAKey.advertisingRouter) && (*it)->getHeader().getLinkStateID() == LSAKey.linkStateID) {
-//                return (*it);
-//            }
-//        }
-//
-//        break;
-//
-//    case NSSA_LSA:
-//        for (auto it=this->routerLSAList.begin(); it!=this->routerLSAList.end(); it++)
-//        {
-//            if(((*it)->getHeader().getAdvertisingRouter() == LSAKey.advertisingRouter) && (*it)->getHeader().getLinkStateID() == LSAKey.linkStateID) {
-//                return (*it);
-//            }
-//        }
-//
-//        break;
-//
-//    case INTRA_AREA_PREFIX_LSA:
-//        for (auto it=this->intraAreaPrefixLSAList.begin(); it!=this->intraAreaPrefixLSAList.end(); it++)
-//        {
-//            if(((*it)->getHeader().getAdvertisingRouter() == LSAKey.advertisingRouter) && (*it)->getHeader().getLinkStateID() == LSAKey.linkStateID) {
-//                return (*it);
-//            }
-//        }
-//
-//        break;
-//
-//    case LINK_LSA:
-//        for (auto it=this->interfaceList.begin(); it!=this->interfaceList.end(); it++)
-//        {
-//            LinkLSA* lsa = (*it)->getLinkLSAbyKey(LSAKey);
-//            if(lsa != nullptr)
-//                return lsa;
-//        }
-//
-//        break;
-//    }
-//    //TODO - link lsa from interface
-//    //TODO - as external from top data structure
-//
-//
-//    return nullptr;
-//}
+OSPFv3LSA* OSPFv3Area::getLSAbyKey(LSAKeyType LSAKey)
+{
+    switch(LSAKey.LSType){
+    case ROUTER_LSA:
+        for (auto it=this->routerLSAList.begin(); it!=this->routerLSAList.end(); it++)
+        {
+            if(((*it)->getHeader().getAdvertisingRouter() == LSAKey.advertisingRouter) && (*it)->getHeader().getLinkStateID() == LSAKey.linkStateID) {
+                return (*it);
+            }
+        }
+
+        break;
+
+    case NETWORK_LSA:
+        for (auto it=this->networkLSAList.begin(); it!=this->networkLSAList.end(); it++)
+        {
+            if(((*it)->getHeader().getAdvertisingRouter() == LSAKey.advertisingRouter) && (*it)->getHeader().getLinkStateID() == LSAKey.linkStateID) {
+                return (*it);
+            }
+        }
+
+        break;
+
+    case INTER_AREA_PREFIX_LSA:
+        for (auto it=this->interAreaPrefixLSAList.begin(); it!=this->interAreaPrefixLSAList.end(); it++)
+        {
+            if(((*it)->getHeader().getAdvertisingRouter() == LSAKey.advertisingRouter) && (*it)->getHeader().getLinkStateID() == LSAKey.linkStateID) {
+                return (*it);
+            }
+        }
+
+        break;
+
+    case INTER_AREA_ROUTER_LSA:
+        for (auto it=this->routerLSAList.begin(); it!=this->routerLSAList.end(); it++)
+        {
+            if(((*it)->getHeader().getAdvertisingRouter() == LSAKey.advertisingRouter) && (*it)->getHeader().getLinkStateID() == LSAKey.linkStateID) {
+                return (*it);
+            }
+        }
+
+        break;
+
+    case NSSA_LSA:
+        for (auto it=this->routerLSAList.begin(); it!=this->routerLSAList.end(); it++)
+        {
+            if(((*it)->getHeader().getAdvertisingRouter() == LSAKey.advertisingRouter) && (*it)->getHeader().getLinkStateID() == LSAKey.linkStateID) {
+                return (*it);
+            }
+        }
+
+        break;
+
+    case INTRA_AREA_PREFIX_LSA:
+        for (auto it=this->intraAreaPrefixLSAList.begin(); it!=this->intraAreaPrefixLSAList.end(); it++)
+        {
+            if(((*it)->getHeader().getAdvertisingRouter() == LSAKey.advertisingRouter) && (*it)->getHeader().getLinkStateID() == LSAKey.linkStateID) {
+                return (*it);
+            }
+        }
+
+        break;
+
+    case LINK_LSA:
+        for (auto it=this->interfaceList.begin(); it!=this->interfaceList.end(); it++)
+        {
+            LinkLSA* lsa = (*it)->getLinkLSAbyKey(LSAKey);
+            if(lsa != nullptr)
+                return lsa;
+        }
+
+        break;
+    }
+    //TODO - link lsa from interface
+    //TODO - as external from top data structure
+
+
+    return nullptr;
+}
 
 // add created address range into list of area's address ranges
 void OSPFv3Area::addAddressRange(Ipv6AddressRange addressRange, bool advertise)
@@ -4038,210 +4038,210 @@ void OSPFv3Area::debugDump()
         EV_DEBUG << "\t\tinterface id: " << (*it)->getIntName() << "\n";
 
 }//debugDump
-//
-//std::string OSPFv3Area::detailedInfo() const
-//{//TODO - adjust so that it pnly prints LSAs that are there
-//    std::stringstream out;
-//
-//    out << "OSPFv3 1 address-family ";
-//    if(this->getInstance()->getAddressFamily()==IPV4INSTANCE)
-//        out << "ipv4 (router-id ";
-//    else
-//        out << "ipv6 (router-id ";
-//
-//    out << this->getInstance()->getProcess()->getRouterID();
-//    out << ")\n\n";
-//
-//    if(this->routerLSAList.size()>0) {
-//        out << "Router Link States (Area " << this->getAreaID().str(false) << ")\n" ;
-//        out << "ADV Router\tAge\tSeq#\t\tFragment ID\tLink count\tBits\n";
-//        for(auto it=this->routerLSAList.begin(); it!=this->routerLSAList.end(); it++) {
-//            OSPFv3LSAHeader& header = (*it)->getHeader();
-//            bool bitsEmpty = true;
-//            out << header.getAdvertisingRouter()<<"\t\t";
-//            out << header.getLsaAge() <<"\t0x8000000"<<header.getLsaSequenceNumber()<<"\t0\t\t1\t\t";
-//            if((*it)->getNtBit()) {
-//                out << "Nt ";
-//                bitsEmpty = false;
-//            }
-//            if((*it)->getXBit()){
-//                out << "x ";
-//                bitsEmpty = false;
-//            }
-//            if((*it)->getVBit()){
-//                out << "V ";
-//                bitsEmpty = false;
-//            }
-//            if((*it)->getEBit()){
-//                out << "E ";
-//                bitsEmpty = false;
-//            }
-//            if((*it)->getBBit()){
-//                out << "B";
-//                bitsEmpty = false;
-//            }
-//            if(bitsEmpty)
-//                out << "None";//TODO Link count and Bits
-//
-//            out << endl;
-//        }
-//    }
-//
-//    if(this->networkLSAList.size()>0) {
-//        out << "\nNet Link States (Area " << this->getAreaID().str(false) << ")\n" ;
-//        out << "ADV Router\tAge\tSeq#\t\tLink State ID\tRtr count\n";
-//        for(auto it=this->networkLSAList.begin(); it!=this->networkLSAList.end(); it++) {
-//            OSPFv3LSAHeader& header = (*it)->getHeader();
-//            out << header.getAdvertisingRouter()<<"\t\t";
-//            out << header.getLsaAge()<<"\t0x8000000"<<header.getLsaSequenceNumber()<<"\t"<<header.getLinkStateID().str(false)<<"\t\t" << (*it)->getAttachedRouterArraySize() << "\n";
-//        }
-//    }
-//
-//    if(this->interAreaPrefixLSAList.size()>0) {
-//        out << "\nInter Area Prefix Link States (Area " << this->getAreaID().str(false) << ")\n" ;
-//        out << "ADV Router\tAge\tSeq#\t\tPrefix\n";
-//        for(auto it = this->interAreaPrefixLSAList.begin(); it != this->interAreaPrefixLSAList.end(); it++){
-//            OSPFv3LSAHeader& header = (*it)->getHeader();
-//            out << header.getAdvertisingRouter()<<"\t\t";
-////            out << (int)simTime().dbl() - header.getLsaAge()<<"\t0x8000000"<<header.getLsaSequenceNumber()<<"\t";
-//            out << header.getLsaAge()<<"\t0x8000000"<<header.getLsaSequenceNumber()<<"\t";
-//
-//            L3Address addrPref = (*it)->getPrefix();
-//            if(this->getInstance()->getAddressFamily()==IPV4INSTANCE) {
-//                Ipv4Address ipv4addr = addrPref.toIPv4();
-//                ipv4addr = ipv4addr.getNetwork();
-//                out << ipv4addr.str() << "/" << (int)(*it)->getPrefixLen() << endl;
-//            }
-//            else if(this->getInstance()->getAddressFamily()==IPV6INSTANCE) {
-//                Ipv6Address ipv6addr = addrPref.toIPv6();
-//                ipv6addr = ipv6addr.getPrefix((*it)->getPrefixLen());
-//                if(ipv6addr == Ipv6Address::UNSPECIFIED_ADDRESS)
-//                    out << "::/0" << endl; //TODO - this needs to be changed to the actual length
-//                else
-//                    out << ipv6addr.str() << "/" << (int)(*it)->getPrefixLen() << endl;
-//            }
-//        }
-//    }
-//
-//    out << "\nLink (Type-8) Link States (Area " << this->getAreaID().str(false) << ")\n" ;
-//    out << "ADV Router\tAge\tSeq#\t\tLink State ID\tInterface\n";
-//    for(auto it=this->interfaceList.begin(); it!=this->interfaceList.end(); it++) {
-//        int linkLSACount = (*it)->getLinkLSACount();
-//        for(int i = 0; i<linkLSACount; i++) {
-//            OSPFv3LSAHeader& header = (*it)->getLinkLSA(i)->getHeader();
-//            out << header.getAdvertisingRouter()<<"\t\t";
-//            out << header.getLsaAge()<<"\t0x8000000"<<header.getLsaSequenceNumber()<<"\t"<<header.getLinkStateID().str(false)<<"\t\t"<< (*it)->getIntName() << "\n";
-//        }
-//    }
-//
-//    if(this->intraAreaPrefixLSAList.size()>0) {
-//        out << "\nIntra Area Prefix Link States (Area" << this->getAreaID().str(false) << ")\n" ;
-//        out << "ADV Router\tAge\tSeq#\t\tLink ID\t\tRef-lstype\tRef-LSID\n";
-//        for(auto it=this->intraAreaPrefixLSAList.begin(); it!=this->intraAreaPrefixLSAList.end(); it++) {
-//            OSPFv3LSAHeader& header = (*it)->getHeader();
-//            out << header.getAdvertisingRouter() << "\t\t";
-//            out << header.getLsaAge() << "\t0x8000000" << header.getLsaSequenceNumber() << "\t" << header.getLinkStateID().str(false) << "\t\t0x200" << (*it)->getReferencedLSType() << "\t\t" << (*it)->getReferencedLSID().str(false)<<"\n\n";
-//        }
-//    }
-//
-//    // LG out stream for DEV
-//    out << "ROUTER LSA LIST .size = " <<  routerLSAList.size() << "\n";
-//    for(auto it=this->routerLSAList.begin(); it!=this->routerLSAList.end(); it++) {
-//        OSPFv3LSAHeader& header = (*it)->getHeader();
-//        out << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< endl;
-//        out << "LinkStateID =\t\t" << header.getLinkStateID() << endl;
-//        out << "Age = \t\t\t" << header.getLsaAge() << endl;
-//        out << "type\t\tinterfaceID\t\tneighborIntID\t\tneighborRouterID\n";
-//        for (int i = 0; i < (*it)->getRoutersArraySize(); i++)
-//           out << (int)(*it)->getRouters(i).type << "\t\t" << (*it)->getRouters(i).interfaceID << "\t\t\t" << (*it)->getRouters(i).neighborInterfaceID << "\t\t\t" << (*it)->getRouters(i).neighborRouterID << "\n";
-//        out << endl;
-//    }
-//
-//    out << endl;
-//
-//    out <<  "NETWORK LSA LIST .size() = " << networkLSAList.size() << endl;
-//    for (auto it=this->networkLSAList.begin(); it!=this->networkLSAList.end(); it++) {
-//        OSPFv3LSAHeader& header = (*it)->getHeader();
-//        out << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< endl;
-//        out << "LinkStateID =\t\t" << header.getLinkStateID() << endl;
-//        out << "Age = \t\t\t" << header.getLsaAge() << endl;
-//        out << "Attached Router:" << endl;
-//        for (int i = 0; i < (*it)->getAttachedRouterArraySize(); i++)
-//            out << (*it)->getAttachedRouter(i) << endl;
-//    }
-//    out << endl;
-//
-//    for (int  itf = 0; itf < this->getInterfaceCount() ; itf++ )
+
+std::string OSPFv3Area::detailedInfo() const
+{//TODO - adjust so that it pnly prints LSAs that are there
+    std::stringstream out;
+
+    out << "OSPFv3 1 address-family ";
+    if(this->getInstance()->getAddressFamily()==IPV4INSTANCE)
+        out << "ipv4 (router-id ";
+    else
+        out << "ipv6 (router-id ";
+
+    out << this->getInstance()->getProcess()->getRouterID();
+    out << ")\n\n";
+
+    if(this->routerLSAList.size()>0) {
+        out << "Router Link States (Area " << this->getAreaID().str(false) << ")\n" ;
+        out << "ADV Router\tAge\tSeq#\t\tFragment ID\tLink count\tBits\n";
+        for(auto it=this->routerLSAList.begin(); it!=this->routerLSAList.end(); it++) {
+            OSPFv3LSAHeader& header = (*it)->getHeaderForUpdate();
+            bool bitsEmpty = true;
+            out << header.getAdvertisingRouter()<<"\t\t";
+            out << header.getLsaAge() <<"\t0x8000000"<<header.getLsaSequenceNumber()<<"\t0\t\t1\t\t";
+            if((*it)->getNtBit()) {
+                out << "Nt ";
+                bitsEmpty = false;
+            }
+            if((*it)->getXBit()){
+                out << "x ";
+                bitsEmpty = false;
+            }
+            if((*it)->getVBit()){
+                out << "V ";
+                bitsEmpty = false;
+            }
+            if((*it)->getEBit()){
+                out << "E ";
+                bitsEmpty = false;
+            }
+            if((*it)->getBBit()){
+                out << "B";
+                bitsEmpty = false;
+            }
+            if(bitsEmpty)
+                out << "None";//TODO Link count and Bits
+
+            out << endl;
+        }
+    }
+
+    if(this->networkLSAList.size()>0) {
+        out << "\nNet Link States (Area " << this->getAreaID().str(false) << ")\n" ;
+        out << "ADV Router\tAge\tSeq#\t\tLink State ID\tRtr count\n";
+        for(auto it=this->networkLSAList.begin(); it!=this->networkLSAList.end(); it++) {
+            OSPFv3LSAHeader& header = (*it)->getHeaderForUpdate();
+            out << header.getAdvertisingRouter()<<"\t\t";
+            out << header.getLsaAge()<<"\t0x8000000"<<header.getLsaSequenceNumber()<<"\t"<<header.getLinkStateID().str(false)<<"\t\t" << (*it)->getAttachedRouterArraySize() << "\n";
+        }
+    }
+
+    if(this->interAreaPrefixLSAList.size()>0) {
+        out << "\nInter Area Prefix Link States (Area " << this->getAreaID().str(false) << ")\n" ;
+        out << "ADV Router\tAge\tSeq#\t\tPrefix\n";
+        for(auto it = this->interAreaPrefixLSAList.begin(); it != this->interAreaPrefixLSAList.end(); it++){
+            OSPFv3LSAHeader& header = (*it)->getHeaderForUpdate();
+            out << header.getAdvertisingRouter()<<"\t\t";
+//            out << (int)simTime().dbl() - header.getLsaAge()<<"\t0x8000000"<<header.getLsaSequenceNumber()<<"\t";
+            out << header.getLsaAge()<<"\t0x8000000"<<header.getLsaSequenceNumber()<<"\t";
+
+            L3Address addrPref = (*it)->getPrefix();
+            if(this->getInstance()->getAddressFamily()==IPV4INSTANCE) {
+                Ipv4Address ipv4addr = addrPref.toIpv4();
+                ipv4addr = ipv4addr.getNetwork();
+                out << ipv4addr.str() << "/" << (int)(*it)->getPrefixLen() << endl;
+            }
+            else if(this->getInstance()->getAddressFamily()==IPV6INSTANCE) {
+                Ipv6Address ipv6addr = addrPref.toIpv6();
+                ipv6addr = ipv6addr.getPrefix((*it)->getPrefixLen());
+                if(ipv6addr == Ipv6Address::UNSPECIFIED_ADDRESS)
+                    out << "::/0" << endl; //TODO - this needs to be changed to the actual length
+                else
+                    out << ipv6addr.str() << "/" << (int)(*it)->getPrefixLen() << endl;
+            }
+        }
+    }
+
+    out << "\nLink (Type-8) Link States (Area " << this->getAreaID().str(false) << ")\n" ;
+    out << "ADV Router\tAge\tSeq#\t\tLink State ID\tInterface\n";
+    for(auto it=this->interfaceList.begin(); it!=this->interfaceList.end(); it++) {
+        int linkLSACount = (*it)->getLinkLSACount();
+        for(int i = 0; i<linkLSACount; i++) {
+            OSPFv3LSAHeader& header = (*it)->getLinkLSA(i)->getHeaderForUpdate();
+            out << header.getAdvertisingRouter()<<"\t\t";
+            out << header.getLsaAge()<<"\t0x8000000"<<header.getLsaSequenceNumber()<<"\t"<<header.getLinkStateID().str(false)<<"\t\t"<< (*it)->getIntName() << "\n";
+        }
+    }
+
+    if(this->intraAreaPrefixLSAList.size()>0) {
+        out << "\nIntra Area Prefix Link States (Area" << this->getAreaID().str(false) << ")\n" ;
+        out << "ADV Router\tAge\tSeq#\t\tLink ID\t\tRef-lstype\tRef-LSID\n";
+        for(auto it=this->intraAreaPrefixLSAList.begin(); it!=this->intraAreaPrefixLSAList.end(); it++) {
+            OSPFv3LSAHeader& header = (*it)->getHeaderForUpdate();
+            out << header.getAdvertisingRouter() << "\t\t";
+            out << header.getLsaAge() << "\t0x8000000" << header.getLsaSequenceNumber() << "\t" << header.getLinkStateID().str(false) << "\t\t0x200" << (*it)->getReferencedLSType() << "\t\t" << (*it)->getReferencedLSID().str(false)<<"\n\n";
+        }
+    }
+
+    // LG out stream for DEV
+    out << "ROUTER LSA LIST .size = " <<  routerLSAList.size() << "\n";
+    for(auto it=this->routerLSAList.begin(); it!=this->routerLSAList.end(); it++) {
+        OSPFv3LSAHeader& header = (*it)->getHeaderForUpdate();
+        out << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< endl;
+        out << "LinkStateID =\t\t" << header.getLinkStateID() << endl;
+        out << "Age = \t\t\t" << header.getLsaAge() << endl;
+        out << "type\t\tinterfaceID\t\tneighborIntID\t\tneighborRouterID\n";
+        for (int i = 0; i < (*it)->getRoutersArraySize(); i++)
+           out << (int)(*it)->getRouters(i).type << "\t\t" << (*it)->getRouters(i).interfaceID << "\t\t\t" << (*it)->getRouters(i).neighborInterfaceID << "\t\t\t" << (*it)->getRouters(i).neighborRouterID << "\n";
+        out << endl;
+    }
+
+    out << endl;
+
+    out <<  "NETWORK LSA LIST .size() = " << networkLSAList.size() << endl;
+    for (auto it=this->networkLSAList.begin(); it!=this->networkLSAList.end(); it++) {
+        OSPFv3LSAHeader& header = (*it)->getHeaderForUpdate();
+        out << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< endl;
+        out << "LinkStateID =\t\t" << header.getLinkStateID() << endl;
+        out << "Age = \t\t\t" << header.getLsaAge() << endl;
+        out << "Attached Router:" << endl;
+        for (int i = 0; i < (*it)->getAttachedRouterArraySize(); i++)
+            out << (*it)->getAttachedRouter(i) << endl;
+    }
+    out << endl;
+
+    for (int  itf = 0; itf < this->getInterfaceCount() ; itf++ )
+    {
+        OSPFv3Interface *iface = this->getInterface(itf);
+        out << "IFACE = " << iface->getIntName() << "\nLINK LSA LIST = " << iface->getLinkLSACount() << "\n";
+        for (int ix = 0; ix <  iface->getLinkLSACount(); ix++)
+        {
+            OSPFv3LSAHeader& header = iface->getLinkLSA(ix)->getHeaderForUpdate();
+            out << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
+            out << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
+            out << "Age = \t\t\t" << header.getLsaAge() << endl;
+
+            out << "link-local add = " << iface->getLinkLSA(ix)->getLinkLocalInterfaceAdd() << "\n";
+            out << "prefixes = " <<  iface->getLinkLSA(ix)->getPrefixesArraySize() << "\n";
+
+            for (int d = 0 ; d < iface->getLinkLSA(ix)->getPrefixesArraySize(); d++)
+            {
+                if (iface->getLinkLSA(ix)->getPrefixes(d).addressPrefix.getType() == L3Address::IPv4) // je to ipv6
+                {
+                    out << "\t" <<iface->getLinkLSA(ix)->getPrefixes(d).addressPrefix.toIpv4().str() << "/" << (int)iface->getLinkLSA(ix)->getPrefixes(d).prefixLen << "\n";
+
+                }
+                else
+                {
+                    out << "\t" << iface->getLinkLSA(ix)->getPrefixes(d).addressPrefix.toIpv6().str() << "/" << (int) iface->getLinkLSA(ix)->getPrefixes(d).prefixLen << "\n";
+
+                }
+            }
+            out << "\n";
+        }
+    }
+
+    out << "INTER AREA LSA LIST = " << interAreaPrefixLSAList.size() << "\n";
+    for (auto it=this->interAreaPrefixLSAList.begin(); it!=this->interAreaPrefixLSAList.end(); it++) {
+       OSPFv3LSAHeader& header = (*it)->getHeaderForUpdate();
+       out << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
+       out << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
+       out << "Age = \t\t\t" << header.getLsaAge() << endl;
+       out << "prefix =\t\t " << (*it)->getPrefix() << "\n";
+       out << "prefixLen =\t\t " << (int)(*it)->getPrefixLen() << "\n";
+       out << "metric =\t\t " << (int)(*it)->getMetric() << "\n";
+    }
+    out << endl;
+    out <<  "INTRA AREA PREFIX = " << intraAreaPrefixLSAList.size() << "\n";
+    for (auto it=this->intraAreaPrefixLSAList.begin(); it!=this->intraAreaPrefixLSAList.end(); it++) {
+        OSPFv3LSAHeader& header = (*it)->getHeaderForUpdate();
+        out << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
+        out << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
+        out << "Age = \t\t\t" << header.getLsaAge() << endl;
+        out << "getPrefixesArraySize = " << (*it)->getPrefixesArraySize() << "\n";
+        out << "getReferencedLSType = " << (*it)->getReferencedLSType() << "\n";
+        out << "getReferencedLSID = " << (*it)->getReferencedLSID() << "\n";
+        out << "getReferencedAdvRtr = " << (*it)->getReferencedAdvRtr() << "\n";
+        out << "prefixes :" << "\n";
+        for (int i = 0; i < (*it)->getPrefixesArraySize(); i++) {
+
+            out << "addressPrefix = "<< (*it)->getPrefixes(i).addressPrefix << "/" << int((*it)->getPrefixes(i).prefixLen) << "\n";
+            out << "metric = "<< int((*it)->getPrefixes(i).metric) << "\n";
+        }
+        out << "\n";
+    }
+    out << "\n\n";
+
+//    for (int t = 0 ; t < interfaceList.size(); t++)
 //    {
-//        OSPFv3Interface *iface = this->getInterface(itf);
-//        out << "IFACE = " << iface->getIntName() << "\nLINK LSA LIST = " << iface->getLinkLSACount() << "\n";
-//        for (int ix = 0; ix <  iface->getLinkLSACount(); ix++)
-//        {
-//            OSPFv3LSAHeader& header = iface->getLinkLSA(ix)->getHeader();
-//            out << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
-//            out << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
-//            out << "Age = \t\t\t" << header.getLsaAge() << endl;
-//
-//            out << "link-local add = " << iface->getLinkLSA(ix)->getLinkLocalInterfaceAdd() << "\n";
-//            out << "prefixes = " <<  iface->getLinkLSA(ix)->getPrefixesArraySize() << "\n";
-//
-//            for (int d = 0 ; d < iface->getLinkLSA(ix)->getPrefixesArraySize(); d++)
-//            {
-//                if (iface->getLinkLSA(ix)->getPrefixes(d).addressPrefix.getType() == L3Address::IPv4) // je to ipv6
-//                {
-//                    out << "\t" <<iface->getLinkLSA(ix)->getPrefixes(d).addressPrefix.toIPv4().str() << "/" << (int)iface->getLinkLSA(ix)->getPrefixes(d).prefixLen << "\n";
-//
-//                }
-//                else
-//                {
-//                    out << "\t" << iface->getLinkLSA(ix)->getPrefixes(d).addressPrefix.toIPv6().str() << "/" << (int) iface->getLinkLSA(ix)->getPrefixes(d).prefixLen << "\n";
-//
-//                }
-//            }
-//            out << "\n";
-//        }
+//        OSPFv3Interface *intf = interfaceList[t];
+//        out << "intfID = " << intf->getInterfaceId() <<  "\tTYPE " << intf->getType() << "\n";
 //    }
-//
-//    out << "INTER AREA LSA LIST = " << interAreaPrefixLSAList.size() << "\n";
-//    for (auto it=this->interAreaPrefixLSAList.begin(); it!=this->interAreaPrefixLSAList.end(); it++) {
-//       OSPFv3LSAHeader& header = (*it)->getHeader();
-//       out << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
-//       out << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
-//       out << "Age = \t\t\t" << header.getLsaAge() << endl;
-//       out << "prefix =\t\t " << (*it)->getPrefix() << "\n";
-//       out << "prefixLen =\t\t " << (int)(*it)->getPrefixLen() << "\n";
-//       out << "metric =\t\t " << (int)(*it)->getMetric() << "\n";
-//    }
-//    out << endl;
-//    out <<  "INTRA AREA PREFIX = " << intraAreaPrefixLSAList.size() << "\n";
-//    for (auto it=this->intraAreaPrefixLSAList.begin(); it!=this->intraAreaPrefixLSAList.end(); it++) {
-//        OSPFv3LSAHeader& header = (*it)->getHeader();
-//        out << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
-//        out << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
-//        out << "Age = \t\t\t" << header.getLsaAge() << endl;
-//        out << "getPrefixesArraySize = " << (*it)->getPrefixesArraySize() << "\n";
-//        out << "getReferencedLSType = " << (*it)->getReferencedLSType() << "\n";
-//        out << "getReferencedLSID = " << (*it)->getReferencedLSID() << "\n";
-//        out << "getReferencedAdvRtr = " << (*it)->getReferencedAdvRtr() << "\n";
-//        out << "prefixes :" << "\n";
-//        for (int i = 0; i < (*it)->getPrefixesArraySize(); i++) {
-//
-//            out << "addressPrefix = "<< (*it)->getPrefixes(i).addressPrefix << "/" << int((*it)->getPrefixes(i).prefixLen) << "\n";
-//            out << "metric = "<< int((*it)->getPrefixes(i).metric) << "\n";
-//        }
-//        out << "\n";
-//    }
-//    out << "\n\n";
-//
-////    for (int t = 0 ; t < interfaceList.size(); t++)
-////    {
-////        OSPFv3Interface *intf = interfaceList[t];
-////        out << "intfID = " << intf->getInterfaceId() <<  "\tTYPE " << intf->getType() << "\n";
-////    }
-//
-//
-//
-//    return out.str();
-//
-//}//detailedInfo
+
+
+
+    return out.str();
+
+}//detailedInfo
 }//namespace inet

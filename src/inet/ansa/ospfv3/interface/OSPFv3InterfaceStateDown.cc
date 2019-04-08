@@ -1,7 +1,7 @@
 #include "inet/ansa/ospfv3/interface/OSPFv3InterfaceStateDown.h"
-//#include "inet/ansa/ospfv3/interface/OSPFv3InterfaceStateDROther.h"       MIGRACIA LG
-//#include "inet/ansa/ospfv3/interface/OSPFv3InterfaceStateLoopback.h"
-//#include "inet/ansa/ospfv3/interface/OSPFv3InterfaceStatePointToPoint.h"
+#include "inet/ansa/ospfv3/interface/OSPFv3InterfaceStateDROther.h"
+#include "inet/ansa/ospfv3/interface/OSPFv3InterfaceStateLoopback.h"
+#include "inet/ansa/ospfv3/interface/OSPFv3InterfaceStatePointToPoint.h"
 #include "inet/ansa/ospfv3/interface/OSPFv3InterfacePassive.h"
 //#include "ansa/routing/ospfv3/OSPFv3Timers.h"
 //#include <cmodule.h>
@@ -48,15 +48,15 @@ void OSPFv3InterfaceStateDown::processEvent(OSPFv3Interface* interface, OSPFv3In
 //                }
 //                break;
 //
-//            case OSPFv3Interface::BROADCAST_TYPE:
-//                if (interface->getRouterPriority() == 0) {
-//                    changeState(interface, new OSPFv3InterfaceStateDROther, this);
-//                }
-//                else {
-//                    changeState(interface, new OSPFv3InterfaceStateWaiting, this);
-//                    interface->getArea()->getInstance()->getProcess()->setTimer(interface->getWaitTimer(), interface->getDeadInterval());
-//                }
-//                break;
+            case OSPFv3Interface::BROADCAST_TYPE:
+                if (interface->getRouterPriority() == 0) {
+                    changeState(interface, new OSPFv3InterfaceStateDROther, this);
+                }
+                else {
+                    changeState(interface, new OSPFv3InterfaceStateWaiting, this);
+                    interface->getArea()->getInstance()->getProcess()->setTimer(interface->getWaitTimer(), interface->getDeadInterval());
+                }
+                break;
 
             default:
                 break;

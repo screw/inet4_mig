@@ -27,8 +27,8 @@ void OSPFv3Splitter::initialize(int stage)
 
 //        ift = check_and_cast<IInterfaceTable *>(containingModule->getSubmodule("interfaceTable"));
         ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
-//        registerService(Protocol::ospfv3, nullptr, gate("ipIn"));
-//        registerProtocol(Protocol::ospfv3, gate("ipOut"), nullptr);
+        registerService(Protocol::ospf, nullptr, gate("ipIn"));
+        registerProtocol(Protocol::ospf, gate("ipOut"), nullptr);
 
 //        IPSocket ipSocket(gate("ipOut"));
 //        ipSocket.registerProtocol(IP_PROT_OSPF);
@@ -41,47 +41,51 @@ void OSPFv3Splitter::initialize(int stage)
 
 void OSPFv3Splitter::handleMessage(cMessage* msg)
 {
-//    if(msg->isSelfMessage()) {
-//        EV_DEBUG <<"Self message received by Splitter\n";
-//        delete msg;
-//    }
-//    else{
-//        if(strcmp(msg->getArrivalGate()->getBaseName(),"processIn")==0){
-//            this->send(msg, "ipOut");//A message from one of the processes
-//        }
-//        else if(strcmp(msg->getArrivalGate()->getBaseName(),"ipIn")==0){
+    EV_DEBUG << "SOM V SPLITTERI NA ZACIATKU HANDLE MESSAGE\n";
+    if(msg->isSelfMessage()) {
+        EV_DEBUG <<"Self message received by Splitter\n";
+        delete msg;
+    }
+    else{
+        if(strcmp(msg->getArrivalGate()->getBaseName(),"processIn")==0){
+            this->send(msg, "ipOut");//A message from one of the processes
+        }
+        else if(strcmp(msg->getArrivalGate()->getBaseName(),"ipIn")==0){
+            Packet *packet = check_and_cast<Packet *>(msg);
 //            IPv6ControlInfo *ctlInfo = dynamic_cast<IPv6ControlInfo*>(msg->getControlInfo());
 //
 //            if(ctlInfo==nullptr){
 //                delete msg;
 //                return;
 //            }
-//
+
 //           OSPFv3Packet* packet = dynamic_cast<OSPFv3Packet*>(msg);
-//
-//            if(packet==nullptr){
-//                delete msg;
-//                return;
-//            }
-//
+           auto protocol = packet->getTag<PacketProtocolTag>()->getProtocol();
+           EV_DEBUG << "SOM V SPLITTERI\n";
+
+            if(protocol!=&Protocol::ospf){
+                delete msg;
+                return;
+            }
+            InterfaceEntry *ie = ift->getInterfaceById(packet->getTag<InterfaceInd>()->getInterfaceId());
 //            InterfaceEntry* ie = this->ift->getInterfaceById(ctlInfo->getInterfaceId());
-//            char* ieName = (char*)ie->getName();
-//            std::map<std::string, std::pair<int,int>>::iterator it = this->interfaceToProcess.find(ieName);
-//            //Is there a process with this interface??
-//            if(it!=this->interfaceToProcess.end()){
-//                this->send(msg, "processOut", it->second.first);//first is always there
-//
-//                if(it->second.second!=-1) {
-//                    cMessage* copy = msg->dup();
-//                    copy->setControlInfo(msg->getControlInfo()->dup());
-//                    this->send(copy, "processOut", it->second.second);
-//                }
-//            }
-//            else {
-//                delete msg;
-//            }
-//        }
-//    }
+            char* ieName = (char*)ie->getInterfaceName();
+            std::map<std::string, std::pair<int,int>>::iterator it = this->interfaceToProcess.find(ieName);
+            //Is there a process with this interface??
+            if(it!=this->interfaceToProcess.end()){
+                this->send(msg, "processOut", it->second.first);//first is always there
+
+                if(it->second.second!=-1) {
+                    cMessage* copy = msg->dup();
+                    copy->setControlInfo(msg->getControlInfo()->dup());
+                    this->send(copy, "processOut", it->second.second);
+                }
+            }
+            else {
+                delete msg;
+            }
+        }
+    }
 }
 
 // routingConfig and intConfig are filled through omnetpp.ini of an example
@@ -160,8 +164,8 @@ void OSPFv3Splitter::parseConfig(cXMLElement* routingConfig, cXMLElement* intCon
 //            }
 
             //ALL_OSPF_ROUTERS_MCAST renamed into ALL_ROUTERS_5
-            ipv6int->joinMulticastGroup(Ipv6Address::ALL_ROUTERS_5);//TODO - join only once
-            ipv6int->assignAddress(Ipv6Address::ALL_ROUTERS_5, false, 0, 0);
+            ipv6int->joinMulticastGroup(Ipv6Address::ALL_OSPF_ROUTERS_MCAST);//TODO - join only once
+            ipv6int->assignAddress(Ipv6Address::ALL_OSPF_ROUTERS_MCAST, false, 0, 0);
         }
     }
 

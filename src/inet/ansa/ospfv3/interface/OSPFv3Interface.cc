@@ -3,6 +3,7 @@
 #include "inet/ansa/ospfv3/interface/OSPFv3InterfaceState.h"
 //#include "inet/networklayer/ipv6/IPv6Datagram_m.h"    MIGRACIA LG , v novom inete nie je , nahrada , asi Ipv6Header_m
 #include "inet/networklayer/ipv6/Ipv6Header_m.h"
+#include "inet/networklayer/common/L3AddressTag_m.h"
 
 
 using namespace std;
@@ -97,89 +98,97 @@ void OSPFv3Interface::reset()
 }//reset
 
 
-//
-//OSPFv3HelloPacket* OSPFv3Interface::prepareHello()
-//{
-//    OSPFv3Options options;
-//    int length;
+
+Packet* OSPFv3Interface::prepareHello()
+{
+    OSPFv3Options options;
+    int length;
 //    OSPFv3HelloPacket* helloPacket = new OSPFv3HelloPacket();
-//    std::vector<Ipv4Address> neighbors;
-//
-//    //OSPF common packet header first
-//    helloPacket->setVersion(3);
-//    helloPacket->setType(HELLO_PACKET);
-//    //TODO - packet length
-//    helloPacket->setRouterID(this->getArea()->getInstance()->getProcess()->getRouterID());
-//    helloPacket->setAreaID(this->containingArea->getAreaID());
-//    helloPacket->setInstanceID(this->getArea()->getInstance()->getInstanceID());
-//    length = 16;
-//
-//    //Hello content
-//    helloPacket->setInterfaceID(this->interfaceId);//TODO - check LG
-//    helloPacket->setRouterPriority(this->getRouterPriority());
-//    memset(&options, 0, sizeof(OSPFv3Options));
-//
-//    options.rBit = true;
-//    options.v6Bit = true;
-//    if(this->getArea()->getExternalRoutingCapability())
-//        options.eBit = true;
-//
-//    if(this->getArea()->getAreaType() == NSSA)
-//        options.nBit = true;
-//
-//    helloPacket->setOptions(options);
-//    length+=8;
-//    //TODO - set options
-//    helloPacket->setHelloInterval(this->getHelloInterval());
-//    helloPacket->setDeadInterval(this->getDeadInterval());
-//    //TODO - set the DR correctly
-//    helloPacket->setDesignatedRouterID(this->getDesignatedID());
-//    helloPacket->setBackupDesignatedRouterID(this->BackupRouterID);
-//    //TODO - set the neighbor id correctly
-//
-//    length += 12;
-//
-//    int neighborCount = this->getNeighborCount();
-//    for(int i=0; i<neighborCount; i++){
-//        if(this->getNeighbor(i)->getState() >= OSPFv3Neighbor::INIT_STATE) {
-//            neighbors.push_back(this->getNeighbor(i)->getNeighborID());
-//            length+=4;
-//        }
-//    }
-//
-//    unsigned int initedNeighborCount = neighbors.size();
-//    helloPacket->setNeighborIDArraySize(initedNeighborCount);
-//    for (unsigned int k = 0; k < initedNeighborCount; k++) {
-//        helloPacket->setNeighborID(k, neighbors.at(k));
-//    }
-//
-//    helloPacket->setPacketLength(length);
-//    helloPacket->setByteLength(length);
+    const auto& helloPacket = makeShared<OSPFv3HelloPacket>();
+    std::vector<Ipv4Address> neighbors;
+
+    //OSPF common packet header first
+    helloPacket->setVersion(3);
+    helloPacket->setType(HELLO_PACKET);
+    //TODO - packet length
+    helloPacket->setRouterID(this->getArea()->getInstance()->getProcess()->getRouterID());
+    helloPacket->setAreaID(this->containingArea->getAreaID());
+    helloPacket->setInstanceID(this->getArea()->getInstance()->getInstanceID());
+    length = 16;
+
+    //Hello content
+    helloPacket->setInterfaceID(this->interfaceId);//TODO - check LG
+    helloPacket->setRouterPriority(this->getRouterPriority());
+    memset(&options, 0, sizeof(OSPFv3Options));
+
+    options.rBit = true;
+    options.v6Bit = true;
+    if(this->getArea()->getExternalRoutingCapability())
+        options.eBit = true;
+
+    if(this->getArea()->getAreaType() == NSSA)
+        options.nBit = true;
+
+    helloPacket->setOptions(options);
+    length+=8;
+    //TODO - set options
+    helloPacket->setHelloInterval(this->getHelloInterval());
+    helloPacket->setDeadInterval(this->getDeadInterval());
+    //TODO - set the DR correctly
+    helloPacket->setDesignatedRouterID(this->getDesignatedID());
+    helloPacket->setBackupDesignatedRouterID(this->BackupRouterID);
+    //TODO - set the neighbor id correctly
+
+    length += 12;
+
+    int neighborCount = this->getNeighborCount();
+    for(int i=0; i<neighborCount; i++){
+        if(this->getNeighbor(i)->getState() >= OSPFv3Neighbor::INIT_STATE) {
+            neighbors.push_back(this->getNeighbor(i)->getNeighborID());
+            length+=4;
+        }
+    }
+
+    unsigned int initedNeighborCount = neighbors.size();
+    helloPacket->setNeighborIDArraySize(initedNeighborCount);
+    for (unsigned int k = 0; k < initedNeighborCount; k++) {
+        helloPacket->setNeighborID(k, neighbors.at(k));
+    }
+
+    helloPacket->setPacketLength(length);
+
+    helloPacket->setChunkLength(B(length));
+//    helloPacket->setByteLength(length);       MIGRACIA LG
 //    return helloPacket;
-//}
-//
-//
+
+    Packet *pk = new Packet();
+    pk->insertAtBack(helloPacket);
+
+    return pk;
+}
+
+
 //// PRIDANE
-//bool OSPFv3Interface::hasAnyNeighborInStates(int states) const
-//{
-//    long neighborCount = neighbors.size();
-//    for (long i = 0; i < neighborCount; i++)
-//    {
-//        OSPFv3Neighbor::OSPFv3NeighborStateType neighborState = neighbors[i]->getState();
-//        if (neighborState >= states)
-//            return true;
-//    }
-//    return false;
-//}
-//
-//void OSPFv3Interface::ageTransmittedLSALists()
-//{
-//    long neighborCount = neighbors.size();
-//    for (long i = 0; i < neighborCount; i++) {
-//        neighbors[i]->ageTransmittedLSAList();
-//    }
-//}
-//
+bool OSPFv3Interface::hasAnyNeighborInStates(int states) const
+{
+    long neighborCount = neighbors.size();
+    for (long i = 0; i < neighborCount; i++)
+    {
+        OSPFv3Neighbor::OSPFv3NeighborStateType neighborState = neighbors[i]->getState();
+        if (neighborState >= states)
+            return true;
+    }
+    return false;
+}
+
+void OSPFv3Interface::ageTransmittedLSALists()
+{
+    long neighborCount = neighbors.size();
+    for (long i = 0; i < neighborCount; i++) {
+        neighbors[i]->ageTransmittedLSAList();
+    }
+}
+
 //bool OSPFv3Interface::ageDatabase()
 //{
 //    long lsaCount = this->getLinkLSACount();
@@ -278,292 +287,295 @@ void OSPFv3Interface::reset()
 //}
 //
 ////----------------------------------------------- Hello Packet ------------------------------------------------//
-//
-//void OSPFv3Interface::processHelloPacket(OSPFv3Packet* packet)
-//{
-//    EV_DEBUG <<"$$$$$$$$$ Hello packet was received on interface " << this->getIntName() << "\n";
+
+void OSPFv3Interface::processHelloPacket(Packet* packet)
+{
+    EV_DEBUG <<"$$$$$$$$$ Hello packet was received on interface " << this->getIntName() << "\n";
+    const auto& hello = packet->peekAtFront<OSPFv3HelloPacket>();
 //    OSPFv3HelloPacket* hello = check_and_cast<OSPFv3HelloPacket*>(packet);
-//    bool neighborChanged = false;
-//    bool backupSeen = false;
-//    bool neighborsDRStateChanged = false;
-//    bool drChanged = false;
-//    bool shouldRebuildRoutingTable=false;
-//
-//    IPv6ControlInfo* ctlInfo = dynamic_cast<IPv6ControlInfo*>(packet->getControlInfo());
-//
-//    //comparing hello and dead values
-//    if((hello->getHelloInterval()==this->getHelloInterval()) && (hello->getDeadInterval()==this->getDeadInterval())) {
-//        if(true) {//TODO - this will check the E-bit
-//            Ipv4Address sourceId = hello->getRouterID();
-//            OSPFv3Neighbor* neighbor = this->getNeighborById(sourceId);
-//
-//            if(neighbor != nullptr) {
-//                EV_DEBUG << "$$$$$$ This is not a new neighbor!!! I know him for a long time...\n";
-//                Ipv4Address designatedRouterID = neighbor->getNeighborsDR();
-//                Ipv4Address backupRouterID = neighbor->getNeighborsBackup();
-//                int newPriority = hello->getRouterPriority();
-//                Ipv4Address newDesignatedRouterID = hello->getDesignatedRouterID();
-//                Ipv4Address newBackupRouterID = hello->getBackupDesignatedRouterID();
-//                Ipv4Address dRouterID;
-//
-//
-//                /*
-//                 * Potialto to vyzera ze ide porovnat DR ID stare a nove z packetu.
-//                 * Tu porovna ci typ intf je VIRTUAL_TYPE a ci je súèasne sused DOWN
-//                 * Ak áno, nastaví susedovi (?) prioritu pod¾a router priority z hello packetu
-//                 * a tiez zmeni dead interval.  preco ?
-//                 * */
-//                if ((this->interfaceType == OSPFv3InterfaceType::VIRTUAL_TYPE) &&
-//                        (neighbor->getState() == OSPFv3Neighbor::DOWN_STATE))
-//                {
-//                    neighbor->setNeighborPriority(hello->getRouterPriority());
-//                    neighbor->setNeighborDeadInterval(hello->getDeadInterval());
-//                }
-//
-//                /* If a change in the neighbor's Router Priority field
-//                   was noted, the receiving interface's state machine is
-//                   scheduled with the event NEIGHBOR_CHANGE.
-//                 */
-//                if (neighbor->getNeighborPriority() != newPriority) {
-//                    neighborChanged = true;
-//                }
-//
-//                /* If the neighbor is both declaring itself to be Designated
-//                   Router(Hello Packet's Designated Router field = Neighbor IP
-//                   address) and the Backup Designated Router field in the
-//                   packet is equal to 0.0.0.0 and the receiving interface is in
-//                   state Waiting, the receiving interface's state machine is
-//                   scheduled with the event BACKUP_SEEN.
-//                 */
-//                if ((newDesignatedRouterID == sourceId) &&
-//                        (newBackupRouterID == NULL_IPV4ADDRESS) &&
-//                        (this->getState() == OSPFv3InterfaceFAState::INTERFACE_STATE_WAITING))
-//                {
-//                    backupSeen = true;
-//                }
-//                else {
-//                    /* Otherwise, if the neighbor is declaring itself to be Designated Router and it
-//                       had not previously, or the neighbor is not declaring itself
-//                       Designated Router where it had previously, the receiving
-//                       interface's state machine is scheduled with the event
-//                       NEIGHBOR_CHANGE.
-//                     */
-//                    if (((newDesignatedRouterID == sourceId) &&
-//                            (newDesignatedRouterID != designatedRouterID)) ||
-//                            ((newDesignatedRouterID != sourceId) &&
-//                                    (sourceId == designatedRouterID)))
-//                    {
-//                        neighborChanged = true;
-//                        neighborsDRStateChanged = true;
-//                    }
-//                }
-//                /*Waiting
-//            In this state, the router is trying to determine the
-//            identity of the (Backup) Designated Router for the network.
-//            To do this, the router monitors the Hello Packets it
-//            receives.  The router is not allowed to elect a Backup
-//            Designated Router nor a Designated Router until it
-//            transitions out of Waiting state.  This prevents unnecessary
-//            changes of (Backup) Designated Router.
-//                 * */
-//
-//                /* If the neighbor is declaring itself to be Backup Designated
-//                   Router(Hello Packet's Backup Designated Router field =
-//                   Neighbor ID ) and the receiving interface is in state
-//                   Waiting, the receiving interface's state machine is
-//                   scheduled with the event BACKUP_SEEN.
-//                */
-//                if ((newBackupRouterID == sourceId) &&
-//                        (this->getState() == OSPFv3InterfaceFAState::INTERFACE_STATE_WAITING))
-//                {
-//                    backupSeen = true;
-//                }
-//                else {
-//                    /* Otherwise, if the neighbor is declaring itself to be Backup Designated Router
-//                    and it had not previously, or the neighbor is not declaring
-//                    itself Backup Designated Router where it had previously, the
-//                    receiving interface's state machine is scheduled with the
-//                    event NEIGHBOR_CHANGE.
-//                     */
-//                    if (((newBackupRouterID == sourceId) &&
-//                            (newBackupRouterID != backupRouterID)) ||
-//                            ((newBackupRouterID != sourceId) &&
-//                                    (sourceId == backupRouterID)))
-//                    {
-//                        neighborChanged = true;
-//                    }
-//                }
-//
-//                neighbor->setNeighborID(hello->getRouterID());
-//                neighbor->setNeighborPriority(newPriority);
+    bool neighborChanged = false;
+    bool backupSeen = false;
+    bool neighborsDRStateChanged = false;
+    bool drChanged = false;
+    bool shouldRebuildRoutingTable=false;
+
+//    Ipv6ControlInfo* ctlInfo = dynamic_cast<Ipv6ControlInfo*>(packet->getControlInfo());
+
+    //comparing hello and dead values
+    if((hello->getHelloInterval()==this->getHelloInterval()) && (hello->getDeadInterval()==this->getDeadInterval())) {
+        if(true) {//TODO - this will check the E-bit
+            Ipv4Address sourceId = hello->getRouterID();
+            OSPFv3Neighbor* neighbor = this->getNeighborById(sourceId);
+
+            if(neighbor != nullptr) {
+                EV_DEBUG << "$$$$$$ This is not a new neighbor!!! I know him for a long time...\n";
+                Ipv4Address designatedRouterID = neighbor->getNeighborsDR();
+                Ipv4Address backupRouterID = neighbor->getNeighborsBackup();
+                int newPriority = hello->getRouterPriority();
+                Ipv4Address newDesignatedRouterID = hello->getDesignatedRouterID();
+                Ipv4Address newBackupRouterID = hello->getBackupDesignatedRouterID();
+                Ipv4Address dRouterID;
+
+
+                /*
+                 * Potialto to vyzera ze ide porovnat DR ID stare a nove z packetu.
+                 * Tu porovna ci typ intf je VIRTUAL_TYPE a ci je súèasne sused DOWN
+                 * Ak áno, nastaví susedovi (?) prioritu pod¾a router priority z hello packetu
+                 * a tiez zmeni dead interval.  preco ?
+                 * */
+                if ((this->interfaceType == OSPFv3InterfaceType::VIRTUAL_TYPE) &&
+                        (neighbor->getState() == OSPFv3Neighbor::DOWN_STATE))
+                {
+                    neighbor->setNeighborPriority(hello->getRouterPriority());
+                    neighbor->setNeighborDeadInterval(hello->getDeadInterval());
+                }
+
+                /* If a change in the neighbor's Router Priority field
+                   was noted, the receiving interface's state machine is
+                   scheduled with the event NEIGHBOR_CHANGE.
+                 */
+                if (neighbor->getNeighborPriority() != newPriority) {
+                    neighborChanged = true;
+                }
+
+                /* If the neighbor is both declaring itself to be Designated
+                   Router(Hello Packet's Designated Router field = Neighbor IP
+                   address) and the Backup Designated Router field in the
+                   packet is equal to 0.0.0.0 and the receiving interface is in
+                   state Waiting, the receiving interface's state machine is
+                   scheduled with the event BACKUP_SEEN.
+                 */
+                if ((newDesignatedRouterID == sourceId) &&
+                        (newBackupRouterID == NULL_IPV4ADDRESS) &&
+                        (this->getState() == OSPFv3InterfaceFAState::INTERFACE_STATE_WAITING))
+                {
+                    backupSeen = true;
+                }
+                else {
+                    /* Otherwise, if the neighbor is declaring itself to be Designated Router and it
+                       had not previously, or the neighbor is not declaring itself
+                       Designated Router where it had previously, the receiving
+                       interface's state machine is scheduled with the event
+                       NEIGHBOR_CHANGE.
+                     */
+                    if (((newDesignatedRouterID == sourceId) &&
+                            (newDesignatedRouterID != designatedRouterID)) ||
+                            ((newDesignatedRouterID != sourceId) &&
+                                    (sourceId == designatedRouterID)))
+                    {
+                        neighborChanged = true;
+                        neighborsDRStateChanged = true;
+                    }
+                }
+                /*Waiting
+            In this state, the router is trying to determine the
+            identity of the (Backup) Designated Router for the network.
+            To do this, the router monitors the Hello Packets it
+            receives.  The router is not allowed to elect a Backup
+            Designated Router nor a Designated Router until it
+            transitions out of Waiting state.  This prevents unnecessary
+            changes of (Backup) Designated Router.
+                 * */
+
+                /* If the neighbor is declaring itself to be Backup Designated
+                   Router(Hello Packet's Backup Designated Router field =
+                   Neighbor ID ) and the receiving interface is in state
+                   Waiting, the receiving interface's state machine is
+                   scheduled with the event BACKUP_SEEN.
+                */
+                if ((newBackupRouterID == sourceId) &&
+                        (this->getState() == OSPFv3InterfaceFAState::INTERFACE_STATE_WAITING))
+                {
+                    backupSeen = true;
+                }
+                else {
+                    /* Otherwise, if the neighbor is declaring itself to be Backup Designated Router
+                    and it had not previously, or the neighbor is not declaring
+                    itself Backup Designated Router where it had previously, the
+                    receiving interface's state machine is scheduled with the
+                    event NEIGHBOR_CHANGE.
+                     */
+                    if (((newBackupRouterID == sourceId) &&
+                            (newBackupRouterID != backupRouterID)) ||
+                            ((newBackupRouterID != sourceId) &&
+                                    (sourceId == backupRouterID)))
+                    {
+                        neighborChanged = true;
+                    }
+                }
+
+                neighbor->setNeighborID(hello->getRouterID());
+                neighbor->setNeighborPriority(newPriority);
+//                neighbor->setNeighborAddress(ctlInfo->getSourceAddress().toIPv6());         CTRLINFO UZ NEPOUZIVAM
+                neighbor->setNeighborAddress( packet->getTag<L3AddressInd>()->getSrcAddress().toIpv6());
+                neighbor->setNeighborInterfaceID(hello->getInterfaceID());
+                dRouterID = newDesignatedRouterID;
+                if (newDesignatedRouterID != designatedRouterID) {
+                    designatedRouterID = dRouterID;
+                    drChanged = true;
+                }
+
+                neighbor->setDesignatedRouterID(dRouterID);
+                dRouterID = newBackupRouterID;
+                if (newBackupRouterID != backupRouterID) {
+                    backupRouterID = dRouterID;
+                    drChanged = true;
+                }
+
+                neighbor->setBackupDesignatedRouterID(dRouterID);
+                if (drChanged) {
+                    neighbor->setupDesignatedRouters(false);
+                }
+
+                /* If the neighbor router's Designated or Backup Designated Router
+                   has changed it's necessary to look up the Router IDs belonging to the
+                   new addresses.
+                 */
+                if (!neighbor->designatedRoutersAreSetUp()) {
+                    OSPFv3Neighbor *designated = this->getNeighborById(designatedRouterID);
+                    OSPFv3Neighbor *backup = this->getNeighborById(backupRouterID);
+
+                    if (designated != nullptr) {
+                        EV_DEBUG << "Setting new DR ID in hello processing\n";
+                        dRouterID = designated->getNeighborID();
+                        neighbor->setDesignatedRouterID(dRouterID);
+                        EV_DEBUG << "New DR for neighbor " << dRouterID << " is " << neighbor->getNeighborsDR() << "\n";
+                    }
+                    if (backup != nullptr) {
+                        dRouterID = backup->getNeighborID();
+                        neighbor->setBackupDesignatedRouterID(dRouterID);
+                    }
+                    if ((designated != nullptr) && (backup != nullptr)) {
+                        neighbor->setupDesignatedRouters(true);
+                    }
+                }
+
+                neighbor->setLastHelloTime((int)simTime().dbl());
+            }
+            else {
+                Ipv4Address dRouterID;
+                bool designatedSetUp = false;
+                bool backupSetUp = false;
+
+                neighbor = new OSPFv3Neighbor(sourceId, this);
+                neighbor->setNeighborPriority(hello->getRouterPriority());
+                neighbor->setNeighborAddress(packet->getTag<L3AddressInd>()->getSrcAddress().toIpv6());
 //                neighbor->setNeighborAddress(ctlInfo->getSourceAddress().toIPv6());
-//                neighbor->setNeighborInterfaceID(hello->getInterfaceID());
-//                dRouterID = newDesignatedRouterID;
-//                if (newDesignatedRouterID != designatedRouterID) {
-//                    designatedRouterID = dRouterID;
-//                    drChanged = true;
-//                }
+                neighbor->setNeighborDeadInterval(hello->getDeadInterval());
+                neighbor->setNeighborInterfaceID(hello->getInterfaceID());
+
+                dRouterID = hello->getDesignatedRouterID();
+                OSPFv3Neighbor *designated = this->getNeighborById(dRouterID);
+
+                // Get the Designated Router ID from the corresponding Neighbor Object.
+                if (designated != nullptr) {
+                    if (designated->getNeighborID() != dRouterID) {
+                        dRouterID = designated->getNeighborID();
+                    }
+                    designatedSetUp = true;
+                }
+                neighbor->setDesignatedRouterID(dRouterID);
+
+                dRouterID = hello->getBackupDesignatedRouterID();
+                OSPFv3Neighbor* backup = this->getNeighborById(dRouterID);
+
+                // Get the Backup Designated Router ID from the corresponding Neighbor Object.
+                if (backup != nullptr) {
+                    if (backup->getNeighborID() != dRouterID) {
+                        dRouterID = backup->getNeighborID();
+                    }
+                    backupSetUp = true;
+                }
+                neighbor->setBackupDesignatedRouterID(dRouterID);
+                if (designatedSetUp && backupSetUp) {
+                    neighbor->setupDesignatedRouters(true);
+                }
+                this->addNeighbor(neighbor);
+            }
+
+            neighbor->processEvent(OSPFv3Neighbor::OSPFv3NeighborEventType::HELLO_RECEIVED);
+            if ((this->interfaceType == OSPFv3InterfaceType::NBMA_TYPE) &&
+                    (this->getRouterPriority() == 0) &&
+                    (neighbor->getState() >= OSPFv3Neighbor::OSPFv3NeighborStateType::INIT_STATE))
+            {
+                Packet* hello = this->prepareHello();
+                this->getArea()->getInstance()->getProcess()->sendPacket(hello, neighbor->getNeighborIP(), this->interfaceName.c_str());
+            }
+
+//            Ipv4Address interfaceAddress = intf->getAddressRange().address;
+            unsigned int neighborsNeighborCount = hello->getNeighborIDArraySize();
+            unsigned int i;
+
+            for (i = 0; i < neighborsNeighborCount; i++) {
+                if (hello->getNeighborID(i) == this->getArea()->getInstance()->getProcess()->getRouterID()) {
+                    neighbor->processEvent(OSPFv3Neighbor::TWOWAY_RECEIVED);
+                    break;
+                }
+            }
+
+            /* Otherwise, the neighbor state machine should
+               be executed with the event ONEWAY_RECEIVED, and the processing
+               of the packet stops.
+            */
+            if (i == neighborsNeighborCount) {
+                neighbor->processEvent(OSPFv3Neighbor::ONEWAY_RECEIVED);
+            }
+
+            if (neighborChanged) {
+                EV_DEBUG << "Neighbor change noted in Hello packet processing in router " << this->getArea()->getInstance()->getProcess()->getRouterID() << "\n";
+                this->processEvent(OSPFv3InterfaceEvent::NEIGHBOR_CHANGE_EVENT);
+                /* In some cases neighbors get stuck in TwoWay state after a DR
+                   or Backup change. (calculateDesignatedRouter runs before the
+                   neighbors' signal of DR change + this router does not become
+                   neither DR nor backup -> IS_ADJACENCY_OK does not get called.)
+                   So to make it work(workaround) we'll call IS_ADJACENCY_OK for
+                   all neighbors in TwoWay state from here. This shouldn't break
+                   anything because if the neighbor state doesn't have to change
+                   then needAdjacency returns false and nothing happnes in
+                   IS_ADJACENCY_OK.
+                 */
+                unsigned int neighborCount = this->getNeighborCount();
+                for (i = 0; i < neighborCount; i++) {
+                    OSPFv3Neighbor *stuckNeighbor = this->neighbors.at(i);
+                    if (stuckNeighbor->getState() == OSPFv3Neighbor::TWOWAY_STATE) {
+                        stuckNeighbor->processEvent(OSPFv3Neighbor::IS_ADJACENCY_OK);
+                    }
+                }
+
+                if (neighborsDRStateChanged) {
+                    EV_DEBUG <<"Router DR has changed - need to add LSAs\n";
+                    shouldRebuildRoutingTable = true;
+//                    RouterLSA* routerLSA = this->getArea()->originateRouterLSA();
+//                    RouterLSA *routerLSA = intf->getArea()->findRouterLSA(router->getRouterID());
 //
-//                neighbor->setDesignatedRouterID(dRouterID);
-//                dRouterID = newBackupRouterID;
-//                if (newBackupRouterID != backupRouterID) {
-//                    backupRouterID = dRouterID;
-//                    drChanged = true;
-//                }
+//                    if (routerLSA != nullptr) {
+//                        long sequenceNumber = routerLSA->getHeader().getLsSequenceNumber();
+//                        if (sequenceNumber == MAX_SEQUENCE_NUMBER) {
+//                            routerLSA->getHeader().setLsAge(MAX_AGE);
+//                            intf->getArea()->floodLSA(routerLSA);
+//                            routerLSA->incrementInstallTime();
+//                        }
+//                        else {
+//                            RouterLSA *newLSA = intf->getArea()->originateRouterLSA();
 //
-//                neighbor->setBackupDesignatedRouterID(dRouterID);
-//                if (drChanged) {
-//                    neighbor->setupDesignatedRouters(false);
-//                }
+//                            newLSA->getHeader().setLsSequenceNumber(sequenceNumber + 1);
+//                            shouldRebuildRoutingTable |= routerLSA->update(newLSA);
+//                            delete newLSA;
 //
-//                /* If the neighbor router's Designated or Backup Designated Router
-//                   has changed it's necessary to look up the Router IDs belonging to the
-//                   new addresses.
-//                 */
-//                if (!neighbor->designatedRoutersAreSetUp()) {
-//                    OSPFv3Neighbor *designated = this->getNeighborById(designatedRouterID);
-//                    OSPFv3Neighbor *backup = this->getNeighborById(backupRouterID);
-//
-//                    if (designated != nullptr) {
-//                        EV_DEBUG << "Setting new DR ID in hello processing\n";
-//                        dRouterID = designated->getNeighborID();
-//                        neighbor->setDesignatedRouterID(dRouterID);
-//                        EV_DEBUG << "New DR for neighbor " << dRouterID << " is " << neighbor->getNeighborsDR() << "\n";
+//                            intf->getArea()->floodLSA(routerLSA);
+//                        }
 //                    }
-//                    if (backup != nullptr) {
-//                        dRouterID = backup->getNeighborID();
-//                        neighbor->setBackupDesignatedRouterID(dRouterID);
-//                    }
-//                    if ((designated != nullptr) && (backup != nullptr)) {
-//                        neighbor->setupDesignatedRouters(true);
-//                    }
-//                }
-//
-//                neighbor->setLastHelloTime((int)simTime().dbl());
-//            }
-//            else {
-//                Ipv4Address dRouterID;
-//                bool designatedSetUp = false;
-//                bool backupSetUp = false;
-//
-//                neighbor = new OSPFv3Neighbor(sourceId, this);
-//                neighbor->setNeighborPriority(hello->getRouterPriority());
-//                neighbor->setNeighborAddress(ctlInfo->getSourceAddress().toIPv6());
-//                neighbor->setNeighborDeadInterval(hello->getDeadInterval());
-//                neighbor->setNeighborInterfaceID(hello->getInterfaceID());
-//
-//                dRouterID = hello->getDesignatedRouterID();
-//                OSPFv3Neighbor *designated = this->getNeighborById(dRouterID);
-//
-//                // Get the Designated Router ID from the corresponding Neighbor Object.
-//                if (designated != nullptr) {
-//                    if (designated->getNeighborID() != dRouterID) {
-//                        dRouterID = designated->getNeighborID();
-//                    }
-//                    designatedSetUp = true;
-//                }
-//                neighbor->setDesignatedRouterID(dRouterID);
-//
-//                dRouterID = hello->getBackupDesignatedRouterID();
-//                OSPFv3Neighbor* backup = this->getNeighborById(dRouterID);
-//
-//                // Get the Backup Designated Router ID from the corresponding Neighbor Object.
-//                if (backup != nullptr) {
-//                    if (backup->getNeighborID() != dRouterID) {
-//                        dRouterID = backup->getNeighborID();
-//                    }
-//                    backupSetUp = true;
-//                }
-//                neighbor->setBackupDesignatedRouterID(dRouterID);
-//                if (designatedSetUp && backupSetUp) {
-//                    neighbor->setupDesignatedRouters(true);
-//                }
-//                this->addNeighbor(neighbor);
-//            }
-//
-//            neighbor->processEvent(OSPFv3Neighbor::OSPFv3NeighborEventType::HELLO_RECEIVED);
-//            if ((this->interfaceType == OSPFv3InterfaceType::NBMA_TYPE) &&
-//                    (this->getRouterPriority() == 0) &&
-//                    (neighbor->getState() >= OSPFv3Neighbor::OSPFv3NeighborStateType::INIT_STATE))
-//            {
-//                OSPFv3HelloPacket* hello = this->prepareHello();
-//                this->getArea()->getInstance()->getProcess()->sendPacket(hello, neighbor->getNeighborIP(), this->interfaceName.c_str());
-//            }
-//
-////            Ipv4Address interfaceAddress = intf->getAddressRange().address;
-//            unsigned int neighborsNeighborCount = hello->getNeighborIDArraySize();
-//            unsigned int i;
-//
-//            for (i = 0; i < neighborsNeighborCount; i++) {
-//                if (hello->getNeighborID(i) == this->getArea()->getInstance()->getProcess()->getRouterID()) {
-//                    neighbor->processEvent(OSPFv3Neighbor::TWOWAY_RECEIVED);
-//                    break;
-//                }
-//            }
-//
-//            /* Otherwise, the neighbor state machine should
-//               be executed with the event ONEWAY_RECEIVED, and the processing
-//               of the packet stops.
-//            */
-//            if (i == neighborsNeighborCount) {
-//                neighbor->processEvent(OSPFv3Neighbor::ONEWAY_RECEIVED);
-//            }
-//
-//            if (neighborChanged) {
-//                EV_DEBUG << "Neighbor change noted in Hello packet processing in router " << this->getArea()->getInstance()->getProcess()->getRouterID() << "\n";
-//                this->processEvent(OSPFv3InterfaceEvent::NEIGHBOR_CHANGE_EVENT);
-//                /* In some cases neighbors get stuck in TwoWay state after a DR
-//                   or Backup change. (calculateDesignatedRouter runs before the
-//                   neighbors' signal of DR change + this router does not become
-//                   neither DR nor backup -> IS_ADJACENCY_OK does not get called.)
-//                   So to make it work(workaround) we'll call IS_ADJACENCY_OK for
-//                   all neighbors in TwoWay state from here. This shouldn't break
-//                   anything because if the neighbor state doesn't have to change
-//                   then needAdjacency returns false and nothing happnes in
-//                   IS_ADJACENCY_OK.
-//                 */
-//                unsigned int neighborCount = this->getNeighborCount();
-//                for (i = 0; i < neighborCount; i++) {
-//                    OSPFv3Neighbor *stuckNeighbor = this->neighbors.at(i);
-//                    if (stuckNeighbor->getState() == OSPFv3Neighbor::TWOWAY_STATE) {
-//                        stuckNeighbor->processEvent(OSPFv3Neighbor::IS_ADJACENCY_OK);
-//                    }
-//                }
-//
-//                if (neighborsDRStateChanged) {
-//                    EV_DEBUG <<"Router DR has changed - need to add LSAs\n";
-//                    shouldRebuildRoutingTable = true;
-////                    RouterLSA* routerLSA = this->getArea()->originateRouterLSA();
-////                    RouterLSA *routerLSA = intf->getArea()->findRouterLSA(router->getRouterID());
-////
-////                    if (routerLSA != nullptr) {
-////                        long sequenceNumber = routerLSA->getHeader().getLsSequenceNumber();
-////                        if (sequenceNumber == MAX_SEQUENCE_NUMBER) {
-////                            routerLSA->getHeader().setLsAge(MAX_AGE);
-////                            intf->getArea()->floodLSA(routerLSA);
-////                            routerLSA->incrementInstallTime();
-////                        }
-////                        else {
-////                            RouterLSA *newLSA = intf->getArea()->originateRouterLSA();
-////
-////                            newLSA->getHeader().setLsSequenceNumber(sequenceNumber + 1);
-////                            shouldRebuildRoutingTable |= routerLSA->update(newLSA);
-////                            delete newLSA;
-////
-////                            intf->getArea()->floodLSA(routerLSA);
-////                        }
-////                    }
-//                }
-//            }
-//        }
-//    }
-//
-//    if (shouldRebuildRoutingTable) {
-//        this->getArea()->getInstance()->getProcess()->rebuildRoutingTable();
-//    }
-//
-//    delete packet;
-//}//processHello
+                }
+            }
+        }
+    }
+
+    if (shouldRebuildRoutingTable) {
+        this->getArea()->getInstance()->getProcess()->rebuildRoutingTable();
+    }
+
+    delete packet;
+}//processHello
 //
 ////--------------------------------------------Database Description Packets--------------------------------------------//
 //
@@ -1159,21 +1171,21 @@ void OSPFv3Interface::reset()
 //                                (this->getState() == OSPFv3Interface::INTERFACE_STATE_BACKUP) ||
 //                                (this->getDesignatedID() == Ipv4Address::UNSPECIFIED_ADDRESS))
 //                        {
-//                            EV_DEBUG << "Sending ACK to all\n";//TODO  - ked tak skontrolovat
+//                            EV_DEBUG << "Sending ACK to all\n";
 //                            this->sendLSAcknowledgement(&(currentLSA->getHeader()), Ipv6Address::ALL_OSPF_ROUTERS_MCAST);
 //                        }
 //                        else {
-//                            EV_DEBUG << "Sending ACK to Designated mcast\n";//TODO
+//                            EV_DEBUG << "Sending ACK to Designated mcast\n";
 //                            this->sendLSAcknowledgement(&(currentLSA->getHeader()), Ipv6Address::ALL_OSPF_DESIGNATED_ROUTERS_MCAST);
 //                        }
 //                    }
 //                    else {
 //                        if (this->getType() == OSPFv3Interface::POINTTOPOINT_TYPE) {
-//                            EV_DEBUG << "Sending ACK to all\n";//TODO
+//                            EV_DEBUG << "Sending ACK to all\n";
 //                            this->sendLSAcknowledgement(&(currentLSA->getHeader()), Ipv6Address::ALL_OSPF_ROUTERS_MCAST);
 //                        }
 //                        else {
-//                            EV_DEBUG << "Sending ACK only to neighbor\n";//TODO
+//                            EV_DEBUG << "Sending ACK only to neighbor\n";
 //                            this->sendLSAcknowledgement(&(currentLSA->getHeader()), neighbor->getNeighborIP());
 //                        }
 //                    }
@@ -1563,6 +1575,10 @@ void OSPFv3Interface::reset()
 //
 //
 ////-------------------------------------------- Flooding ---------------------------------------------//
+bool OSPFv3Interface::floodLSA(OSPFv3LSA* lsa, OSPFv3Interface* interface, OSPFv3Neighbor* neighbor)
+{
+ return true;
+}
 //bool OSPFv3Interface::floodLSA(OSPFv3LSA* lsa, OSPFv3Interface* interface, OSPFv3Neighbor* neighbor)
 //{
 //    std::cout << this->getArea()->getInstance()->getProcess()->getRouterID() << " - FLOOD LSA INTERFACE!!" << endl;
@@ -1716,62 +1732,62 @@ void OSPFv3Interface::reset()
 //    return floodedBackOut;
 //}//floodLSA
 //
-//void OSPFv3Interface::removeFromAllRetransmissionLists(LSAKeyType lsaKey)
-//{
-//    long neighborCount = getNeighborCount();
-//    for (long i = 0; i < neighborCount; i++) {
-//        neighbors[i]->removeFromRetransmissionList(lsaKey);
-//    }
-//
-//}
-//
-//bool OSPFv3Interface::isOnAnyRetransmissionList(LSAKeyType lsaKey) const
-//{
-//    long neighborCount = getNeighborCount();
-//    for (long i = 0; i < neighborCount; i++) {
-//        if (neighbors[i]->isLinkStateRequestListEmpty(lsaKey)) {
-//            return true;
-//        }
-//    }
-//    return false;
-//}
-//
-//OSPFv3Neighbor* OSPFv3Interface::getNeighborById(Ipv4Address neighborId)
-//{
-//    std::map<Ipv4Address, OSPFv3Neighbor*>::iterator neighborIt = this->neighborsById.find(neighborId);
-//    if(neighborIt == this->neighborsById.end())
-//        return nullptr;
-//
-//    return neighborIt->second;
-//}//getNeighborById
-//
-//void OSPFv3Interface::removeNeighborByID(Ipv4Address neighborId)
-//{
-//    std::map<Ipv4Address, OSPFv3Neighbor*>::iterator neighborIt = this->neighborsById.find(neighborId);
-//    if(neighborIt != this->neighborsById.end()) {
-//        this->neighborsById.erase(neighborIt);
-//    }
-//
-//    int neighborCnt = this->getNeighborCount();
-//    for(int i=0; i<neighborCnt; i++){
-//        OSPFv3Neighbor* current = this->getNeighbor(i);
-//        if(current->getNeighborID() == neighborId) {
-//            this->neighbors.erase(this->neighbors.begin()+i);
-//            break;
-//        }
-//    }
-//}//getNeighborById
-//
-//void OSPFv3Interface::addNeighbor(OSPFv3Neighbor* newNeighbor)
-//{
-//    EV_DEBUG << "^^^^^^^^ FROM ADDING ^^^^^^^^^^\n";
-//    EV_DEBUG << newNeighbor->getNeighborID() << "  /  " << newNeighbor->getNeighborInterfaceID()  <<  " / " <<  newNeighbor->getInterface()->getInterfaceId() << "\n";
-//    OSPFv3Neighbor* check = this->getNeighborById(newNeighbor->getNeighborID());
-//    if(check==nullptr){
-//        this->neighbors.push_back(newNeighbor);
-//        this->neighborsById[newNeighbor->getNeighborID()]=newNeighbor;
-//    }
-//}//addNeighbor
+void OSPFv3Interface::removeFromAllRetransmissionLists(LSAKeyType lsaKey)
+{
+    long neighborCount = getNeighborCount();
+    for (long i = 0; i < neighborCount; i++) {
+        neighbors[i]->removeFromRetransmissionList(lsaKey);
+    }
+
+}
+
+bool OSPFv3Interface::isOnAnyRetransmissionList(LSAKeyType lsaKey) const
+{
+    long neighborCount = getNeighborCount();
+    for (long i = 0; i < neighborCount; i++) {
+        if (neighbors[i]->isLinkStateRequestListEmpty(lsaKey)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+OSPFv3Neighbor* OSPFv3Interface::getNeighborById(Ipv4Address neighborId)
+{
+    std::map<Ipv4Address, OSPFv3Neighbor*>::iterator neighborIt = this->neighborsById.find(neighborId);
+    if(neighborIt == this->neighborsById.end())
+        return nullptr;
+
+    return neighborIt->second;
+}//getNeighborById
+
+void OSPFv3Interface::removeNeighborByID(Ipv4Address neighborId)
+{
+    std::map<Ipv4Address, OSPFv3Neighbor*>::iterator neighborIt = this->neighborsById.find(neighborId);
+    if(neighborIt != this->neighborsById.end()) {
+        this->neighborsById.erase(neighborIt);
+    }
+
+    int neighborCnt = this->getNeighborCount();
+    for(int i=0; i<neighborCnt; i++){
+        OSPFv3Neighbor* current = this->getNeighbor(i);
+        if(current->getNeighborID() == neighborId) {
+            this->neighbors.erase(this->neighbors.begin()+i);
+            break;
+        }
+    }
+}//getNeighborById
+
+void OSPFv3Interface::addNeighbor(OSPFv3Neighbor* newNeighbor)
+{
+    EV_DEBUG << "^^^^^^^^ FROM addNeighbor ^^^^^^^^^^\n";
+    EV_DEBUG << newNeighbor->getNeighborID() << "  /  " << newNeighbor->getNeighborInterfaceID()  <<  " / " <<  newNeighbor->getInterface()->getInterfaceId() << "\n";
+    OSPFv3Neighbor* check = this->getNeighborById(newNeighbor->getNeighborID());
+    if(check==nullptr){
+        this->neighbors.push_back(newNeighbor);
+        this->neighborsById[newNeighbor->getNeighborID()]=newNeighbor;
+    }
+}//addNeighbor
 //
 //LinkLSA* OSPFv3Interface::originateLinkLSA()
 //{
@@ -1888,17 +1904,17 @@ void OSPFv3Interface::reset()
 //    this->linkLSAList.push_back(lsa);
 //}
 //
-//LinkLSA* OSPFv3Interface::getLinkLSAbyKey(LSAKeyType lsaKey)
-//{
-//    for (auto it=this->linkLSAList.begin(); it!=this->linkLSAList.end(); it++)
-//    {
-//        if(((*it)->getHeader().getAdvertisingRouter() == lsaKey.advertisingRouter) && (*it)->getHeader().getLinkStateID() == lsaKey.linkStateID) {
-//            return (*it);
-//        }
-//    }
-//
-//    return nullptr;
-//}
+LinkLSA* OSPFv3Interface::getLinkLSAbyKey(LSAKeyType lsaKey)
+{
+    for (auto it=this->linkLSAList.begin(); it!=this->linkLSAList.end(); it++)
+    {
+        if(((*it)->getHeader().getAdvertisingRouter() == lsaKey.advertisingRouter) && (*it)->getHeader().getLinkStateID() == lsaKey.linkStateID) {
+            return (*it);
+        }
+    }
+
+    return nullptr;
+}
 //
 //bool OSPFv3Interface::installLinkLSA(OSPFv3LinkLSA *lsa)
 //{
@@ -1972,89 +1988,89 @@ void OSPFv3Interface::reset()
 //
 //    return differentHeader || differentBody;
 //}
-//
-//std::string OSPFv3Interface::info() const
-//{
-//    std::stringstream out;
-//
-//    out << "Interface " << this->getIntName() << " Info:\n";
-//    return out.str();
-//}//info
-//
-//std::string OSPFv3Interface::detailedInfo() const
-//{
-//    std::stringstream out;
-//    Ipv4Address neighbor;
-//    Ipv6Address designatedIP;
-//    Ipv6Address backupIP;
-//
-//    int adjCount = 0;
-//    for(auto it=this->neighbors.begin(); it!=this->neighbors.end(); it++) {
-//        if((*it)->getState()==OSPFv3Neighbor::FULL_STATE)
-//            adjCount++;
-//
-//        if((*it)->getNeighborID() == this->DesignatedRouterID)
-//            designatedIP = (*it)->getNeighborIP();
-//        if((*it)->getNeighborID() == this->BackupRouterID)
-//            backupIP = (*it)->getNeighborIP();
-//    }
-//
-//    out << "Interface " << this->getIntName() << "\n"; //TODO - isUP?
-//    out << "Link Local Address ";//TODO - for over all addresses
-//    InterfaceEntry* ie = this->ift->getInterfaceByName(this->getIntName().c_str());
-//    IPv6InterfaceData *ipv6int = ie->ipv6Data();
-//    out << ipv6int->getLinkLocalAddress() << ", Interface ID " << this->interfaceId << "\n";
-//
-//    if(this->getArea()->getInstance()->getAddressFamily() == IPV4INSTANCE) {
-//        IPv4InterfaceData* ipv4int = ie->ipv4Data();
-//        out << "Internet Address " << ipv4int->getIPAddress() << endl;
-//    }
-//
-//    out << "Area " << this->getArea()->getAreaID().getInt();
-//    out << ", Process ID " << this->getArea()->getInstance()->getProcess()->getProcessID();
-//    out << ", Instance ID " << this->getArea()->getInstance()->getInstanceID() << ", ";
-//    out << "Router ID " << this->getArea()->getInstance()->getProcess()->getRouterID() << endl;
-//
-//    out << "Network Type " << this->OSPFv3IntTypeOutput[this->getType()];
-//    out << ", Cost: " << this->getInterfaceCost() << endl;//TODO - type needs to be a string
-//
-//    out << "Transmit Delay is " << this->getTransDelayInterval() << " sec, ";
-//    out << "State " << this->OSPFv3IntStateOutput[this->getState()];
-//    out << ", Priority " << this->getRouterPriority() << endl;
-//
-//    out << "Designated Router (ID) " << this->getDesignatedID().str(false);
-//    out << ", local address " << this->getDesignatedIP() << endl;
-//
-//    out << "Backup Designated router (ID) " << this->getBackupID().str(false);
-//    out << ", local address " << this->getBackupIP() << endl;
-//
-//    out << "Timer intervals configured, Hello " << this->getHelloInterval();
-//    out << ", Dead " << this->getDeadInterval();
-//    out << ", Wait " << this->getDeadInterval();
-//    out << ", Retransmit " << this->getRetransmissionInterval() << endl;
-//
-//    out << "\tHello due in " << (int)simTime().dbl()%this->helloInterval << endl;
-//
-//    out << "Neighbor Count is " << this->getNeighborCount();
-//    out << ", Adjacent neighbor count is " << adjCount << endl;
-//
-//    for(auto it=this->neighbors.begin(); it!=this->neighbors.end(); it++) {
-//        if((*it)->getNeighborID() == this->DesignatedRouterID)
-//            out << "Adjacent with neighbor "<< this->DesignatedRouterID << "(Designated Router)\n";
-//        else if((*it)->getNeighborID() == this->BackupRouterID)
-//            out << "Adjacent with neighbor "<< this->BackupRouterID << "(Backup Designated Router)\n";
-//        else if((*it)->getState() == OSPFv3Neighbor::FULL_STATE)
-//            out << "Adjacent with neighbor " << (*it)->getNeighborID() << endl;
-//    }
-//
-//    out << "Suppress Hello for 0 neighbor(s)\n";
-//
-//    out << "TOTO JE NAVYSE\n";
-//    for (int index = 0; index < interfaceAddresses.size(); index++)
-//    {
-//        out << index << " - " <<  interfaceAddresses[index].prefix.str() << "/" << interfaceAddresses[index].prefixLength  << "\n";
-//    }
-//
-//    return out.str();
-//}//detailedInfo
+
+std::string OSPFv3Interface::info() const
+{
+    std::stringstream out;
+
+    out << "Interface " << this->getIntName() << " Info:\n";
+    return out.str();
+}//info
+
+std::string OSPFv3Interface::detailedInfo() const
+{
+    std::stringstream out;
+    Ipv4Address neighbor;
+    Ipv6Address designatedIP;
+    Ipv6Address backupIP;
+
+    int adjCount = 0;
+    for(auto it=this->neighbors.begin(); it!=this->neighbors.end(); it++) {
+        if((*it)->getState()==OSPFv3Neighbor::FULL_STATE)
+            adjCount++;
+
+        if((*it)->getNeighborID() == this->DesignatedRouterID)
+            designatedIP = (*it)->getNeighborIP();
+        if((*it)->getNeighborID() == this->BackupRouterID)
+            backupIP = (*it)->getNeighborIP();
+    }
+
+    out << "Interface " << this->getIntName() << "\n"; //TODO - isUP?
+    out << "Link Local Address ";//TODO - for over all addresses
+    InterfaceEntry* ie = this->ift->getInterfaceByName(this->getIntName().c_str());
+    Ipv6InterfaceData *ipv6int = ie->ipv6Data();
+    out << ipv6int->getLinkLocalAddress() << ", Interface ID " << this->interfaceId << "\n";
+
+    if(this->getArea()->getInstance()->getAddressFamily() == IPV4INSTANCE) {
+        Ipv4InterfaceData* ipv4int = ie->ipv4Data();
+        out << "Internet Address " << ipv4int->getIPAddress() << endl;
+    }
+
+    out << "Area " << this->getArea()->getAreaID().getInt();
+    out << ", Process ID " << this->getArea()->getInstance()->getProcess()->getProcessID();
+    out << ", Instance ID " << this->getArea()->getInstance()->getInstanceID() << ", ";
+    out << "Router ID " << this->getArea()->getInstance()->getProcess()->getRouterID() << endl;
+
+    out << "Network Type " << this->OSPFv3IntTypeOutput[this->getType()];
+    out << ", Cost: " << this->getInterfaceCost() << endl;//TODO - type needs to be a string
+
+    out << "Transmit Delay is " << this->getTransDelayInterval() << " sec, ";
+    out << "State " << this->OSPFv3IntStateOutput[this->getState()];
+    out << ", Priority " << this->getRouterPriority() << endl;
+
+    out << "Designated Router (ID) " << this->getDesignatedID().str(false);
+    out << ", local address " << this->getDesignatedIP() << endl;
+
+    out << "Backup Designated router (ID) " << this->getBackupID().str(false);
+    out << ", local address " << this->getBackupIP() << endl;
+
+    out << "Timer intervals configured, Hello " << this->getHelloInterval();
+    out << ", Dead " << this->getDeadInterval();
+    out << ", Wait " << this->getDeadInterval();
+    out << ", Retransmit " << this->getRetransmissionInterval() << endl;
+
+    out << "\tHello due in " << (int)simTime().dbl()%this->helloInterval << endl;
+
+    out << "Neighbor Count is " << this->getNeighborCount();
+    out << ", Adjacent neighbor count is " << adjCount << endl;
+
+    for(auto it=this->neighbors.begin(); it!=this->neighbors.end(); it++) {
+        if((*it)->getNeighborID() == this->DesignatedRouterID)
+            out << "Adjacent with neighbor "<< this->DesignatedRouterID << "(Designated Router)\n";
+        else if((*it)->getNeighborID() == this->BackupRouterID)
+            out << "Adjacent with neighbor "<< this->BackupRouterID << "(Backup Designated Router)\n";
+        else if((*it)->getState() == OSPFv3Neighbor::FULL_STATE)
+            out << "Adjacent with neighbor " << (*it)->getNeighborID() << endl;
+    }
+
+    out << "Suppress Hello for 0 neighbor(s)\n";
+
+    out << "TOTO JE NAVYSE\n";
+    for (int index = 0; index < interfaceAddresses.size(); index++)
+    {
+        out << index << " - " <<  interfaceAddresses[index].prefix.str() << "/" << interfaceAddresses[index].prefixLength  << "\n";
+    }
+
+    return out.str();
+}//detailedInfo
 }//namespace inet

@@ -28,25 +28,25 @@ void OSPFv3InterfaceStateWaiting::processEvent(OSPFv3Interface* interface, OSPFv
         interface->reset();
         changeState(interface, new OSPFv3InterfaceStateLoopback, this);
     }
-//    if (event == OSPFv3Interface::HELLO_TIMER_EVENT) {
-//        if (interface->getType() == OSPFv3Interface::BROADCAST_TYPE) {
-//            OSPFv3HelloPacket* hello = interface->prepareHello();
-//            interface->getArea()->getInstance()->getProcess()->sendPacket(hello, Ipv6Address::ALL_OSPF_ROUTERS_MCAST, interface->getIntName().c_str());
-//        }
-//        else {    // Interface::NBMA
-//            unsigned long neighborCount = interface->getNeighborCount();
-//            int hopLimit = (interface->getType() == OSPFv3Interface::VIRTUAL_TYPE) ? VIRTUAL_LINK_TTL : 1;
-//            for (unsigned long i = 0; i < neighborCount; i++) {
-//                OSPFv3Neighbor *neighbor = interface->getNeighbor(i);
-//                if (neighbor->getNeighborPriority() > 0) {
-//                    OSPFv3HelloPacket* hello = interface->prepareHello();
-//                    Ipv6Address dest = neighbor->getNeighborIP();
-//                    interface->getArea()->getInstance()->getProcess()->sendPacket(hello, dest, interface->getIntName().c_str(), hopLimit);
-//                }
-//            }
-//        }
-//        interface->getArea()->getInstance()->getProcess()->setTimer(interface->getHelloTimer(), interface->getHelloInterval());
-//    }
+    if (event == OSPFv3Interface::HELLO_TIMER_EVENT) {
+        if (interface->getType() == OSPFv3Interface::BROADCAST_TYPE) {
+            Packet* hello = interface->prepareHello();
+            interface->getArea()->getInstance()->getProcess()->sendPacket(hello, Ipv6Address::ALL_OSPF_ROUTERS_MCAST, interface->getIntName().c_str());
+        }
+        else {    // Interface::NBMA
+            unsigned long neighborCount = interface->getNeighborCount();
+            int hopLimit = (interface->getType() == OSPFv3Interface::VIRTUAL_TYPE) ? VIRTUAL_LINK_TTL : 1;
+            for (unsigned long i = 0; i < neighborCount; i++) {
+                OSPFv3Neighbor *neighbor = interface->getNeighbor(i);
+                if (neighbor->getNeighborPriority() > 0) {
+                    Packet* hello = interface->prepareHello();
+                    Ipv6Address dest = neighbor->getNeighborIP();
+                    interface->getArea()->getInstance()->getProcess()->sendPacket(hello, dest, interface->getIntName().c_str(), hopLimit);
+                }
+            }
+        }
+        interface->getArea()->getInstance()->getProcess()->setTimer(interface->getHelloTimer(), interface->getHelloInterval());
+    }
 //    if (event == OSPFv3Interface::ACKNOWLEDGEMENT_TIMER_EVENT) {
 //        interface->sendDelayedAcknowledgements();
 //    }
