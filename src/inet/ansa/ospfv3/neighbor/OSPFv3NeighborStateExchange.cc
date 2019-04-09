@@ -50,13 +50,13 @@ void OSPFv3NeighborStateExchange::processEvent(OSPFv3Neighbor *neighbor, OSPFv3N
             changeState(neighbor, new OSPFv3NeighborState2Way, this);
         }
     }
-//    if ((event == OSPFv3Neighbor::SEQUENCE_NUMBER_MISMATCH) || (event == OSPFv3Neighbor::BAD_LINK_STATE_REQUEST)) {
-//        neighbor->reset();
-//        neighbor->incrementDDSequenceNumber();
-//        neighbor->sendDDPacket(true);
-//        neighbor->getInterface()->getArea()->getInstance()->getProcess()->setTimer(neighbor->getDDRetransmissionTimer(), neighbor->getInterface()->getRetransmissionInterval());
-//        changeState(neighbor, new OSPFv3NeighborStateExStart, this);
-//    }
+    if ((event == OSPFv3Neighbor::SEQUENCE_NUMBER_MISMATCH) || (event == OSPFv3Neighbor::BAD_LINK_STATE_REQUEST)) {
+        neighbor->reset();
+        neighbor->incrementDDSequenceNumber();
+        neighbor->sendDDPacket(true);
+        neighbor->getInterface()->getArea()->getInstance()->getProcess()->setTimer(neighbor->getDDRetransmissionTimer(), neighbor->getInterface()->getRetransmissionInterval());
+        changeState(neighbor, new OSPFv3NeighborStateExStart, this);
+    }
     if (event == OSPFv3Neighbor::EXCHANGE_DONE) {
         EV_DEBUG << "OSPFv3Neighbor::EXCHANGE_DONE caught in ExchangeState\n";
         if (!neighbor->isLinkStateRequestListEmpty()) {

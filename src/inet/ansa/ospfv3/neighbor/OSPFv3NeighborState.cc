@@ -18,14 +18,11 @@
 
 #include "inet/ansa/ospfv3/neighbor/OSPFv3NeighborState.h"
 #include "inet/ansa/ospfv3/neighbor/OSPFv3Neighbor.h"
-//#include "ansa/routing/ospfv3/process/OSPFv3Area.h"
-//#include "ansa/routing/ospfv3/interface/OSPFv3Interface.h"
-//#include "ansa/routing/ospfv3/process/OSPFv3Process.h"
 
 namespace inet {
 
 void OSPFv3NeighborState::changeState(OSPFv3Neighbor *neighbor, OSPFv3NeighborState *newState, OSPFv3NeighborState *currentState)
-{//TODO
+{
     OSPFv3Neighbor::OSPFv3NeighborStateType oldState = currentState->getState();
     OSPFv3Neighbor::OSPFv3NeighborStateType nextState = newState->getState();
     bool shouldRebuildRoutingTable = false;
@@ -35,21 +32,21 @@ void OSPFv3NeighborState::changeState(OSPFv3Neighbor *neighbor, OSPFv3NeighborSt
     neighbor->changeState(newState, currentState);
 
 //    if ((oldState == OSPFv3Neighbor::FULL_STATE) || (nextState == OSPFv3Neighbor::FULL_STATE)) {
-//        IPv4Address routerID = neighbor->getInterface()->getArea()->getInstance()->getProcess()->getRouterID();
-////        IPv4Address routerID = neighbor->getContainingInterface()->getContainingArea()->getContainingInstance()->getContainingProcess()->getRouterID();
+//        Ipv4Address routerID = neighbor->getInterface()->getArea()->getInstance()->getProcess()->getRouterID();
+////        Ipv4Address routerID = neighbor->getContainingInterface()->getContainingArea()->getContainingInstance()->getContainingProcess()->getRouterID();
 //        RouterLSA *routerLSA = neighbor->getInterface()->getArea()->findRouterLSA(routerID);
 //
 //        if (routerLSA != nullptr) {
 //            long sequenceNumber = routerLSA->getHeader().getLsaSequenceNumber();
 //            if (sequenceNumber == MAX_SEQUENCE_NUMBER) {
-//                routerLSA->getHeader().setLsaAge(MAX_AGE);
+//                routerLSA->getHeaderForUpdate().setLsaAge(MAX_AGE);
 //                neighbor->getInterface()->getArea()->floodLSA(routerLSA);
 //                routerLSA->incrementInstallTime();
 //            }
 //            else {
 //                RouterLSA *newLSA = neighbor->getInterface()->getArea()->originateRouterLSA();
 //
-//                newLSA->getHeader().setLsaSequenceNumber(sequenceNumber + 1);
+//                newLSA->getHeaderForUpdate().setLsaSequenceNumber(sequenceNumber + 1);
 ////                shouldRebuildRoutingTable |= routerLSA->update(newLSA);
 //                shouldRebuildRoutingTable |= neighbor->getInterface()->getArea()->updateRouterLSA(routerLSA, newLSA);
 //                if (shouldRebuildRoutingTable)
@@ -64,12 +61,12 @@ void OSPFv3NeighborState::changeState(OSPFv3Neighbor *neighbor, OSPFv3NeighborSt
 //        // ma DR NetworkLSAList.size() = 2 , napriek tomu, ze v DB ma NetworkLSA len jedno LG
 //        if (neighbor->getInterface()->getState() == OSPFv3Interface::INTERFACE_STATE_DESIGNATED) {
 //            NetworkLSA *networkLSA = neighbor->getInterface()->getArea()->findNetworkLSAByLSID(
-//                    IPv4Address(neighbor->getInterface()->getInterfaceId()));
+//                    Ipv4Address(neighbor->getInterface()->getInterfaceId()));
 //
 //            if (networkLSA != nullptr) {
 //                long sequenceNumber = networkLSA->getHeader().getLsaSequenceNumber();
 //                if (sequenceNumber == MAX_SEQUENCE_NUMBER) {
-//                    networkLSA->getHeader().setLsaAge(MAX_AGE);
+//                    networkLSA->getHeaderForUpdate()().setLsaAge(MAX_AGE);
 //                    neighbor->getInterface()->getArea()->floodLSA(networkLSA);
 //                    networkLSA->incrementInstallTime();
 //                }
@@ -82,21 +79,21 @@ void OSPFv3NeighborState::changeState(OSPFv3Neighbor *neighbor, OSPFv3NeighborSt
 //                        delete newLSA;
 //                    }
 //                    else {    // no neighbors on the network -> old NetworkLSA must be flushed
-//                        networkLSA->getHeader().setLsaAge(MAX_AGE);
+//                        networkLSA->getHeaderForUpdate().setLsaAge(MAX_AGE);
 //                        networkLSA->incrementInstallTime();
 //                    }
 //                    std::cout << "neighbor router ID = " << neighbor->getInterface()->getArea()->getInstance()->getProcess()->getRouterID() << endl;
-//                                std::cout << "neighbor NetworkLSA getCount = " << neighbor->getInterface()->getArea()->getNetworkLSACount() << endl;
+//                    std::cout << "neighbor NetworkLSA getCount = " << neighbor->getInterface()->getArea()->getNetworkLSACount() << endl;
 //
 //                    neighbor->getInterface()->getArea()->floodLSA(networkLSA);
 //                }
 //            }
 //        }
 //    }
-//
-//    if (shouldRebuildRoutingTable) {
-//        neighbor->getInterface()->getArea()->getInstance()->getProcess()->rebuildRoutingTable();
-//    }
+
+    if (shouldRebuildRoutingTable) {
+        neighbor->getInterface()->getArea()->getInstance()->getProcess()->rebuildRoutingTable();
+    }
 }
 
 } // namespace inet

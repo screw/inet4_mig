@@ -54,17 +54,17 @@ void OSPFv3NeighborStateLoading::processEvent(OSPFv3Neighbor *neighbor, OSPFv3Ne
             changeState(neighbor, new OSPFv3NeighborState2Way, this);
         }
     }
-//    if ((event == OSPFv3Neighbor::SEQUENCE_NUMBER_MISMATCH) || (event == OSPFv3Neighbor::BAD_LINK_STATE_REQUEST)) {
-//        EV_DEBUG << "OSPFv3Neighbor::SEQUENCE_NUMBER_MISMATCH or BAD_LINK_STATE_REQUEST caught StateLoading\n";
-//        neighbor->reset();
-//        neighbor->incrementDDSequenceNumber();
-//        neighbor->sendDDPacket(true);
-//        neighbor->getInterface()->getArea()->getInstance()->getProcess()->setTimer(neighbor->getDDRetransmissionTimer(), neighbor->getInterface()->getRetransmissionInterval());
-//        changeState(neighbor, new OSPFv3NeighborStateExStart, this);
-//    }
+    if ((event == OSPFv3Neighbor::SEQUENCE_NUMBER_MISMATCH) || (event == OSPFv3Neighbor::BAD_LINK_STATE_REQUEST)) {
+        EV_DEBUG << "OSPFv3Neighbor::SEQUENCE_NUMBER_MISMATCH or BAD_LINK_STATE_REQUEST caught StateLoading\n";
+        neighbor->reset();
+        neighbor->incrementDDSequenceNumber();
+        neighbor->sendDDPacket(true);
+        neighbor->getInterface()->getArea()->getInstance()->getProcess()->setTimer(neighbor->getDDRetransmissionTimer(), neighbor->getInterface()->getRetransmissionInterval());
+        changeState(neighbor, new OSPFv3NeighborStateExStart, this);
+    }
     if (event == OSPFv3Neighbor::REQUEST_RETRANSMISSION_TIMER) {
         EV_DEBUG << "OSPFv3Neighbor::REQUEST_RETRANSMISSION_TIMER caught StateLoading\n";
-//        neighbor->sendLinkStateRequestPacket();
+//        neighbor->sendLinkStateRequestPacket();   TODO LG, PRECO JE TOTO ZAKOMENTOVANE ?
 //        neighbor->startRequestRetransmissionTimer();
     }
     if (event == OSPFv3Neighbor::UPDATE_RETRANSMISSION_TIMER) {
@@ -72,9 +72,9 @@ void OSPFv3NeighborStateLoading::processEvent(OSPFv3Neighbor *neighbor, OSPFv3Ne
 //        neighbor->retransmitUpdatePacket();
 //        neighbor->startUpdateRetransmissionTimer();
     }
-//    if (event == OSPFv3Neighbor::DD_RETRANSMISSION_TIMER) {
-//        EV_DEBUG << "OSPFv3Neighbor::DD_RETRANSMISSION_TIMER caught StateLoading\n";
-//        neighbor->deleteLastSentDDPacket();
-//    }
+    if (event == OSPFv3Neighbor::DD_RETRANSMISSION_TIMER) {
+        EV_DEBUG << "OSPFv3Neighbor::DD_RETRANSMISSION_TIMER caught StateLoading\n";
+        neighbor->deleteLastSentDDPacket();
+    }
 }
 }//namespace inet

@@ -152,11 +152,11 @@ class INET_API OSPFv3Interface : public cObject
     OSPFv3Interface::OSPFv3InterfaceFAState getState() const;
 
     void processHelloPacket(Packet* packet);
-    void processDDPacket(OSPFv3Packet* packet);
-    bool preProcessDDPacket(OSPFv3DatabaseDescription *ddPacket, OSPFv3Neighbor* neighbor, bool inExchangeStart);
+    void processDDPacket(Packet* packet);
+    bool preProcessDDPacket(Packet* packet, OSPFv3Neighbor* neighbor, bool inExchangeStart);
     void processLSR(OSPFv3Packet* packet, OSPFv3Neighbor* neighbor);
-    OSPFv3LSUpdate* prepareLSUHeader();
-    OSPFv3LSUpdate* prepareUpdatePacket(OSPFv3LSA *lsa, OSPFv3LSUpdate* updatePacket);
+    Packet* prepareLSUHeader();
+    Packet* prepareUpdatePacket(OSPFv3LSA *lsa, Packet* updatePacket);
     void processLSU(OSPFv3Packet* packet, OSPFv3Neighbor* neighbor);
     void processLSAck(OSPFv3Packet* packet, OSPFv3Neighbor* neighbor);
     bool floodLSA(OSPFv3LSA* lsa, OSPFv3Interface* interface=nullptr, OSPFv3Neighbor* neighbor=nullptr);

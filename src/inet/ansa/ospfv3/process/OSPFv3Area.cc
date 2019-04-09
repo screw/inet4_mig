@@ -117,24 +117,24 @@ OSPFv3Interface* OSPFv3Area::getInterfaceByIndex(Ipv4Address LinkStateID)
     return nullptr;
 }
 
-//OSPFv3LSAHeader* OSPFv3Area::findLSA(LSAKeyType lsaKey)     //asi skor hladas getLSAbyKey
-//{
-//
-////    EV_DEBUG << "FIND LSA:\n";
-//
-//    switch (lsaKey.LSType) {
-//    case ROUTER_LSA: {
-//        RouterLSA* lsa = this->getRouterLSAbyKey(lsaKey);
-//        if(lsa == nullptr) {
-//            return nullptr;
-//        }
-//        else {
-//            OSPFv3LSAHeader* lsaHeader = &(lsa->getHeader());
-//            return lsaHeader;
-//        }
-//    }
-//    break;
-//
+const OSPFv3LSAHeader* OSPFv3Area::findLSA(LSAKeyType lsaKey)     //asi skor hladas getLSAbyKey
+{
+
+//    EV_DEBUG << "FIND LSA:\n";
+
+    switch (lsaKey.LSType) {
+    case ROUTER_LSA: {
+        RouterLSA* lsa = this->getRouterLSAbyKey(lsaKey);
+        if(lsa == nullptr) {
+            return nullptr;
+        }
+        else {
+            const OSPFv3LSAHeader* lsaHeader = &(lsa->getHeader());
+            return lsaHeader;
+        }
+    }
+    break;
+
 //    case NETWORK_LSA: {
 //        NetworkLSA* lsa = this->getNetworkLSAbyKey(lsaKey);
 //                if(lsa == nullptr) {
@@ -147,36 +147,36 @@ OSPFv3Interface* OSPFv3Area::getInterfaceByIndex(Ipv4Address LinkStateID)
 //        //return this->getNetworkLSAbyId(lsaKey.linkStateID);
 //    }
 //    break;
-//
-////    case SUMMARYLSA_NETWORKS_TYPE:
-////    case SUMMARYLSA_ASBOUNDARYROUTERS_TYPE: {
-////        auto areaIt = areasByID.find(areaID);
-////        if (areaIt != areasByID.end()) {
-////            return areaIt->second->findSummaryLSA(lsaKey);
-////        }
-////    }
-////    break;
-////
-////    case AS_EXTERNAL_LSA_TYPE: {
-////        return findASExternalLSA(lsaKey);
-////    }
-////    break;
-////
-//    default:
-//        //ASSERT(false);
-//        break;
+
+//    case SUMMARYLSA_NETWORKS_TYPE:
+//    case SUMMARYLSA_ASBOUNDARYROUTERS_TYPE: {
+//        auto areaIt = areasByID.find(areaID);
+//        if (areaIt != areasByID.end()) {
+//            return areaIt->second->findSummaryLSA(lsaKey);
+//        }
 //    }
-//    return nullptr;
-//}
+//    break;
 //
-//Ipv4Address OSPFv3Area::getNewRouterLinkStateID()
-//{
-//    Ipv4Address currIP = this->routerLsID;
-//    int newIP = currIP.getInt()+1;
-//    this->routerLsID = Ipv4Address(newIP);
-//    return currIP;
-//}
+//    case AS_EXTERNAL_LSA_TYPE: {
+//        return findASExternalLSA(lsaKey);
+//    }
+//    break;
 //
+    default:
+        //ASSERT(false);
+        break;
+    }
+    return nullptr;
+}
+
+Ipv4Address OSPFv3Area::getNewRouterLinkStateID()
+{
+    Ipv4Address currIP = this->routerLsID;
+    int newIP = currIP.getInt()+1;
+    this->routerLsID = Ipv4Address(newIP);
+    return currIP;
+}
+
 //void OSPFv3Area::ageDatabase()
 //{
 //    long lsaCount = this->getRouterLSACount();

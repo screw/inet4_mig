@@ -15,11 +15,11 @@ void OSPFv3InterfaceStateWaiting::processEvent(OSPFv3Interface* interface, OSPFv
      * INTERFACE_DOWN or LOOPBACK_IND - transit to DOWN
      *
      */
-//    if ((event == OSPFv3Interface::BACKUP_SEEN_EVENT) ||                              MIGRACIA LG
-//            (event == OSPFv3Interface::WAIT_TIMER_EVENT))
-//    {
-//        calculateDesignatedRouter(interface);
-//    }
+    if ((event == OSPFv3Interface::BACKUP_SEEN_EVENT) ||
+            (event == OSPFv3Interface::WAIT_TIMER_EVENT))
+    {
+        calculateDesignatedRouter(interface);
+    }
     if (event == OSPFv3Interface::INTERFACE_DOWN_EVENT) {
         interface->reset();
         changeState(interface, new OSPFv3InterfaceStateDown, this);
@@ -47,9 +47,9 @@ void OSPFv3InterfaceStateWaiting::processEvent(OSPFv3Interface* interface, OSPFv
         }
         interface->getArea()->getInstance()->getProcess()->setTimer(interface->getHelloTimer(), interface->getHelloInterval());
     }
-//    if (event == OSPFv3Interface::ACKNOWLEDGEMENT_TIMER_EVENT) {
-//        interface->sendDelayedAcknowledgements();
-//    }
+    if (event == OSPFv3Interface::ACKNOWLEDGEMENT_TIMER_EVENT) {
+        interface->sendDelayedAcknowledgements();
+    }
 }//processEvent
 
 

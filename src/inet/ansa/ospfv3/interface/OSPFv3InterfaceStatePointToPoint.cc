@@ -19,22 +19,22 @@ void OSPFv3InterfaceStatePointToPoint::processEvent(OSPFv3Interface* interface, 
         interface->reset();
         changeState(interface, new OSPFv3InterfaceStateLoopback, this);
     }
-//    if (event == OSPFv3Interface::HELLO_TIMER_EVENT) {
-//        if (interface->getType() == OSPFv3Interface::VIRTUAL_TYPE) {
-//            if (interface->getNeighborCount() > 0) {                                          MIGRACIA LG
-//                OSPFv3HelloPacket* hello = interface->prepareHello();
-//                Ipv6Address dest = interface->getNeighbor(0)->getNeighborIP();
-//                interface->getArea()->getInstance()->getProcess()->sendPacket(hello, dest, interface->getIntName().c_str(), VIRTUAL_LINK_TTL);
-//            }
-//        }
-//        else {
-//            OSPFv3HelloPacket* hello = interface->prepareHello();
-//            interface->getArea()->getInstance()->getProcess()->sendPacket(hello, Ipv6Address::ALL_OSPF_ROUTERS_MCAST, interface->getIntName().c_str());
-//        }
-//        interface->getArea()->getInstance()->getProcess()->setTimer(interface->getHelloTimer(), interface->getHelloInterval());
-//    }
-//    if (event == OSPFv3Interface::ACKNOWLEDGEMENT_TIMER_EVENT) {
-//        interface->sendDelayedAcknowledgements();
-//    }
+    if (event == OSPFv3Interface::HELLO_TIMER_EVENT) {
+        if (interface->getType() == OSPFv3Interface::VIRTUAL_TYPE) {
+            if (interface->getNeighborCount() > 0) {
+                Packet* hello = interface->prepareHello();
+                Ipv6Address dest = interface->getNeighbor(0)->getNeighborIP();
+                interface->getArea()->getInstance()->getProcess()->sendPacket(hello, dest, interface->getIntName().c_str(), VIRTUAL_LINK_TTL);
+            }
+        }
+        else {
+            Packet* hello = interface->prepareHello();
+            interface->getArea()->getInstance()->getProcess()->sendPacket(hello, Ipv6Address::ALL_OSPF_ROUTERS_MCAST, interface->getIntName().c_str());
+        }
+        interface->getArea()->getInstance()->getProcess()->setTimer(interface->getHelloTimer(), interface->getHelloInterval());
+    }
+    if (event == OSPFv3Interface::ACKNOWLEDGEMENT_TIMER_EVENT) {
+        interface->sendDelayedAcknowledgements();
+    }
 }//processEvent
 }//namespace inet

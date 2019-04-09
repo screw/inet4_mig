@@ -26,28 +26,28 @@ void OSPFv3InterfaceStateDown::processEvent(OSPFv3Interface* interface, OSPFv3In
             switch (interface->getType()) {
             case OSPFv3Interface::POINTTOPOINT_TYPE:
             case OSPFv3Interface::POINTTOMULTIPOINT_TYPE:
-//            case OSPFv3Interface::VIRTUAL_TYPE:                                                               MIGRACIA LG
-//                changeState(interface, new OSPFv3InterfaceStatePointToPoint, this);
-//                break;
-//
-//            case OSPFv3Interface::NBMA_TYPE:
-//                if (interface->getRouterPriority() == 0) {
-//                    changeState(interface, new OSPFv3InterfaceStateDROther, this);
-//                }
-//                else {
-//                    changeState(interface, new OSPFv3InterfaceStateWaiting, this);
-//                    interface->getArea()->getInstance()->getProcess()->setTimer(interface->getWaitTimer(), interface->getDeadInterval());
-//
-//                    long neighborCount = interface->getNeighborCount();
-//                    for (long i = 0; i < neighborCount; i++) {
-//                        OSPFv3Neighbor *neighbor = interface->getNeighbor(i);
-//                        if (neighbor->getNeighborPriority() > 0) {
-//                            neighbor->processEvent(OSPFv3Neighbor::START);
-//                        }
-//                    }
-//                }
-//                break;
-//
+            case OSPFv3Interface::VIRTUAL_TYPE:
+                changeState(interface, new OSPFv3InterfaceStatePointToPoint, this);
+                break;
+
+            case OSPFv3Interface::NBMA_TYPE:
+                if (interface->getRouterPriority() == 0) {
+                    changeState(interface, new OSPFv3InterfaceStateDROther, this);
+                }
+                else {
+                    changeState(interface, new OSPFv3InterfaceStateWaiting, this);
+                    interface->getArea()->getInstance()->getProcess()->setTimer(interface->getWaitTimer(), interface->getDeadInterval());
+
+                    long neighborCount = interface->getNeighborCount();
+                    for (long i = 0; i < neighborCount; i++) {
+                        OSPFv3Neighbor *neighbor = interface->getNeighbor(i);
+                        if (neighbor->getNeighborPriority() > 0) {
+                            neighbor->processEvent(OSPFv3Neighbor::START);
+                        }
+                    }
+                }
+                break;
+
             case OSPFv3Interface::BROADCAST_TYPE:
                 if (interface->getRouterPriority() == 0) {
                     changeState(interface, new OSPFv3InterfaceStateDROther, this);
@@ -62,18 +62,18 @@ void OSPFv3InterfaceStateDown::processEvent(OSPFv3Interface* interface, OSPFv3In
                 break;
             }
         }
-        else if(interface->isInterfacePassive()) {
-//            LinkLSA *lsa = interface->originateLinkLSA();                                                        MIGRACIA LG
+//        else if(interface->isInterfacePassive()) {            MIGRACIA LG
+//            LinkLSA *lsa = interface->originateLinkLSA();
 //            interface->installLinkLSA(lsa);
 //            IntraAreaPrefixLSA *prefLsa = interface->getArea()->originateIntraAreaPrefixLSA();
 //            if (!interface->getArea()->installIntraAreaPrefixLSA(prefLsa))
 //                EV_DEBUG << "Intra Area Prefix LSA for network beyond interface " << interface->getIntName() << " was not created!\n";
-
-            changeState(interface, new OSPFv3InterfacePassive, this);
-        }
+//
+//            changeState(interface, new OSPFv3InterfacePassive, this);
+//        }
         if (event == OSPFv3Interface::LOOP_IND_EVENT) {
             interface->reset();
-//              changeState(interface, new OSPFv3InterfaceStateLoopback, this);                         $$$$$$$$$ taktiez MIGRACIA LG
+              changeState(interface, new OSPFv3InterfaceStateLoopback, this);
         }
     }
 }//processEvent

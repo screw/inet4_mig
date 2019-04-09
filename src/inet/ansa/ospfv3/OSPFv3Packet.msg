@@ -287,7 +287,7 @@ class OSPFv3DatabaseDescription extends OSPFv3Packet {
 //************************************************//
 
 //identity of requested LSA - there may be multiple LSAs requested in a single LSR
-class OSPFv3LSRequest{
+struct OSPFv3LSRequest{
     uint16_t lsaType;
     Ipv4Address lsaID;
     Ipv4Address advertisingRouter;

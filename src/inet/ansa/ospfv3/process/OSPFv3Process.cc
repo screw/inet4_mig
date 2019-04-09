@@ -449,44 +449,44 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
 //        }
 //    }
 //} // ageDatabase
-//
-///// for IPv6 AF
-//bool OSPFv3Process::hasAddressRange(const Ipv6AddressRange& addressRange) const
-//{
-//    long instanceCount = instances.size();
-//    for (long i = 0; i < instanceCount; i++)
-//    {
-//        long areaCount = instances[i]->getAreaCount();
-//
-//        for (long j = 0; j < areaCount; j++)
-//        {
-//           if(instances[i]->getArea(j)->hasAddressRange(addressRange))
-//           {
-//               return true;
-//           }
-//        }
-//    }
-//    return false;
-//}
-//// for IPv4 AF
-//bool OSPFv3Process::hasAddressRange(const Ipv4AddressRange& addressRange) const
-//{
-//    long instanceCount = instances.size();
-//    for (long i = 0; i < instanceCount; i++)
-//    {
-//        long areaCount = instances[i]->getAreaCount();
-//
-//        for (long j = 0; j < areaCount; j++)
-//        {
-//           if(instances[i]->getArea(j)->hasAddressRange(addressRange))
-//           {
-//               return true;
-//           }
-//        }
-//    }
-//    return false;
-//}
-//
+
+// for IPv6 AF
+bool OSPFv3Process::hasAddressRange(const Ipv6AddressRange& addressRange) const
+{
+    long instanceCount = instances.size();
+    for (long i = 0; i < instanceCount; i++)
+    {
+        long areaCount = instances[i]->getAreaCount();
+
+        for (long j = 0; j < areaCount; j++)
+        {
+           if(instances[i]->getArea(j)->hasAddressRange(addressRange))
+           {
+               return true;
+           }
+        }
+    }
+    return false;
+}
+// for IPv4 AF
+bool OSPFv3Process::hasAddressRange(const Ipv4AddressRange& addressRange) const
+{
+    long instanceCount = instances.size();
+    for (long i = 0; i < instanceCount; i++)
+    {
+        long areaCount = instances[i]->getAreaCount();
+
+        for (long j = 0; j < areaCount; j++)
+        {
+           if(instances[i]->getArea(j)->hasAddressRange(addressRange))
+           {
+               return true;
+           }
+        }
+    }
+    return false;
+}
+
 void OSPFv3Process::handleTimer(cMessage* msg)
 {
     switch(msg->getKind())
@@ -689,13 +689,52 @@ void OSPFv3Process::sendPacket(Packet *packet, Ipv6Address destination, const ch
 
     switch (ospfPacket->getType())
     {
-           case HELLO_PACKET:
-           {
-               packet->setName("OSPFv3_HelloPacket");
+        case HELLO_PACKET:
+        {
+            packet->setName("OSPFv3_HelloPacket");
 
-               const auto& helloPacket = packet->peekAtFront<OSPFv3HelloPacket>();
-//               printHelloPacket(helloPacket.get(), destination, outputIfIndex);
-           }
+//            const auto& helloPacket = packet->peekAtFront<OSPFv3HelloPacket>();
+//            printHelloPacket(helloPacket.get(), destination, outputIfIndex);
+        }
+        break;
+        case DATABASE_DESCRIPTION:
+        {
+            packet->setName("OSPFv3_DDPacket");
+
+//            const auto& ddPacket = packet->peekAtFront<OSPFv3DatabaseDescription>();
+//            printDatabaseDescriptionPacket(ddPacket.get(), destination, outputIfIndex);
+        }
+        break;
+
+        case LSR:
+        {
+            packet->setName("OSPFv3_LSRPacket");
+
+//            const auto& requestPacket = packet->peekAtFront<OSPFv3LinkStateRequest>();
+//            printLinkStateRequestPacket(requestPacket.get(), destination, outputIfIndex);
+        }
+        break;
+
+        case LSU:
+        {
+            packet->setName("OSPFv3_LSUPacket");
+
+//            const auto& updatePacket = packet->peekAtFront<OSPFv3LSUpdate>();
+//            printLinkStateUpdatePacket(updatePacket.get(), destination, outputIfIndex);
+        }
+        break;
+
+        case LS_ACK:
+        {
+            packet->setName("OSPFv3_LSAckPacket");
+
+//            const auto& ackPacket = packet->peekAtFront<OSPFv3LSAck>();
+//            printLinkStateAcknowledgementPacket(ackPacket.get(), destination, outputIfIndex);
+        }
+        break;
+
+        default:
+            break;
 
     }
 //    IPv6ControlInfo *ipv6ControlInfo = new IPv6ControlInfo();

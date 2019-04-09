@@ -265,6 +265,9 @@ void OSPFv3InterfaceState::changeState(OSPFv3Interface *interface, OSPFv3Interfa
 //        interface->getArea()->getInstance()->getProcess()->rebuildRoutingTable();
 //    }
 }
+void OSPFv3InterfaceState::calculateDesignatedRouter(OSPFv3Interface *intf){
+    EV_DEBUG << "MIGRACIA LG calculateDesignatedRouter\n";
+}
 /*
 
 void OSPFv3InterfaceState::calculateDesignatedRouter(OSPFv3Interface *intf){

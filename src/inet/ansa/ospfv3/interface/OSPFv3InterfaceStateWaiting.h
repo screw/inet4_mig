@@ -20,7 +20,7 @@ class INET_API OSPFv3InterfaceStateWaiting : public OSPFv3InterfaceState
     ~OSPFv3InterfaceStateWaiting() {};
     void processEvent(OSPFv3Interface* intf, OSPFv3Interface::OSPFv3InterfaceEvent event) override;
     OSPFv3Interface::OSPFv3InterfaceFAState getState() const override { return OSPFv3Interface::INTERFACE_STATE_WAITING; }
-    std::string getInterfaceStateString() const {return std::string("OSPFv3InterfaceStateWaiting");};
+    std::string getInterfaceStateString() const override{return std::string("OSPFv3InterfaceStateWaiting");};
 };
 
 }//namespace inet

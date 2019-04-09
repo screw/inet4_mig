@@ -37,19 +37,19 @@ void OSPFv3NeighborState2Way::processEvent(OSPFv3Neighbor *neighbor, OSPFv3Neigh
         neighbor->getInterface()->getArea()->getInstance()->getProcess()->clearTimer(neighbor->getInactivityTimer());
         neighbor->getInterface()->getArea()->getInstance()->getProcess()->setTimer(neighbor->getInactivityTimer(), neighbor->getInterface()->getDeadInterval());
     }
-//    if (event == OSPFv3Neighbor::IS_ADJACENCY_OK) {
-//        EV_DEBUG << "IS_ADJACENCY_OK in Neighbor state 2way\n";
-//        if (neighbor->needAdjacency()) {
-//            if (!(neighbor->isFirstAdjacencyInited())) {
-//                neighbor->initFirstAdjacency();
-//            }
-//            else {
-//                neighbor->incrementDDSequenceNumber();
-//            }
-//            neighbor->sendDDPacket(true);
-//            neighbor->getInterface()->getArea()->getInstance()->getProcess()->setTimer(neighbor->getDDRetransmissionTimer(), neighbor->getInterface()->getRetransmissionInterval());
-//            changeState(neighbor, new OSPFv3NeighborStateExStart, this);
-//        }
-//    }
+    if (event == OSPFv3Neighbor::IS_ADJACENCY_OK) {
+        EV_DEBUG << "IS_ADJACENCY_OK in Neighbor state 2way\n";
+        if (neighbor->needAdjacency()) {
+            if (!(neighbor->isFirstAdjacencyInited())) {
+                neighbor->initFirstAdjacency();
+            }
+            else {
+                neighbor->incrementDDSequenceNumber();
+            }
+            neighbor->sendDDPacket(true);
+            neighbor->getInterface()->getArea()->getInstance()->getProcess()->setTimer(neighbor->getDDRetransmissionTimer(), neighbor->getInterface()->getRetransmissionInterval());
+            changeState(neighbor, new OSPFv3NeighborStateExStart, this);
+        }
+    }
 }
 }//namespace inet

@@ -317,6 +317,31 @@ inline bool operator<(OSPFv3LSAHeader& leftLSA, OSPFv3LSAHeader& rightLSA)
     return false;
 }
 
+inline bool operator<(const OSPFv3LSAHeader& leftLSA, const OSPFv3LSAHeader& rightLSA)
+{
+    long leftSequenceNumber = leftLSA.getLsaSequenceNumber();
+    long rightSequenceNumber = rightLSA.getLsaSequenceNumber();
+
+    if (leftSequenceNumber < rightSequenceNumber) {
+        return true;
+    }
+    if (leftSequenceNumber == rightSequenceNumber) {
+        unsigned short leftAge = leftLSA.getLsaAge();
+        unsigned short rightAge = rightLSA.getLsaAge();
+
+        if ((leftAge != MAX_AGE) && (rightAge == MAX_AGE)) {
+            return true;
+        }
+        if ((leftAge == MAX_AGE) && (rightAge != MAX_AGE)) {
+            return false;
+        }
+        if ((abs(leftAge - rightAge) > MAX_AGE_DIFF) && (leftAge > rightAge)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 inline bool operator==(OSPFv3LSAHeader& leftLSA, OSPFv3LSAHeader& rightLSA)
 {
     long leftSequenceNumber = leftLSA.getLsaSequenceNumber();

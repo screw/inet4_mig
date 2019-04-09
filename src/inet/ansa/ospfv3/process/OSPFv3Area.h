@@ -136,7 +136,7 @@ class INET_API OSPFv3Area : public cObject
 //    IntraAreaPrefixLSA* findIntraAreaPrefixLSAByReference(LSAKeyType lsaKey);
 //    IntraAreaPrefixLSA* IntraAreaPrefixLSAAlreadyExists(OSPFv3IntraAreaPrefixLSA *newLsa);
 
-    OSPFv3LSAHeader* findLSA(LSAKeyType lsaKey);
+    const OSPFv3LSAHeader* findLSA(LSAKeyType lsaKey);
     bool floodLSA(OSPFv3LSA* lsa, OSPFv3Interface* interface=nullptr, OSPFv3Neighbor* neighbor=nullptr);
 //
     void removeFromAllRetransmissionLists(LSAKeyType lsaKey);

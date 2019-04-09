@@ -19,7 +19,7 @@ class INET_API OSPFv3InterfaceStateDROther : public OSPFv3InterfaceState
     ~OSPFv3InterfaceStateDROther() {};
     virtual void processEvent(OSPFv3Interface* intf, OSPFv3Interface::OSPFv3InterfaceEvent event) override;
     OSPFv3Interface::OSPFv3InterfaceFAState getState() const override { return OSPFv3Interface::INTERFACE_STATE_DROTHER; }
-    std::string getInterfaceStateString() const {return std::string("OSPFv3InterfaceStateDROther");};
+    std::string getInterfaceStateString() const override{return std::string("OSPFv3InterfaceStateDROther");};
 };
 
 }//namespace inet

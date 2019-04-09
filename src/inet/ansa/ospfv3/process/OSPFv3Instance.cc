@@ -118,13 +118,13 @@ void OSPFv3Instance::processPacket(Packet* pk)
                     intf->processHelloPacket(pk);
                     break;
 
-//                case OSPFv3PacketType::DATABASE_DESCRIPTION:
-//                    if (neighbor != nullptr) {
-//                        EV_DEBUG << "Instance is sending packet to interface\n";
-//                        intf->processDDPacket(packet);
-//                    }
-//                    break;
-//
+                case OSPFv3PacketType::DATABASE_DESCRIPTION:
+                    if (neighbor != nullptr) {
+                        EV_DEBUG << "Instance is sending packet to interface\n";
+                        intf->processDDPacket(pk);
+                    }
+                    break;
+
 //                case OSPFv3PacketType::LSR:
 //                    if (neighbor != nullptr) {
 //                        intf->processLSR(packet, neighbor);

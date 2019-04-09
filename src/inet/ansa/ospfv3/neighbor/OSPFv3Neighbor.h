@@ -8,6 +8,8 @@
 #include "inet/ansa/ospfv3/OSPFv3Common.h"
 #include "inet/ansa/ospfv3/OSPFv3Timers.h"
 
+#include "inet/common/packet/Packet.h"
+
 namespace inet{
 
 class OSPFv3NeighborState;
@@ -109,7 +111,7 @@ class OSPFv3Neighbor{
     void sendDDPacket(bool init = false);
     void sendLinkStateRequestPacket();
 
-    void setLastReceivedDDPacket(OSPFv3DatabaseDescription* ddPacket);
+    void setLastReceivedDDPacket(OSPFv3DDPacketID packetID) { lastReceivedDDPacket = packetID; }
     OSPFv3DDPacketID getLastReceivedDDPacket(){return this->lastReceivedDDPacket;}
     bool isLinkStateRequestListEmpty(){return this->linkStateRequestList.empty();}
     bool isRequestRetransmissionTimerActive(){return this->requestRetransmissionTimerActive;}
@@ -127,7 +129,7 @@ class OSPFv3Neighbor{
 
     bool isLinkStateRequestListEmpty(LSAKeyType lsaKey) const;
 
-    void addToRequestList(OSPFv3LSAHeader *lsaHeader);
+    void addToRequestList(const OSPFv3LSAHeader *lsaHeader);
     bool retransmitDatabaseDescriptionPacket();
     bool isLSAOnRequestList(LSAKeyType lsaKey);
     OSPFv3LSAHeader *findOnRequestList(LSAKeyType lsaKey);
@@ -169,7 +171,7 @@ class OSPFv3Neighbor{
     std::list<OSPFv3LSAHeader *> databaseSummaryList;//database summary list - complete list of LSAs that make up the area link-state database - the neighbor goes into Database Exchange state
     std::list<OSPFv3LSAHeader *> linkStateRequestList;//link state request list - list of LSAs that need to be received from the neighbor
     std::list<TransmittedLSA > transmittedLSAs;//link state retransmission list - LSA were flooded but not acknowledged, these are retransmitted until acknowledged or until the adjacency ends
-    OSPFv3DatabaseDescription *lastTransmittedDDPacket = nullptr;
+    Packet *lastTransmittedDDPacket = nullptr;
 
     OSPFv3Interface* containingInterface;
     static unsigned long ddSequenceNumberInitSeed;

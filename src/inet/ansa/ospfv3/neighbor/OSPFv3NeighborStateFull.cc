@@ -48,23 +48,23 @@ void OSPFv3NeighborStateFull::processEvent(OSPFv3Neighbor *neighbor, OSPFv3Neigh
             changeState(neighbor, new OSPFv3NeighborState2Way, this);
         }
     }
-//    if ((event == OSPFv3Neighbor::SEQUENCE_NUMBER_MISMATCH) || (event == OSPFv3Neighbor::BAD_LINK_STATE_REQUEST)) {
-//        EV_DEBUG << "OSPFv3Neighbor::SEQUENCE_NUMBER_MISMATCH or BAD_LINK_STATE_REQUEST caught in FullState\n";
-//        neighbor->reset();
-//        neighbor->incrementDDSequenceNumber();
-//        neighbor->sendDDPacket(true);
-//        neighbor->getInterface()->getArea()->getInstance()->getProcess()->setTimer(neighbor->getDDRetransmissionTimer(), neighbor->getInterface()->getRetransmissionInterval());
-//        changeState(neighbor, new OSPFv3NeighborStateExStart, this);
-//    }
-//    if (event == OSPFv3Neighbor::UPDATE_RETRANSMISSION_TIMER) {
-//        EV_DEBUG << "OSPFv3Neighbor::UPDATE_RETRANSMISSION_TIMER caught in FullState\n";
-//        neighbor->retransmitUpdatePacket();
-//        neighbor->startUpdateRetransmissionTimer();
-//        EV_DEBUG << "END\n";
-//    }
-//    if (event == OSPFv3Neighbor::DD_RETRANSMISSION_TIMER) {
-//        EV_DEBUG << "OSPFv3Neighbor::DD_RETRANSMISSION_TIMER caught in FullState\n";
-//        neighbor->deleteLastSentDDPacket();
-//    }
+    if ((event == OSPFv3Neighbor::SEQUENCE_NUMBER_MISMATCH) || (event == OSPFv3Neighbor::BAD_LINK_STATE_REQUEST)) {
+        EV_DEBUG << "OSPFv3Neighbor::SEQUENCE_NUMBER_MISMATCH or BAD_LINK_STATE_REQUEST caught in FullState\n";
+        neighbor->reset();
+        neighbor->incrementDDSequenceNumber();
+        neighbor->sendDDPacket(true);
+        neighbor->getInterface()->getArea()->getInstance()->getProcess()->setTimer(neighbor->getDDRetransmissionTimer(), neighbor->getInterface()->getRetransmissionInterval());
+        changeState(neighbor, new OSPFv3NeighborStateExStart, this);
+    }
+    if (event == OSPFv3Neighbor::UPDATE_RETRANSMISSION_TIMER) {
+        EV_DEBUG << "OSPFv3Neighbor::UPDATE_RETRANSMISSION_TIMER caught in FullState\n";
+        neighbor->retransmitUpdatePacket();
+        neighbor->startUpdateRetransmissionTimer();
+        EV_DEBUG << "END\n";
+    }
+    if (event == OSPFv3Neighbor::DD_RETRANSMISSION_TIMER) {
+        EV_DEBUG << "OSPFv3Neighbor::DD_RETRANSMISSION_TIMER caught in FullState\n";
+        neighbor->deleteLastSentDDPacket();
+    }
 }
 }//namespace inet
