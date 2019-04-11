@@ -1,7 +1,6 @@
 #include "inet/ansa/ospfv3/interface/OSPFv3Interface.h"
 #include "inet/ansa/ospfv3/interface/OSPFv3InterfaceStateDown.h"
 #include "inet/ansa/ospfv3/interface/OSPFv3InterfaceState.h"
-//#include "inet/networklayer/ipv6/IPv6Datagram_m.h" LG,  v novom inete nie je , nahrada , asi Ipv6Header_m
 #include "inet/networklayer/ipv6/Ipv6Header_m.h"
 #include "inet/networklayer/common/L3AddressTag_m.h"
 
@@ -35,7 +34,6 @@ OSPFv3Interface::OSPFv3Interface(const char* name, cModule* routerModule, OSPFv3
     Ipv6InterfaceData *ipv6int = ie->ipv6Data();
     this->interfaceId = ift->getInterfaceById(ie->getInterfaceId())->getInterfaceId();
     this->interfaceLLIP = ipv6int->getLinkLocalAddress();//TODO - check
-//    EV_DEBUG << "Interface Link Local IP: " << ipv6int->getLinkLocalAddress().Ipv6Address() << "\n";
     this->interfaceType = interfaceType;
     this->passiveInterface = passive;
     this->transitNetworkInterface = false; //false at first
@@ -63,7 +61,6 @@ OSPFv3Interface::~OSPFv3Interface()
 
 void OSPFv3Interface::processEvent(OSPFv3Interface::OSPFv3InterfaceEvent event)
 {
-//    std::cout << "Passing event number " << event << " to state" << this->state->getInterfaceStateString() << "\n";
     EV_DEBUG << "Passing event number " << event << " to state" << this->state->getInterfaceStateString() << "\n";
     this->state->processEvent(this, event);
 }
@@ -94,7 +91,7 @@ OSPFv3Interface::OSPFv3InterfaceFAState OSPFv3Interface::getState() const
 
 void OSPFv3Interface::reset()
 {
-    EV_DEBUG << "Resetting interface " << this->getIntName() << "\n";
+    EV_DEBUG << "Resetting interface " << this->getIntName() << " - not implemented yet!\n";
 }//reset
 
 
@@ -134,10 +131,8 @@ Packet* OSPFv3Interface::prepareHello()
     //TODO - set options
     helloPacket->setHelloInterval(this->getHelloInterval());
     helloPacket->setDeadInterval(this->getDeadInterval());
-    //TODO - set the DR correctly
     helloPacket->setDesignatedRouterID(this->getDesignatedID());
     helloPacket->setBackupDesignatedRouterID(this->BackupRouterID);
-    //TODO - set the neighbor id correctly
 
     length += 12;
 
@@ -166,8 +161,6 @@ Packet* OSPFv3Interface::prepareHello()
     return pk;
 }
 
-
-//// PRIDANE
 bool OSPFv3Interface::hasAnyNeighborInStates(int states) const
 {
     long neighborCount = neighbors.size();
@@ -281,7 +274,6 @@ bool OSPFv3Interface::ageDatabase()
             linkIt++;
         }
     }
-
     return shouldRebuildRoutingTable;
 }
 
@@ -289,7 +281,7 @@ bool OSPFv3Interface::ageDatabase()
 
 void OSPFv3Interface::processHelloPacket(Packet* packet)
 {
-    EV_DEBUG <<"$$$$$$$$$ Hello packet was received on interface " << this->getIntName() << "\n";
+    EV_DEBUG <<"Hello packet was received on interface " << this->getIntName() << "\n";
     const auto& hello = packet->peekAtFront<OSPFv3HelloPacket>();
 //    OSPFv3HelloPacket* hello = check_and_cast<OSPFv3HelloPacket*>(packet);
     bool neighborChanged = false;
@@ -307,7 +299,7 @@ void OSPFv3Interface::processHelloPacket(Packet* packet)
             OSPFv3Neighbor* neighbor = this->getNeighborById(sourceId);
 
             if(neighbor != nullptr) {
-                EV_DEBUG << "$$$$$$ This is not a new neighbor!!! I know him for a long time...\n";
+                EV_DEBUG << "This is not a new neighbor!!! I know him for a long time...\n";
                 Ipv4Address designatedRouterID = neighbor->getNeighborsDR();
                 Ipv4Address backupRouterID = neighbor->getNeighborsBackup();
                 int newPriority = hello->getRouterPriority();
@@ -435,10 +427,9 @@ void OSPFv3Interface::processHelloPacket(Packet* packet)
                     OSPFv3Neighbor *backup = this->getNeighborById(backupRouterID);
 
                     if (designated != nullptr) {
-                        EV_DEBUG << "Setting new DR ID in hello processing\n";
                         dRouterID = designated->getNeighborID();
                         neighbor->setDesignatedRouterID(dRouterID);
-                        EV_DEBUG << "New DR for neighbor " << dRouterID << " is " << neighbor->getNeighborsDR() << "\n";
+                        EV_DEBUG << "Setting new DR in hello processing for neighbor " << dRouterID << " is " << neighbor->getNeighborsDR() << "\n";
                     }
                     if (backup != nullptr) {
                         dRouterID = backup->getNeighborID();

@@ -933,268 +933,228 @@ void OSPFv3Process::calculateASExternalRoutes(std::vector<OSPFv3RoutingTableEntr
 
 void OSPFv3Process::rebuildRoutingTable()
 {
-    EV_DEBUG << "VOLAM PROCESS REBUILD ROUTING TABLE\n";
+    unsigned long instanceCount = this->instances.size();
+    std::vector<OSPFv3RoutingTableEntry *> newTableIPv6;
+    std::vector<OSPFv3IPv4RoutingTableEntry *> newTableIPv4;
+
+    for(unsigned int k=0; k<instanceCount; k++) {
+        OSPFv3Instance* currInst = this->instances.at(k);
+        unsigned long areaCount = currInst->getAreaCount();
+        bool hasTransitAreas = false;
+
+        unsigned long i;
+
+        EV_INFO << "Rebuilding routing table for instance " << this->instances.at(k)->getInstanceID() << ":\n";
+
+        //2)Intra area routes are calculated using SPF algo
+        for (i = 0; i < areaCount; i++) {
+            currInst->getArea(i)->calculateShortestPathTree(newTableIPv6, newTableIPv4);
+            if (currInst->getArea(i)->getTransitCapability()) {
+                hasTransitAreas = true;
+            }
+        }
+//        3)Inter-area routes are calculated by examining summary-LSAs (on backbone only)
+        if (areaCount > 1) {
+            OSPFv3Area *backbone = currInst->getAreaById(BACKBONE_AREAID);
+            if (backbone != nullptr) {
+                backbone->calculateInterAreaRoutes(newTableIPv6, newTableIPv4);
+            }
+        }
+        else {
+            if (areaCount == 1) {
+                currInst->getArea(0)->calculateInterAreaRoutes(newTableIPv6, newTableIPv4);
+            }
+        }
+
+        //4)On BDR - Transit area LSAs(summary) are examined - find better paths then in 2) and 3)
+       /* if (hasTransitAreas) {
+            for (i = 0; i < areaCount; i++) {
+                if (currInst->getArea(i)->getTransitCapability()) {
+                    if (currInst->getAddressFamily() == IPV6INSTANCE)
+                        currInst->getArea(i)->recheckInterAreaPrefixLSAs(newTableIPv6);
+                    else //IPV4INSTACE
+                        currInst->getArea(i)->recheckInterAreaPrefixLSAs(newTableIPv4);
+                }
+            }
+        }*/
+
+        //5) Routes to external destinations are calculated
+       // calculateASExternalRoutes(newTableIPv6, newTableIPv4);
+
+        // backup the routing table
+        unsigned long routeCount = routingTableIPv6.size();
+        std::vector<OSPFv3RoutingTableEntry *> oldTableIPv6;
+        std::vector<OSPFv3IPv4RoutingTableEntry *> oldTableIPv4;
+
+      /*  oldTableIPv6.assign(routingTableIPv6.begin(), routingTableIPv6.end());
+        routingTableIPv6.clear();
+        routingTableIPv6.assign(newTableIPv6.begin(), newTableIPv6.end());
+
+
+        oldTableIPv4.assign(routingTableIPv4.begin(), routingTableIPv4.end());
+        routingTableIPv4.clear();
+        routingTableIPv4.assign(newTableIPv4.begin(), newTableIPv4.end());*/
+
+
+
+
+        if (currInst->getAddressFamily() == IPV6INSTANCE) // IPv6 AF should not clear IPv4 Routing table and vice versa
+        {
+
+            oldTableIPv6.assign(routingTableIPv6.begin(), routingTableIPv6.end());
+            routingTableIPv6.clear();
+            routingTableIPv6.assign(newTableIPv6.begin(), newTableIPv6.end());
+
+            std::vector<Ipv6Route *> eraseEntriesIPv6;
+            unsigned long routingEntryNumber = rt6->getNumRoutes();
+            // remove entries from the IPv6 routing table inserted by the OSPF module
+            for (i = 0; i < routingEntryNumber; i++) {
+                Ipv6Route *entry = rt6->getRoute(i);
+    //            OSPFv3RoutingTableEntry *ospfEntry = dynamic_cast<OSPFv3RoutingTableEntry *>(entry);
+                if (entry->getSourceType() == IRoute::OSPF)
+                    eraseEntriesIPv6.push_back(entry);
+    //            if (ospfEntry != nullptr) {
+    //                eraseEntries.push_back(entry);
+    //            }
+            }
+            unsigned int eraseCount = eraseEntriesIPv6.size();
+            for (i = 0; i < eraseCount; i++) {
+                rt6->deleteRoute(eraseEntriesIPv6[i]);
+            }
+        }
+        else
+        {
+            oldTableIPv4.assign(routingTableIPv4.begin(), routingTableIPv4.end());
+            routingTableIPv4.clear();
+            routingTableIPv4.assign(newTableIPv4.begin(), newTableIPv4.end());
+
+            std::vector<Ipv4Route *> eraseEntriesIPv4;
+            unsigned long routingEntryNumber = rt4->getNumRoutes();
+            // remove entries from the IPv64routing table inserted by the OSPF module
+            for (i = 0; i < routingEntryNumber; i++) {
+                Ipv4Route *entry = rt4->getRoute(i);
+    //            OSPFv3RoutingTableEntry *ospfEntry = dynamic_cast<OSPFv3RoutingTableEntry *>(entry);
+                if (entry->getSourceType() == IRoute::OSPF)
+                    eraseEntriesIPv4.push_back(entry);
+    //            if (ospfEntry != nullptr) {
+    //                eraseEntries.push_back(entry);
+    //            }
+            }
+            unsigned int eraseCount = eraseEntriesIPv4.size();
+            for (i = 0; i < eraseCount; i++) {
+                rt4->deleteRoute(eraseEntriesIPv4[i]);
+            }
+        }
+
+        // TODO : LG dorobit aj pre IPv4 !!!!
+
+        // add the new routing entries
+        if (currInst->getAddressFamily() == IPV6INSTANCE)
+        {
+            routeCount = routingTableIPv6.size();
+            EV_DEBUG  << "rebuild , routeCount - " << routeCount << "\n";
+
+            for (i = 0; i < routeCount; i++) {
+                if (routingTableIPv6[i]->getDestinationType() == OSPFv3RoutingTableEntry::NETWORK_DESTINATION) {
+
+                    if (routingTableIPv6[i]->getNextHopCount() > 0)
+                    {
+                        if (routingTableIPv6[i]->getNextHop(0).hopAddress != Ipv6Address::UNSPECIFIED_ADDRESS)
+                        {
+                            Ipv6Route *route = new Ipv6Route(routingTableIPv6[i]->getDestinationAsGeneric().toIpv6(), routingTableIPv6[i]->getPrefixLength(), routingTableIPv6[i]->getSourceType());
+                            route->setNextHop   (   routingTableIPv6[i]->getNextHop(0).hopAddress);
+                            route->setMetric    (       routingTableIPv6[i]->getMetric());
+                            route->setInterface (    routingTableIPv6[i]->getInterface());
+                            route->setExpiryTime(   routingTableIPv6[i]->getExpiryTime());
+                            route->setAdminDist (    routingTableIPv6[i]->getAdminDist());
+
+                            rt6->addRoutingProtocolRoute(route);
+                        }
+                    }
+
+                   // rt->addRoute(routingTable[i]);
+                   //rt->addRoute(new OSPFv3RoutingTableEntry(*(routingTable[i]), routingTable[i]->getDestPrefix(), routingTable[i]->getPrefixLength(), routingTable[i]->getSourceType()));
+    //                rt->addRoute(new OSPFv3RoutingTableEntry(*(routingTable[i]), *(routingTable[i])->getDestPrefix(), *(routingTableIPv6[i])->getPrefixLength(),  *(routingTableIPv6[i])->getSourceType()));
+
+                }
+            }
+            for (int g = 0; g < rt6->getNumRoutes(); g++)
+            {
+                Ipv6Route* route = rt6->getRoute(g);
+                std::cout << route->getSourceType();
+                    std::cout << " ";
+                    if (route->getDestPrefix().isUnspecified())
+                        std::cout << "::";
+                    else
+                        std::cout << route->getDestPrefix();
+                    std::cout << "/" << route->getPrefixLength();
+                    std::cout << " .. nexthop = " <<  route->getNextHop().str();
+                    if (route->getNextHop().isUnspecified())
+                    {
+                        std::cout << ", is directly connected";
+                    }
+                    else
+                    {
+                        std::cout << ", [" << route->getAdminDist() << "/" << route->getMetric() << "]";
+                        std::cout << " via ";
+                        std::cout << route->getNextHop();
+                    }
+                    std::cout << ", " << route->getInterface()->getInterfaceName();
+                    std::cout << "\n";
+            }
+
+            //notifyAboutRoutingTableChanges(oldTableIPv6);
+
+            routeCount = oldTableIPv6.size();
+            for (i = 0; i < routeCount; i++)
+            {
+                delete (oldTableIPv6[i]);
+            }
+        }
+        else
+        {
+            routeCount = routingTableIPv4.size();
+            EV_DEBUG  << "rebuild , routeCount - " << routeCount << "\n";
+
+            for (i = 0; i < routeCount; i++) {
+                if (routingTableIPv4[i]->getDestinationType() == OSPFv3IPv4RoutingTableEntry::NETWORK_DESTINATION)
+                {
+                    if (routingTableIPv4[i]->getNextHopCount() > 0)
+                    {
+                        if (routingTableIPv4[i]->getNextHop(0).hopAddress != Ipv4Address::UNSPECIFIED_ADDRESS)
+                        {
+                            Ipv4Route *route = new Ipv4Route();
+                            route->setDestination(  routingTableIPv4[i]->getDestinationAsGeneric().toIpv4());
+                            route->setNetmask   (   route->getDestination().makeNetmask(routingTableIPv4[i]->getPrefixLength()));
+                            route->setSourceType(   routingTableIPv4[i]->getSourceType());
+                            route->setNextHop   (   routingTableIPv4[i]->getNextHop(0).hopAddress);
+                            route->setMetric    (       routingTableIPv4[i]->getMetric());
+                            route->setInterface (    routingTableIPv4[i]->getInterface());
+                            route->setAdminDist (    routingTableIPv4[i]->getAdminDist());
+
+                            rt4->addRoute(route);
+                        }
+                    }
+
+                }
+            }
+
+            routeCount = oldTableIPv4.size();
+            for (i = 0; i < routeCount; i++)
+            {
+               delete (oldTableIPv4[i]);
+            }
+        }
+
+        EV_INFO << "Routing table was rebuilt.\n"
+                << "Results (IPv6):\n";
+
+        routeCount = routingTableIPv6.size();
+        for (i = 0; i < routeCount; i++) {
+            EV_INFO << *routingTableIPv6[i] << "\n";
+        }
+    }
 }
-//void OSPFv3Process::rebuildRoutingTable()  MIGRACIA LG
-//{
-//    unsigned long instanceCount = this->instances.size();
-//    std::vector<OSPFv3RoutingTableEntry *> newTableIPv6;
-//    std::vector<OSPFv3IPv4RoutingTableEntry *> newTableIPv4;
-//
-//    for(unsigned int k=0; k<instanceCount; k++) {
-//        OSPFv3Instance* currInst = this->instances.at(k);
-//        unsigned long areaCount = currInst->getAreaCount();
-//        bool hasTransitAreas = false;
-//
-//        unsigned long i;
-//
-//        EV_INFO << "Rebuilding routing table for instance " << this->instances.at(k)->getInstanceID() << ":\n";
-//
-//        //2)Intra area routes are calculated using SPF algo
-//        for (i = 0; i < areaCount; i++) {
-//            currInst->getArea(i)->calculateShortestPathTree(newTableIPv6, newTableIPv4);
-//            if (currInst->getArea(i)->getTransitCapability()) {
-//                hasTransitAreas = true;
-//            }
-//        }
-////        3)Inter-area routes are calculated by examining summary-LSAs (on backbone only)
-//        if (areaCount > 1) {
-//            OSPFv3Area *backbone = currInst->getAreaById(BACKBONE_AREAID);
-//            if (backbone != nullptr) {
-//                backbone->calculateInterAreaRoutes(newTableIPv6, newTableIPv4);
-//            }
-//        }
-//        else {
-//            if (areaCount == 1) {
-//                currInst->getArea(0)->calculateInterAreaRoutes(newTableIPv6, newTableIPv4);
-//            }
-//        }
-//
-//        //4)On BDR - Transit area LSAs(summary) are examined - find better paths then in 2) and 3)
-//       /* if (hasTransitAreas) {
-//            for (i = 0; i < areaCount; i++) {
-//                if (currInst->getArea(i)->getTransitCapability()) {
-//                    if (currInst->getAddressFamily() == IPV6INSTANCE)
-//                        currInst->getArea(i)->recheckInterAreaPrefixLSAs(newTableIPv6);
-//                    else //IPV4INSTACE
-//                        currInst->getArea(i)->recheckInterAreaPrefixLSAs(newTableIPv4);
-//                }
-//            }
-//        }*/
-//
-//        //5) Routes to external destinations are calculated
-//       // calculateASExternalRoutes(newTableIPv6, newTableIPv4);
-//
-//        // backup the routing table
-//        unsigned long routeCount = routingTableIPv6.size();
-//        std::vector<OSPFv3RoutingTableEntry *> oldTableIPv6;
-//        std::vector<OSPFv3IPv4RoutingTableEntry *> oldTableIPv4;
-//
-//      /*  oldTableIPv6.assign(routingTableIPv6.begin(), routingTableIPv6.end());
-//        routingTableIPv6.clear();
-//        routingTableIPv6.assign(newTableIPv6.begin(), newTableIPv6.end());
-//
-//
-//        oldTableIPv4.assign(routingTableIPv4.begin(), routingTableIPv4.end());
-//        routingTableIPv4.clear();
-//        routingTableIPv4.assign(newTableIPv4.begin(), newTableIPv4.end());*/
-//
-//
-//
-//
-//        if (currInst->getAddressFamily() == IPV6INSTANCE) // IPv6 AF should not clear IPv4 Routing table and vice versa
-//        {
-//
-//            oldTableIPv6.assign(routingTableIPv6.begin(), routingTableIPv6.end());
-//            routingTableIPv6.clear();
-//            routingTableIPv6.assign(newTableIPv6.begin(), newTableIPv6.end());
-//
-//            std::vector<IPv6Route *> eraseEntriesIPv6;
-//            unsigned long routingEntryNumber = rt->getNumRoutes();
-//            // remove entries from the IPv6 routing table inserted by the OSPF module
-//            for (i = 0; i < routingEntryNumber; i++) {
-//                IPv6Route *entry = rt->getRoute(i);
-//    //            OSPFv3RoutingTableEntry *ospfEntry = dynamic_cast<OSPFv3RoutingTableEntry *>(entry);
-//                if (entry->getSourceType() == IRoute::OSPF)
-//                    eraseEntriesIPv6.push_back(entry);
-//    //            if (ospfEntry != nullptr) {
-//    //                eraseEntries.push_back(entry);
-//    //            }
-//            }
-//            unsigned int eraseCount = eraseEntriesIPv6.size();
-//            for (i = 0; i < eraseCount; i++) {
-//                rt->deleteRoute(eraseEntriesIPv6[i]);
-//            }
-//        }
-//        else
-//        {
-//            oldTableIPv4.assign(routingTableIPv4.begin(), routingTableIPv4.end());
-//            routingTableIPv4.clear();
-//            routingTableIPv4.assign(newTableIPv4.begin(), newTableIPv4.end());
-//
-//            std::vector<IPv4Route *> eraseEntriesIPv4;
-//            unsigned long routingEntryNumber = rt4->getNumRoutes();
-//            // remove entries from the IPv64routing table inserted by the OSPF module
-//            for (i = 0; i < routingEntryNumber; i++) {
-//                IPv4Route *entry = rt4->getRoute(i);
-//    //            OSPFv3RoutingTableEntry *ospfEntry = dynamic_cast<OSPFv3RoutingTableEntry *>(entry);
-//                if (entry->getSourceType() == IRoute::OSPF)
-//                    eraseEntriesIPv4.push_back(entry);
-//    //            if (ospfEntry != nullptr) {
-//    //                eraseEntries.push_back(entry);
-//    //            }
-//            }
-//            unsigned int eraseCount = eraseEntriesIPv4.size();
-//            for (i = 0; i < eraseCount; i++) {
-//                rt4->deleteRoute(eraseEntriesIPv4[i]);
-//            }
-//        }
-//
-//        // TODO : LG dorobit aj pre IPv4 !!!!
-//
-//        // add the new routing entries
-//        if (currInst->getAddressFamily() == IPV6INSTANCE)
-//        {
-//            routeCount = routingTableIPv6.size();
-//            EV_DEBUG  << "rebuild , routeCount - " << routeCount << "\n";
-//
-//            for (i = 0; i < routeCount; i++) {
-//                if (routingTableIPv6[i]->getDestinationType() == OSPFv3RoutingTableEntry::NETWORK_DESTINATION) {
-//
-//                    if (routingTableIPv6[i]->getNextHopCount() > 0)
-//                    {
-//                      /*  std::cout << "PRED ERROROM ADRESA - " <<  routingTableIPv6[i]->getDestPrefix() << "\n";
-//                        EV_DEBUG << "PRED ERROROM ADRESA - " <<  routingTableIPv6[i]->getDestPrefix() << "\n";
-//                    }
-//                    if (!routingTableIPv6[i]->getNextHop(0).hopAddress.isUnspecified())
-//                    {
-//                        std::cout << "tu ma stopni \n";
-//                        EV_DEBUG << "tu ma stopni \n";
-//                    }*/
-//
-//    //                IPv6Route(Ipv6Address destPrefix, int prefixLength, SourceType sourceType)
-//
-//    //                routingTable[i]->getOptionalCapabilities()
-//    //                routingTable[i]->getArea()
-//    //                routingTable[i]->getPathType()
-//    //                routingTable[i]->getCost()
-//    //                routingTable[i]->getType2Cost()
-//    //                routingTable[i]->getLinkStateOrigin()
-//    //                routingTable[i]->getDestinationType()
-//    //                routingTable[i]->getInterface()
-//    //                route->setDestination(  routingTable[i]->getDestinationAsGeneric().toIPv6());
-//    //                route->setPrefixLength( routingTable[i]->getPrefixLength());
-//    //                route->setSourceType(   routingTable[i]->getSourceType());
-//
-//                    if (routingTableIPv6[i]->getNextHop(0).hopAddress != Ipv6Address::UNSPECIFIED_ADDRESS)
-//                    {
-//                        IPv6Route *route = new IPv6Route(routingTableIPv6[i]->getDestinationAsGeneric().toIPv6(), routingTableIPv6[i]->getPrefixLength(), routingTableIPv6[i]->getSourceType());
-//                        route->setNextHop   (   routingTableIPv6[i]->getNextHop(0).hopAddress);
-//                        route->setMetric    (       routingTableIPv6[i]->getMetric());
-//                        route->setInterface (    routingTableIPv6[i]->getInterface());
-//                        route->setExpiryTime(   routingTableIPv6[i]->getExpiryTime());
-//                        route->setAdminDist (    routingTableIPv6[i]->getAdminDist());
-//
-//                        rt->addRoute(route);
-//                    }
-//                    }
-//
-//                   // rt->addRoute(routingTable[i]);
-//                   //rt->addRoute(new OSPFv3RoutingTableEntry(*(routingTable[i]), routingTable[i]->getDestPrefix(), routingTable[i]->getPrefixLength(), routingTable[i]->getSourceType()));
-//    //                rt->addRoute(new OSPFv3RoutingTableEntry(*(routingTable[i]), *(routingTable[i])->getDestPrefix(), *(routingTableIPv6[i])->getPrefixLength(),  *(routingTableIPv6[i])->getSourceType()));
-//
-//                }
-//            }
-//            for (int g = 0; g < rt->getNumRoutes(); g++)
-//            {
-//                IPv6Route* route = rt->getRoute(g);
-//                std::cout << route->getSourceTypeAbbreviation();
-//                    std::cout << " ";
-//                    if (route->getDestPrefix().isUnspecified())
-//                        std::cout << "::";
-//                    else
-//                        std::cout << route->getDestPrefix();
-//                    std::cout << "/" << route->getPrefixLength();
-//                    std::cout << " .. nexthop = " <<  route->getNextHop().str();
-//                    if (route->getNextHop().isUnspecified())
-//                    {
-//                        std::cout << ", is directly connected";
-//                    }
-//                    else
-//                    {
-//                        std::cout << ", [" << route->getAdminDist() << "/" << route->getMetric() << "]";
-//                        std::cout << " via ";
-//                        std::cout << route->getNextHop();
-//                    }
-//                    std::cout << ", " << route->getInterface()->getName();
-//                    std::cout << "\n";
-//            }
-//
-//            //notifyAboutRoutingTableChanges(oldTableIPv6);
-//
-//            routeCount = oldTableIPv6.size();
-//            for (i = 0; i < routeCount; i++)
-//            {
-//                delete (oldTableIPv6[i]);
-//            }
-//        }
-//        else
-//        {
-//            routeCount = routingTableIPv4.size();
-//            EV_DEBUG  << "rebuild , routeCount - " << routeCount << "\n";
-//
-//            for (i = 0; i < routeCount; i++) {
-//                if (routingTableIPv4[i]->getDestinationType() == OSPFv3IPv4RoutingTableEntry::NETWORK_DESTINATION)
-//                {
-//                    if (routingTableIPv4[i]->getNextHopCount() > 0)
-//                    {
-//                  /*      std::cout << "PRED ERROROM ADRESA - " <<  routingTableIPv4[i]->getDestination() << "\n";
-//                        EV_DEBUG << "PRED ERROROM ADRESA - " <<  routingTableIPv4[i]->getDestination() << "\n";
-//                    }
-//                    if (!routingTableIPv4[i]->getNextHop(0).hopAddress.isUnspecified())
-//                    {
-//                        std::cout << "tu ma stopni \n";
-//                        EV_DEBUG << "tu ma stopni \n";
-//                    }*/
-//
-//
-//
-//                    if (routingTableIPv4[i]->getNextHop(0).hopAddress != Ipv4Address::UNSPECIFIED_ADDRESS)
-//                    {
-//                        IPv4Route *route = new IPv4Route();
-//                        route->setDestination(  routingTableIPv4[i]->getDestinationAsGeneric().toIPv4());
-//                        route->setNetmask   (   route->getDestination().makeNetmask(routingTableIPv4[i]->getPrefixLength()));
-//                        route->setSourceType(   routingTableIPv4[i]->getSourceType());
-//                        route->setNextHop   (   routingTableIPv4[i]->getNextHop(0).hopAddress);
-//                        route->setMetric    (       routingTableIPv4[i]->getMetric());
-//                        route->setInterface (    routingTableIPv4[i]->getInterface());
-//    //                    route->setExpiryTime(   routingTableIPv6[i]->getExpiryTime());
-//                        route->setAdminDist (    routingTableIPv4[i]->getAdminDist());
-//
-//
-//                        rt4->addRoute(route);
-//                    }
-//                    }
-//
-//                }
-//            }
-//
-//            routeCount = oldTableIPv4.size();
-//            for (i = 0; i < routeCount; i++)
-//            {
-//               delete (oldTableIPv4[i]);
-//            }
-//        }
-//
-//        EV_INFO << "Routing table was rebuilt.\n"
-//                << "Results:\n";
-//
-//       /* routeCount = routingTable.size();
-//        for (i = 0; i < routeCount; i++) {
-//            EV_INFO << *routingTableIPv6[i] << "\n";
-//        }*/
-//    }
-//}
 }//namespace inet
 
 

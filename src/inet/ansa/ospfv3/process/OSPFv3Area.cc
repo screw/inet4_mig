@@ -1001,32 +1001,14 @@ NetworkLSA* OSPFv3Area::originateNetworkLSA(OSPFv3Interface* interface)
     }
 }//originateNetworkLSA
 
-//IntraAreaPrefixLSA* OSPFv3Area::getNetIntraAreaPrefixLSA(L3Address prefix, int prefixLen) LG tusimze to nikde nevolam
-//{
-//    int intraPrefCnt = this->getIntraAreaPrefixLSACount();
-//    for(int i=0; i<intraPrefCnt; i++){
-//        IntraAreaPrefixLSA* intraLsa = this->getIntraAreaPrefixLSA(i);
-//        if(intraLsa->getReferencedLSType() == NETWORK_LSA){
-//            L3Address intraPrefix = intraLsa->getPrefixes(0).addressPrefix;
-//            int intraPrefLen = intraLsa->getPrefixes(0).prefixLen;
-//            if(prefix.getPrefix(prefixLen) == intraPrefix.getPrefix(intraPrefLen))
-//                return intraLsa;
-//        }
-//    }
-//    return nullptr;
-//}
-
 NetworkLSA* OSPFv3Area::getNetworkLSAbyKey(LSAKeyType LSAKey)
 {
-    EV_DEBUG << "GET NETWORK LSA BY KEY  \n";
     for (auto it=this->networkLSAList.begin(); it!=this->networkLSAList.end(); it++)
     {
-        EV_DEBUG << "FOR, networkLSAList size: " << this->networkLSAList.size() << "\n";
         if(((*it)->getHeader().getAdvertisingRouter() == LSAKey.advertisingRouter) && (*it)->getHeader().getLinkStateID() == LSAKey.linkStateID) {
             return (*it);
         }
     }
-
     return nullptr;
 }//getRouterLSAByKey
 
@@ -1143,8 +1125,6 @@ void OSPFv3Area::originateInterAreaPrefixLSA(OSPFv3IntraAreaPrefixLSA* lsa, OSPF
         newHeader.setLsaAge(0);
         newHeader.setLsaType(INTER_AREA_PREFIX_LSA);
         newHeader.setLinkStateID(this->getInstance()->getNewInterAreaPrefixLinkStateID());
-        cout << "ORIGIN 1 AREA "<< this->getAreaID() << ", newHeader LINK STATE ID = " << newHeader.getLinkStateID() <<  "\n";
-        EV_DEBUG << "ORIGIN 1 AREA "<< this->getAreaID() << ", newHeader LINK STATE ID = " << newHeader.getLinkStateID() <<  "\n";
         newHeader.setAdvertisingRouter(this->getInstance()->getProcess()->getRouterID());
         newHeader.setLsaSequenceNumber(this->interAreaPrefixLSASequenceNumber++);
 
@@ -1237,7 +1217,6 @@ void OSPFv3Area::originateDefaultInterAreaPrefixLSA(OSPFv3Area* toArea)
     newHeader.setLsaAge(0);
     newHeader.setLsaType(INTER_AREA_PREFIX_LSA);
     newHeader.setLinkStateID(toArea->getInstance()->getNewInterAreaPrefixLinkStateID());
-    EV_DEBUG << "ORIGIN 3 DEFAULT AREA "<< this->getAreaID() << ", newHeader LINK STATE ID = " << newHeader.getLinkStateID() <<  "\n";
     newHeader.setAdvertisingRouter(this->getInstance()->getProcess()->getRouterID());
     newHeader.setLsaSequenceNumber(toArea->getCurrentInterAreaPrefixSequence());        // TODO: skotrolovat ci je to dobry setSqNum
     toArea->incrementInterAreaPrefixSequence();
@@ -1533,15 +1512,6 @@ IntraAreaPrefixLSA* OSPFv3Area::originateNetIntraAreaPrefixLSA(NetworkLSA* netwo
         delete (newLsa);
         return prefixLsa;
     }
-
-   /* for(int i=0; i<intraPrefCnt; i++){
-        IntraAreaPrefixLSA* pref = this->getIntraAreaPrefixLSA(i);
-        if((pref->getReferencedAdvRtr() == this->getInstance()->getProcess()->getRouterID()) &&
-                pref->getReferencedLSType() == ROUTER_LSA){
-            this->intraAreaPrefixLSAList.erase(this->intraAreaPrefixLSAList.begin()+i);
-            EV_DEBUG << "Deleting IntraAreaPrefixLSA -- originateNetIntraAreaPrefixLSA\n";
-        }
-    }*/
     return newLsa;
 }
 
@@ -1783,16 +1753,12 @@ bool OSPFv3Area::installIntraAreaPrefixLSA(const OSPFv3IntraAreaPrefixLSA *lsaC)
         lsaInDatabase->getHeader().getLsaSequenceNumber() <= lsa->getHeader().getLsaSequenceNumber())
     {
         this->removeFromAllRetransmissionLists(lsaKey);
-        EV_DEBUG << "install INTRA Only updating\n";
         return this->updateIntraAreaPrefixLSA(lsaInDatabase, lsa);
     }
     else if (lsa->getReferencedLSType() == NETWORK_LSA || lsa->getReferencedLSType() == ROUTER_LSA)
     {
         IntraAreaPrefixLSA* lsaCopy = new IntraAreaPrefixLSA(*lsa);
-        EV_DEBUG << "BEFORE this->intraAreaPrefixLSAList size = " << this->intraAreaPrefixLSAList.size() << "\n";
         this->intraAreaPrefixLSAList.push_back(lsaCopy);
-        EV_DEBUG << "install INTRA creating new one\n";
-        EV_DEBUG << "AFTER this->intraAreaPrefixLSAList size = " << this->intraAreaPrefixLSAList.size() << "\n";
 
         if (this->getInstance()->getAreaCount() > 1)
             originateInterAreaPrefixLSA(lsaCopy, this);
@@ -1881,15 +1847,6 @@ void OSPFv3Area::subtractIntraAreaPrefixLinkStateID()
     this->intraAreaPrefixLsID = Ipv4Address(newIP);
 }//getNewIntraAreaPrefixStateID
 
-/*Ipv4Address OSPFv3Area::getNewNetIntraAreaPrefixLinkStateID()
-{
-    Ipv4Address currIP = this->netIntraAreaPrefixLsID;
-    int newIP = currIP.getInt()+1;
-    this->netIntraAreaPrefixLsID = Ipv4Address(newIP);
-    return currIP;
-}//getNewNetIntraAreaPrefixStateID*/
-
-
 IntraAreaPrefixLSA* OSPFv3Area::findIntraAreaPrefixByAdvRouter(Ipv4Address advRouter)
 {
     for (auto it=this->intraAreaPrefixLSAList.begin(); it!=this->intraAreaPrefixLSAList.end(); it++)
@@ -1899,7 +1856,6 @@ IntraAreaPrefixLSA* OSPFv3Area::findIntraAreaPrefixByAdvRouter(Ipv4Address advRo
             return (*it);
         }
     }
-
     return nullptr;
 }
 
@@ -1912,7 +1868,6 @@ IntraAreaPrefixLSA* OSPFv3Area::findIntraAreaPrefixLSAByReference(LSAKeyType lsa
             return (*it);
         }
     }
-
     return nullptr;
 }
 
@@ -1926,7 +1881,6 @@ OSPFv3LSA* OSPFv3Area::getLSAbyKey(LSAKeyType LSAKey)
                 return (*it);
             }
         }
-
         break;
 
     case NETWORK_LSA:
@@ -1936,7 +1890,6 @@ OSPFv3LSA* OSPFv3Area::getLSAbyKey(LSAKeyType LSAKey)
                 return (*it);
             }
         }
-
         break;
 
     case INTER_AREA_PREFIX_LSA:
@@ -1946,7 +1899,6 @@ OSPFv3LSA* OSPFv3Area::getLSAbyKey(LSAKeyType LSAKey)
                 return (*it);
             }
         }
-
         break;
 
     case INTER_AREA_ROUTER_LSA:
@@ -1956,7 +1908,6 @@ OSPFv3LSA* OSPFv3Area::getLSAbyKey(LSAKeyType LSAKey)
                 return (*it);
             }
         }
-
         break;
 
     case NSSA_LSA:
@@ -1966,7 +1917,6 @@ OSPFv3LSA* OSPFv3Area::getLSAbyKey(LSAKeyType LSAKey)
                 return (*it);
             }
         }
-
         break;
 
     case INTRA_AREA_PREFIX_LSA:
@@ -1976,7 +1926,6 @@ OSPFv3LSA* OSPFv3Area::getLSAbyKey(LSAKeyType LSAKey)
                 return (*it);
             }
         }
-
         break;
 
     case LINK_LSA:
@@ -1986,7 +1935,6 @@ OSPFv3LSA* OSPFv3Area::getLSAbyKey(LSAKeyType LSAKey)
             if(lsa != nullptr)
                 return lsa;
         }
-
         break;
     }
     //TODO - link lsa from interface
@@ -2105,1918 +2053,1805 @@ bool OSPFv3Area::hasAddressRange(Ipv4AddressRange addressRange) const
 }
 
 
-//void OSPFv3Area::calculateShortestPathTree(std::vector<OSPFv3RoutingTableEntry* >& newTableIPv6, std::vector<OSPFv3IPv4RoutingTableEntry* >& newTableIPv4)
-//{
-//    EV_DEBUG << "Calculating SPF Tree for area " << this->getAreaID() << "\n";
-//    /*1)Initialize the algorithm's data structures. Clear the list
-//        of candidate vertices. Initialize the shortest-path tree to
-//        only the root (which is the router doing the calculation).
-//        Set Area's TransitCapability to FALSE*/
-//    EV_DEBUG << "SPFTREE:";
-//
-//
-//    EV_DEBUG << "********************************* SPFTREE ****************************************************" << "\n";
-//    EV_DEBUG << "JA SOM " <<  this->getInstance()->getProcess()->getRouterID() << " = " << this->getInstance()->getProcess()->getOwner()->getOwner()->getName() << " area = " << this->getAreaID()  << "\n";
-//
-//        // ******pridane, nekopirovane******
-//
-//        EV_DEBUG << "ROUTER LSA LIST = " <<  routerLSAList.size() << "\n";
-//        for(auto it=this->routerLSAList.begin(); it!=this->routerLSAList.end(); it++) {
-//            OSPFv3LSAHeader& header = (*it)->getHeader();
-//            EV_DEBUG << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
-//            EV_DEBUG << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
-//            EV_DEBUG << "Seq Num =\t\t" << header.getLsaSequenceNumber() << "\n";
-//            EV_DEBUG << "type\t\tinterfaceID\tneighborIntID\tneighborRouterID\n";
-//                            for (int i = 0; i < (*it)->getRoutersArraySize(); i++)
-//                                EV_DEBUG << (int)(*it)->getRouters(i).type << "\t\t" << (*it)->getRouters(i).interfaceID << "\t\t\t" << (*it)->getRouters(i).neighborInterfaceID << "\t\t\t" << (*it)->getRouters(i).neighborRouterID << "\n";
-//
-//            EV_DEBUG << "     NEXT HOP EV_DEBUG = " << (*it)->getNextHopCount() << "\n";
-//            EV_DEBUG << "\n";
-//        }
-//
-//        EV_DEBUG << "\n" << "\n";
-//
-//        EV_DEBUG <<  "NETWORK LSA LIST = " << networkLSAList.size() << "\n";
-//        for (auto it=this->networkLSAList.begin(); it!=this->networkLSAList.end(); it++) {
-//            OSPFv3LSAHeader& header = (*it)->getHeader();
-//            EV_DEBUG << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
-//            EV_DEBUG << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
-//            EV_DEBUG << "Seq Num =\t\t" << header.getLsaSequenceNumber() << "\n";
-//            EV_DEBUG << "Attached Router:" << "\n";
-//            for (int i = 0; i < (*it)->getAttachedRouterArraySize(); i++)
-//                EV_DEBUG << (*it)->getAttachedRouter(i) << "\n";
-//
-//            EV_DEBUG << "     NEXT HOP EV_DEBUG = " << (*it)->getNextHopCount() << "\n";
-//        }
-//        EV_DEBUG <<"\n";
-//
-//        EV_DEBUG << "INTER AREA LSA LIST = " << interAreaPrefixLSAList.size() << "\n";
-//        for (auto it=this->interAreaPrefixLSAList.begin(); it!=this->interAreaPrefixLSAList.end(); it++) {
-//            OSPFv3LSAHeader& header = (*it)->getHeader();
-//            EV_DEBUG << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
-//            EV_DEBUG << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
-//            EV_DEBUG << "prefix =\t\t " << (*it)->getPrefix() << "\n";
-//            EV_DEBUG << "prefixLen =\t\t " << (int)(*it)->getPrefixLen() << "\n";
-//            EV_DEBUG << "Seq Num =\t\t" << header.getLsaSequenceNumber() << "\n";
-//        }
-//
-//
-//        EV_DEBUG << "\n" << "\n";
-//
-//        EV_DEBUG << "INTERFACE LIST = " << this->interfaceList.size() << "\n";
-//        for (int i = 0; i < this->interfaceList.size(); i++)
-//        {
-//            EV_DEBUG << "#" << i << "\n";
-//            OSPFv3Interface* inter =  this->getInterface(i);
-//            EV_DEBUG << "type = " << inter->getType() << "\n";
-//            EV_DEBUG << "interfaceID = " << inter->getInterfaceId() << "\n";
-//            EV_DEBUG << "interface IP = " << inter->getInterfaceLLIP() << "\n";
-//            EV_DEBUG << "getLinkLSACount() = " <<  inter->getLinkLSACount() << "\n";
-//            for (int j = 0; j < inter->getLinkLSACount(); j++) {
-//                LinkLSA* linkLSA = inter->getLinkLSA(j);
-//                EV_DEBUG << "LinkLSA" << "\n";
-//                OSPFv3LSAHeader& header = linkLSA->getHeader();
-//                EV_DEBUG << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
-//                EV_DEBUG << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
-//                EV_DEBUG << "Seq Num =\t\t" << header.getLsaSequenceNumber() << "\n";
-//
-//                EV_DEBUG << "getLinkLocalInterfaceAdd = " << linkLSA->getLinkLocalInterfaceAdd() << "\n";
-//                EV_DEBUG << "getPrefixesArraySize = " << linkLSA->getPrefixesArraySize() << "\n";
-//                for (int k = 0; k < linkLSA->getPrefixesArraySize(); k++) {
-//                    // vracia  OSPFv3LinkLSAPrefix
-//                    OSPFv3LinkLSAPrefix pr = linkLSA->getPrefixes(k);
-//                    EV_DEBUG << "\taddressPrefix          = " <<  pr.addressPrefix << "\n";
-//                    EV_DEBUG << "\tprefixLen              = " <<  int(pr.prefixLen) << "\n";
-//                }
-//                EV_DEBUG << "\n";
-//            }
-//        }
-//
-//        EV_DEBUG << "\n" << "\n";
-//        EV_DEBUG <<  "INTRA AREA PREFIX = " << intraAreaPrefixLSAList.size() << "\n";
-//        for (auto it=this->intraAreaPrefixLSAList.begin(); it!=this->intraAreaPrefixLSAList.end(); it++) {
-//            OSPFv3LSAHeader& header = (*it)->getHeader();
-//            EV_DEBUG << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
-//            EV_DEBUG << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
-//            EV_DEBUG << "Seq Num =\t\t" << header.getLsaSequenceNumber() << "\n";
-//            EV_DEBUG << "getPrefixesArraySize = " << (*it)->getPrefixesArraySize() << "\n";
-//            EV_DEBUG << "getReferencedLSType = " << (*it)->getReferencedLSType() << "\n";
-//            EV_DEBUG << "getReferencedLSID = " << (*it)->getReferencedLSID() << "\n";
-//            EV_DEBUG << "getReferencedAdvRtr = " << (*it)->getReferencedAdvRtr() << "\n";
-//            EV_DEBUG << "prefixes :" << "\n";
-//            for (int i = 0; i < (*it)->getPrefixesArraySize(); i++) {
-//                EV_DEBUG << "addressPrefix = "<< (*it)->getPrefixes(i).addressPrefix << "\n";
-//                EV_DEBUG << "prefixLen = "<< int((*it)->getPrefixes(i).prefixLen) << "\n";
-//            }
-//        }
-//        EV_DEBUG << "\n\n";
-//
-//        ////////////////////////////////////////////////////////////////////////////////////////////
-//        ////////////////////////////////////////////////////////////////////////////////////////////
-//        ////////////////////////////////////////////////////////////////////////////////////////////
-//
-//        cout << "********************************* SPFTREE ****************************************************" << "\n";
-//        cout << "JA SOM " <<  this->getInstance()->getProcess()->getRouterID() << " = " << this->getInstance()->getProcess()->getOwner()->getOwner()->getName() << " area = " << this->getAreaID()  << "\n";
-//
-//            // ******pridane, nekopirovane******
-//
-//            cout <<  "ADDRESS RANGE AREA\n";
-//            for (int jo = 0; jo < IPv6areaAddressRanges.size(); jo++)
-//            {
-//                cout << IPv6areaAddressRanges[jo].prefix.str() << "  " << IPv6areaAddressRanges[jo].prefixLength  << endl;
-//
-//            }
-//
-//            cout << "ROUTER LSA LIST = " <<  routerLSAList.size() << "\n";
-//            for(auto it=this->routerLSAList.begin(); it!=this->routerLSAList.end(); it++) {
-//                OSPFv3LSAHeader& header = (*it)->getHeader();
-//                cout << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
-//                cout << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
-//                cout << "type\t\t\tinterfaceID\tneighborIntID\tneighborRouterID\n";
-//                for (int i = 0; i < (*it)->getRoutersArraySize(); i++)
-//                    cout << (int)(*it)->getRouters(i).type << "\t\t\t" << (*it)->getRouters(i).interfaceID << "\t\t\t" << (*it)->getRouters(i).neighborInterfaceID << "\t\t\t" << (*it)->getRouters(i).neighborRouterID << "\n";
-//
-//                cout << "     NEXT HOP cout = " << (*it)->getNextHopCount() << "\n";
-//                cout << "\n";
-//            }
-//
-//            cout << "\n" << "\n";
-//
-//            cout <<  "NETWORK LSA LIST = " << networkLSAList.size() << "\n";
-//            for (auto it=this->networkLSAList.begin(); it!=this->networkLSAList.end(); it++) {
-//                OSPFv3LSAHeader& header = (*it)->getHeader();
-//                cout << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
-//                cout << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
-//                cout << "Attached Router:" << "\n";
-//                for (int i = 0; i < (*it)->getAttachedRouterArraySize(); i++)
-//                    cout << (*it)->getAttachedRouter(i) << "\n";
-//
-//                cout << "     NEXT HOP cout = " << (*it)->getNextHopCount() << "\n";
-//            }
-//
-//            cout << "\n";
-//
-//            cout << "INTER AREA LSA LIST = " << interAreaPrefixLSAList.size() << "\n";
-//            for (auto it=this->interAreaPrefixLSAList.begin(); it!=this->interAreaPrefixLSAList.end(); it++) {
-//                OSPFv3LSAHeader& header = (*it)->getHeader();
-//                cout << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
-//                cout << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
-//                cout << "prefix =\t\t " << (*it)->getPrefix() << "\n";
-//                cout << "prefixLen =\t\t " << (*it)->getPrefixLen() << "\n";
-//            }
-//
-//
-//            cout << "\n" << "\n";
-//
-//            cout << "INTERFACE LIST = " << this->interfaceList.size() << "\n";
-//            for (int i = 0; i < this->interfaceList.size(); i++)
-//            {
-//                cout << "#" << i << "\n";
-//                OSPFv3Interface* inter =  this->getInterface(i);
-//                cout << "type = " << inter->getType() << "\n";
-//                cout << "interfaceID = " << inter->getInterfaceId() << "\n";
-//                cout << "interface IP = " << inter->getInterfaceLLIP() << "\n";
-//                cout << "getLinkLSACount() = " <<  inter->getLinkLSACount() << "\n";
-//                for (int j = 0; j < inter->getLinkLSACount(); j++) {
-//                    LinkLSA* linkLSA = inter->getLinkLSA(j);
-//                    cout << "LinkLSA" << "\n";
-//                    OSPFv3LSAHeader& header = linkLSA->getHeader();
-//                    cout << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
-//                    cout << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
-//
-//                    cout << "getLinkLocalInterfaceAdd = " << linkLSA->getLinkLocalInterfaceAdd() << "\n";
-//                    cout << "getPrefixesArraySize = " << linkLSA->getPrefixesArraySize() << "\n";
-//                    for (int k = 0; k < linkLSA->getPrefixesArraySize(); k++) {
-//                        // vracia  OSPFv3LinkLSAPrefix
-//                        OSPFv3LinkLSAPrefix pr = linkLSA->getPrefixes(k);
-//                        cout << "\taddressPrefix          = " <<  pr.addressPrefix << "\n";
-//                        cout << "\tprefixLen              = " <<  int(pr.prefixLen) << "\n";
-//                    }
-//                    cout << "\n";
-//                }
-//            }
-//
-//            cout << "\n" << "\n";
-//            cout <<  "INTRA AREA PREFIX = " << intraAreaPrefixLSAList.size() << "\n";
-//            for (auto it=this->intraAreaPrefixLSAList.begin(); it!=this->intraAreaPrefixLSAList.end(); it++) {
-//                OSPFv3LSAHeader& header = (*it)->getHeader();
-//                cout << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
-//                cout << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
-//                cout << "getPrefixesArraySize = " << (*it)->getPrefixesArraySize() << "\n";
-//                cout << "getReferencedLSType = " << (*it)->getReferencedLSType() << "\n";
-//                cout << "getReferencedLSID = " << (*it)->getReferencedLSID() << "\n";
-//                cout << "getReferencedAdvRtr = " << (*it)->getReferencedAdvRtr() << "\n";
-//                cout << "prefixes :" << "\n";
-//                for (int i = 0; i < (*it)->getPrefixesArraySize(); i++) {
-//                    cout << "addressPrefix = "<< (*it)->getPrefixes(i).addressPrefix << "\n";
-//                    cout << "prefixLen = "<< int((*it)->getPrefixes(i).prefixLen) << "\n";
-//                }
-//            }
-//            cout << "\n\n";
-//
-//
-//    //**********************************
-//
-//    Ipv4Address routerID = this->getInstance()->getProcess()->getRouterID();
-//    bool finished = false;
-//    std::vector<OSPFv3LSA*> treeVertices;
-//    OSPFv3LSA *justAddedVertex;
-//    std::vector<OSPFv3LSA *> candidateVertices;
-//    unsigned long i, j, k;
-//    unsigned long lsaCount;
-//
-//    if (spfTreeRoot == nullptr) {
-//        RouterLSA *newLSA = originateRouterLSA();
-//
-//        if (installRouterLSA(newLSA))
-//        {
-//            RouterLSA *routerLSA = findRouterLSA(routerID);
-//            spfTreeRoot = routerLSA;
-//            floodLSA(newLSA);       //spread LSA to whole network
-//            delete newLSA;
-//        }
-//    }
-//
-//    if (spfTreeRoot == nullptr) {
-//        cout <<  "spfTreeRoot je stale null";
-//        return;
-//    }
-//
-//    lsaCount = routerLSAList.size();
-//    cout << "lsaCount = " << lsaCount << endl;
-//
-//    for (i = 0; i < lsaCount; i++) {
-//        routerLSAList[i]->clearNextHops();
-//    }
-//    lsaCount = networkLSAList.size();
-//    for (i = 0; i < lsaCount; i++) {
-//        networkLSAList[i]->clearNextHops();
-//    }
-//
-//    spfTreeRoot->setDistance(0);
-//    treeVertices.push_back(spfTreeRoot);   // root is first vertex in dijkstra alg
-//    justAddedVertex = spfTreeRoot;    // (1)
-//
-//    do {
-//        OSPFv3LSAFunctionCode vertexType = static_cast<OSPFv3LSAFunctionCode>(justAddedVertex->getHeader().getLsaType());
-//        if (vertexType == ROUTER_LSA) {
-//            RouterLSA *routerVertex = check_and_cast<RouterLSA *>(justAddedVertex);
-//            if (routerVertex->getVBit()) {
-//                transitCapability = true;
-//            }
-//
-//            int testCount = routerVertex->getRoutersArraySize();
-//            for (int iteration = 0; iteration < testCount; iteration++)
-//            {
-//                EV_DEBUG << "testCount n." << iteration << "\n";
-//                OSPFv3RouterLSABody router = routerVertex->getRouters(iteration);
-//
-//                OSPFv3LSA* joiningVertex;           // joiningVertex is source vertex
-//                OSPFv3LSAFunctionCode joiningVertexType;
-//                /*The Vertex ID for a router is the OSPF Router ID.  The Vertex ID
-//                  for a transit network is a combination of the Interface ID and
-//                  OSPF Router ID of the network's Designated Router.*/
-//                if (router.type == TRANSIT_NETWORK) {
-//                    joiningVertex = findNetworkLSA(router.neighborInterfaceID, router.neighborRouterID);
-//                    joiningVertexType = NETWORK_LSA;
-//                }
-//                else {  // P2P
-//                    EV_DEBUG <<  this->getInstance()->getProcess()->getRouterID() << " = som v P2P type = " << router.type << "\n"; // LG
-//                    joiningVertex = findRouterLSA(router.neighborRouterID);
-//                    joiningVertexType = ROUTER_LSA;
-//                    EV_DEBUG << " som v ROUTER_LSA\n";
-//
-//                }
-//
-//                if ((joiningVertex == nullptr) ||
-//                (joiningVertex->getHeader().getLsaAge() == MAX_AGE)
-//                 || (!hasLink(joiningVertex, justAddedVertex)))    // (from, to)     (2) (b) // uncommented line 15.01.2019 LG
-//                {
+void OSPFv3Area::calculateShortestPathTree(std::vector<OSPFv3RoutingTableEntry* >& newTableIPv6, std::vector<OSPFv3IPv4RoutingTableEntry* >& newTableIPv4)
+{
+    EV_DEBUG << "Calculating SPF Tree for area " << this->getAreaID() << "\n";
+    /*1)Initialize the algorithm's data structures. Clear the list
+        of candidate vertices. Initialize the shortest-path tree to
+        only the root (which is the router doing the calculation).
+        Set Area's TransitCapability to FALSE*/
+    EV_DEBUG << "SPFTREE:";
+
+
+    EV_DEBUG << "********************************* SPFTREE ****************************************************" << "\n";
+    EV_DEBUG << "JA SOM " <<  this->getInstance()->getProcess()->getRouterID() << " = " << this->getInstance()->getProcess()->getOwner()->getOwner()->getName() << " area = " << this->getAreaID()  << "\n";
+
+        // ******pridane, nekopirovane******
+
+        EV_DEBUG << "ROUTER LSA LIST = " <<  routerLSAList.size() << "\n";
+        for(auto it=this->routerLSAList.begin(); it!=this->routerLSAList.end(); it++) {
+            const OSPFv3LSAHeader& header = (*it)->getHeader();
+            EV_DEBUG << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
+            EV_DEBUG << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
+            EV_DEBUG << "Seq Num =\t\t" << header.getLsaSequenceNumber() << "\n";
+            EV_DEBUG << "type\t\tinterfaceID\tneighborIntID\tneighborRouterID\n";
+                            for (int i = 0; i < (*it)->getRoutersArraySize(); i++)
+                                EV_DEBUG << (int)(*it)->getRouters(i).type << "\t\t" << (*it)->getRouters(i).interfaceID << "\t\t\t" << (*it)->getRouters(i).neighborInterfaceID << "\t\t\t" << (*it)->getRouters(i).neighborRouterID << "\n";
+
+            EV_DEBUG << "     NEXT HOP EV_DEBUG = " << (*it)->getNextHopCount() << "\n";
+            EV_DEBUG << "\n";
+        }
+
+        EV_DEBUG << "\n" << "\n";
+
+        EV_DEBUG <<  "NETWORK LSA LIST = " << networkLSAList.size() << "\n";
+        for (auto it=this->networkLSAList.begin(); it!=this->networkLSAList.end(); it++) {
+            const OSPFv3LSAHeader& header = (*it)->getHeader();
+            EV_DEBUG << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
+            EV_DEBUG << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
+            EV_DEBUG << "Seq Num =\t\t" << header.getLsaSequenceNumber() << "\n";
+            EV_DEBUG << "Attached Router:" << "\n";
+            for (int i = 0; i < (*it)->getAttachedRouterArraySize(); i++)
+                EV_DEBUG << (*it)->getAttachedRouter(i) << "\n";
+
+            EV_DEBUG << "     NEXT HOP EV_DEBUG = " << (*it)->getNextHopCount() << "\n";
+        }
+        EV_DEBUG <<"\n";
+
+        EV_DEBUG << "INTER AREA LSA LIST = " << interAreaPrefixLSAList.size() << "\n";
+        for (auto it=this->interAreaPrefixLSAList.begin(); it!=this->interAreaPrefixLSAList.end(); it++) {
+            const OSPFv3LSAHeader& header = (*it)->getHeader();
+            EV_DEBUG << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
+            EV_DEBUG << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
+            EV_DEBUG << "prefix =\t\t " << (*it)->getPrefix() << "\n";
+            EV_DEBUG << "prefixLen =\t\t " << (int)(*it)->getPrefixLen() << "\n";
+            EV_DEBUG << "Seq Num =\t\t" << header.getLsaSequenceNumber() << "\n";
+        }
+
+
+        EV_DEBUG << "\n" << "\n";
+
+        EV_DEBUG << "INTERFACE LIST = " << this->interfaceList.size() << "\n";
+        for (int i = 0; i < this->interfaceList.size(); i++)
+        {
+            EV_DEBUG << "#" << i << "\n";
+            OSPFv3Interface* inter =  this->getInterface(i);
+            EV_DEBUG << "type = " << inter->getType() << "\n";
+            EV_DEBUG << "interfaceID = " << inter->getInterfaceId() << "\n";
+            EV_DEBUG << "interface IP = " << inter->getInterfaceLLIP() << "\n";
+            EV_DEBUG << "getLinkLSACount() = " <<  inter->getLinkLSACount() << "\n";
+            for (int j = 0; j < inter->getLinkLSACount(); j++) {
+                LinkLSA* linkLSA = inter->getLinkLSA(j);
+                EV_DEBUG << "LinkLSA" << "\n";
+                const OSPFv3LSAHeader& header = linkLSA->getHeader();
+                EV_DEBUG << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
+                EV_DEBUG << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
+                EV_DEBUG << "Seq Num =\t\t" << header.getLsaSequenceNumber() << "\n";
+
+                EV_DEBUG << "getLinkLocalInterfaceAdd = " << linkLSA->getLinkLocalInterfaceAdd() << "\n";
+                EV_DEBUG << "getPrefixesArraySize = " << linkLSA->getPrefixesArraySize() << "\n";
+                for (int k = 0; k < linkLSA->getPrefixesArraySize(); k++) {
+                    // vracia  OSPFv3LinkLSAPrefix
+                    OSPFv3LinkLSAPrefix pr = linkLSA->getPrefixes(k);
+                    EV_DEBUG << "\taddressPrefix          = " <<  pr.addressPrefix << "\n";
+                    EV_DEBUG << "\tprefixLen              = " <<  int(pr.prefixLen) << "\n";
+                }
+                EV_DEBUG << "\n";
+            }
+        }
+
+        EV_DEBUG << "\n" << "\n";
+        EV_DEBUG <<  "INTRA AREA PREFIX = " << intraAreaPrefixLSAList.size() << "\n";
+        for (auto it=this->intraAreaPrefixLSAList.begin(); it!=this->intraAreaPrefixLSAList.end(); it++) {
+            const OSPFv3LSAHeader& header = (*it)->getHeader();
+            EV_DEBUG << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
+            EV_DEBUG << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
+            EV_DEBUG << "Seq Num =\t\t" << header.getLsaSequenceNumber() << "\n";
+            EV_DEBUG << "getPrefixesArraySize = " << (*it)->getPrefixesArraySize() << "\n";
+            EV_DEBUG << "getReferencedLSType = " << (*it)->getReferencedLSType() << "\n";
+            EV_DEBUG << "getReferencedLSID = " << (*it)->getReferencedLSID() << "\n";
+            EV_DEBUG << "getReferencedAdvRtr = " << (*it)->getReferencedAdvRtr() << "\n";
+            EV_DEBUG << "prefixes :" << "\n";
+            for (int i = 0; i < (*it)->getPrefixesArraySize(); i++) {
+                EV_DEBUG << "addressPrefix = "<< (*it)->getPrefixes(i).addressPrefix << "\n";
+                EV_DEBUG << "prefixLen = "<< int((*it)->getPrefixes(i).prefixLen) << "\n";
+            }
+        }
+        EV_DEBUG << "\n\n";
+
+        ////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////////////////////////
+
+        cout << "********************************* SPFTREE ****************************************************" << "\n";
+        cout << "JA SOM " <<  this->getInstance()->getProcess()->getRouterID() << " = " << this->getInstance()->getProcess()->getOwner()->getOwner()->getName() << " area = " << this->getAreaID()  << "\n";
+
+            // ******pridane, nekopirovane******
+
+            cout <<  "ADDRESS RANGE AREA\n";
+            for (int jo = 0; jo < IPv6areaAddressRanges.size(); jo++)
+            {
+                cout << IPv6areaAddressRanges[jo].prefix.str() << "  " << IPv6areaAddressRanges[jo].prefixLength  << endl;
+
+            }
+
+            cout << "ROUTER LSA LIST = " <<  routerLSAList.size() << "\n";
+            for(auto it=this->routerLSAList.begin(); it!=this->routerLSAList.end(); it++) {
+                const OSPFv3LSAHeader& header = (*it)->getHeader();
+                cout << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
+                cout << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
+                cout << "type\t\t\tinterfaceID\tneighborIntID\tneighborRouterID\n";
+                for (int i = 0; i < (*it)->getRoutersArraySize(); i++)
+                    cout << (int)(*it)->getRouters(i).type << "\t\t\t" << (*it)->getRouters(i).interfaceID << "\t\t\t" << (*it)->getRouters(i).neighborInterfaceID << "\t\t\t" << (*it)->getRouters(i).neighborRouterID << "\n";
+
+                cout << "     NEXT HOP cout = " << (*it)->getNextHopCount() << "\n";
+                cout << "\n";
+            }
+
+            cout << "\n" << "\n";
+
+            cout <<  "NETWORK LSA LIST = " << networkLSAList.size() << "\n";
+            for (auto it=this->networkLSAList.begin(); it!=this->networkLSAList.end(); it++) {
+                const OSPFv3LSAHeader& header = (*it)->getHeader();
+                cout << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
+                cout << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
+                cout << "Attached Router:" << "\n";
+                for (int i = 0; i < (*it)->getAttachedRouterArraySize(); i++)
+                    cout << (*it)->getAttachedRouter(i) << "\n";
+
+                cout << "     NEXT HOP cout = " << (*it)->getNextHopCount() << "\n";
+            }
+
+            cout << "\n";
+
+            cout << "INTER AREA LSA LIST = " << interAreaPrefixLSAList.size() << "\n";
+            for (auto it=this->interAreaPrefixLSAList.begin(); it!=this->interAreaPrefixLSAList.end(); it++) {
+                const OSPFv3LSAHeader& header = (*it)->getHeader();
+                cout << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
+                cout << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
+                cout << "prefix =\t\t " << (*it)->getPrefix() << "\n";
+                cout << "prefixLen =\t\t " << (*it)->getPrefixLen() << "\n";
+            }
+
+
+            cout << "\n" << "\n";
+
+            cout << "INTERFACE LIST = " << this->interfaceList.size() << "\n";
+            for (int i = 0; i < this->interfaceList.size(); i++)
+            {
+                cout << "#" << i << "\n";
+                OSPFv3Interface* inter =  this->getInterface(i);
+                cout << "type = " << inter->getType() << "\n";
+                cout << "interfaceID = " << inter->getInterfaceId() << "\n";
+                cout << "interface IP = " << inter->getInterfaceLLIP() << "\n";
+                cout << "getLinkLSACount() = " <<  inter->getLinkLSACount() << "\n";
+                for (int j = 0; j < inter->getLinkLSACount(); j++) {
+                    LinkLSA* linkLSA = inter->getLinkLSA(j);
+                    cout << "LinkLSA" << "\n";
+                    const OSPFv3LSAHeader& header = linkLSA->getHeader();
+                    cout << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
+                    cout << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
+
+                    cout << "getLinkLocalInterfaceAdd = " << linkLSA->getLinkLocalInterfaceAdd() << "\n";
+                    cout << "getPrefixesArraySize = " << linkLSA->getPrefixesArraySize() << "\n";
+                    for (int k = 0; k < linkLSA->getPrefixesArraySize(); k++) {
+                        // vracia  OSPFv3LinkLSAPrefix
+                        OSPFv3LinkLSAPrefix pr = linkLSA->getPrefixes(k);
+                        cout << "\taddressPrefix          = " <<  pr.addressPrefix << "\n";
+                        cout << "\tprefixLen              = " <<  int(pr.prefixLen) << "\n";
+                    }
+                    cout << "\n";
+                }
+            }
+
+            cout << "\n" << "\n";
+            cout <<  "INTRA AREA PREFIX = " << intraAreaPrefixLSAList.size() << "\n";
+            for (auto it=this->intraAreaPrefixLSAList.begin(); it!=this->intraAreaPrefixLSAList.end(); it++) {
+                const OSPFv3LSAHeader& header = (*it)->getHeader();
+                cout << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
+                cout << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
+                cout << "getPrefixesArraySize = " << (*it)->getPrefixesArraySize() << "\n";
+                cout << "getReferencedLSType = " << (*it)->getReferencedLSType() << "\n";
+                cout << "getReferencedLSID = " << (*it)->getReferencedLSID() << "\n";
+                cout << "getReferencedAdvRtr = " << (*it)->getReferencedAdvRtr() << "\n";
+                cout << "prefixes :" << "\n";
+                for (int i = 0; i < (*it)->getPrefixesArraySize(); i++) {
+                    cout << "addressPrefix = "<< (*it)->getPrefixes(i).addressPrefix << "\n";
+                    cout << "prefixLen = "<< int((*it)->getPrefixes(i).prefixLen) << "\n";
+                }
+            }
+            cout << "\n\n";
+
+
+    //**********************************
+
+    Ipv4Address routerID = this->getInstance()->getProcess()->getRouterID();
+    bool finished = false;
+    std::vector<OSPFv3LSA*> treeVertices;
+    OSPFv3LSA *justAddedVertex;
+    std::vector<OSPFv3LSA *> candidateVertices;
+    unsigned long i, j, k;
+    unsigned long lsaCount;
+
+    if (spfTreeRoot == nullptr) {
+        RouterLSA *newLSA = originateRouterLSA();
+
+        if (installRouterLSA(newLSA))
+        {
+            RouterLSA *routerLSA = findRouterLSA(routerID);
+            spfTreeRoot = routerLSA;
+            floodLSA(newLSA);       //spread LSA to whole network
+            delete newLSA;
+        }
+    }
+
+    lsaCount = routerLSAList.size();
+    cout << "lsaCount = " << lsaCount << endl;
+
+    for (i = 0; i < lsaCount; i++) {
+        routerLSAList[i]->clearNextHops();
+    }
+    lsaCount = networkLSAList.size();
+    for (i = 0; i < lsaCount; i++) {
+        networkLSAList[i]->clearNextHops();
+    }
+
+    spfTreeRoot->setDistance(0);
+    treeVertices.push_back(spfTreeRoot);   // root is first vertex in dijkstra alg
+    justAddedVertex = spfTreeRoot;    // (1)
+
+    do {
+        OSPFv3LSAFunctionCode vertexType = static_cast<OSPFv3LSAFunctionCode>(justAddedVertex->getHeader().getLsaType());
+        if (vertexType == ROUTER_LSA) {
+            RouterLSA *routerVertex = check_and_cast<RouterLSA *>(justAddedVertex);
+            if (routerVertex->getVBit()) {
+                transitCapability = true;
+            }
+
+            int testCount = routerVertex->getRoutersArraySize();
+            for (int iteration = 0; iteration < testCount; iteration++)
+            {
+                OSPFv3RouterLSABody router = routerVertex->getRouters(iteration);
+                OSPFv3LSA* joiningVertex;           // joiningVertex is source vertex
+                OSPFv3LSAFunctionCode joiningVertexType;
+                /*The Vertex ID for a router is the OSPF Router ID.  The Vertex ID
+                  for a transit network is a combination of the Interface ID and
+                  OSPF Router ID of the network's Designated Router.*/
+                if (router.type == TRANSIT_NETWORK) {
+                    joiningVertex = findNetworkLSA(router.neighborInterfaceID, router.neighborRouterID);
+                    joiningVertexType = NETWORK_LSA;
+                }
+                else {  // P2P
+                    joiningVertex = findRouterLSA(router.neighborRouterID);
+                }
+
+                if ((joiningVertex == nullptr) ||
+                (joiningVertex->getHeader().getLsaAge() == MAX_AGE)
+                 || (!hasLink(joiningVertex, justAddedVertex)))    // (from, to)     (2) (b) // uncommented line 15.01.2019 LG
+                {
+                    continue;
+                }
+
+                unsigned int treeSize = treeVertices.size();    // already visited vertices (at the beginning, only root)
+                bool alreadyOnTree = false;
+
+                for (j = 0; j < treeSize; j++) {                // if vertex, which was found is already in set of visited vertices, go to another one
+                    if (treeVertices[j] == joiningVertex) {
+                      alreadyOnTree = true;
+                      break;
+                    }
+                }
+                if (alreadyOnTree) {    // (2) (c)
 //                    EV_DEBUG << "continue\n";
-//                    continue;
-//                }
-////                if (joiningVertexType == NETWORK_LSA)
-////                    EV_DEBUG <<  "TRANSIT_NETWORK pre joiningVertex - " << joiningVertex->getHeader().getAdvertisingRouter() << " / " << joiningVertex->getHeader().getLinkStateID() << "\n"; // LG
-//
-//                unsigned int treeSize = treeVertices.size();    // already visited vertices (at the beginning, only root)
-//                bool alreadyOnTree = false;
-//
-//                for (j = 0; j < treeSize; j++) {                // if vertex, which was found is already in set of visited vertices, go to another one
-//                    if (treeVertices[j] == joiningVertex) {
-//                      alreadyOnTree = true;
-//                      break;
-//                    }
-//                }
-//                if (alreadyOnTree) {    // (2) (c)
-////                    EV_DEBUG << "continue\n";
-//                    continue;
-//                }
-//
-//                unsigned long linkStateCost = routerVertex->getDistance() + routerVertex->getRouters(iteration).metric;
-//                unsigned int candidateCount = candidateVertices.size();     //candidateVertices is zero at the beginning
-//                OSPFv3LSA *candidate = nullptr;
-//
-//                for (j = 0; j < candidateCount; j++) {
-//                    if (candidateVertices[j] == joiningVertex) {
-//                        candidate = candidateVertices[j];
-//                    }
-//                }
-//                if (candidate != nullptr) { // (2) (d)               // first iteration, candidate is nullptr
-//                    RoutingInfo *routingInfo = check_and_cast<RoutingInfo *>(candidate);
-//                    unsigned long candidateDistance = routingInfo->getDistance();
-//
-//                    if (linkStateCost > candidateDistance) {
-//                       continue;
-//                    }
-//                    if (linkStateCost < candidateDistance) {
-//                       routingInfo->setDistance(linkStateCost);
-//                       routingInfo->clearNextHops();
-//                    }
-//                    std::vector<NextHop> *newNextHops = calculateNextHops(joiningVertex, justAddedVertex);    // (destination, parent)
-//                    unsigned int nextHopCount = newNextHops->size();
-//                    for (k = 0; k < nextHopCount; k++) {
-//                       routingInfo->addNextHop((*newNextHops)[k]);
-//                    }
-//                    delete newNextHops;
-//                }
-//                else
-//                {
-//                   if (joiningVertexType == ROUTER_LSA)
-//                   {
-//                       EV_DEBUG << "joiningVertexType == ROUTERLSA_TYPE === false\n";
-//                       RouterLSA *joiningRouterVertex = check_and_cast<RouterLSA *>(joiningVertex);
-//                       joiningRouterVertex->setDistance(linkStateCost);
-//                       EV_DEBUG << "candidate == nullptr  joiningVertexType == ROUTER LSA_TYPE\n";
-//                       EV_DEBUG << "Calculate NEXT HOP  ADVERT-ROUTER with JV = " << joiningVertex->getHeader().getAdvertisingRouter() << " JAV = " << justAddedVertex->getHeader().getAdvertisingRouter() << "\n";
-//                       std::vector<NextHop> *newNextHops = calculateNextHops(joiningVertex, justAddedVertex);    // (destination, parent)
-//                       unsigned int nextHopCount = newNextHops->size();
-//                       for (k = 0; k < nextHopCount; k++) {
-//                           joiningRouterVertex->addNextHop((*newNextHops)[k]);
-//                       }
-//                       delete newNextHops;
-//                       RoutingInfo *vertexRoutingInfo = check_and_cast<RoutingInfo *>(joiningRouterVertex);
-//                       vertexRoutingInfo->setParent(justAddedVertex);
-//
-//                       candidateVertices.push_back(joiningRouterVertex);
-////                           cout << "joiningVertexType == ROUTERLSA_TYPE === false" << endl;
-//                   }
-//                   else
-//                   {    //joiningVertexType == NETWORK_LSA
-//                        NetworkLSA *joiningNetworkVertex = check_and_cast<NetworkLSA *>(joiningVertex);
-//                        joiningNetworkVertex->setDistance(linkStateCost);
-//                        std::vector<NextHop> *newNextHops = calculateNextHops(joiningVertex, justAddedVertex);    // (destination, parent)
-//
-//                        unsigned int nextHopCount = newNextHops->size();
-//                        for (k = 0; k < nextHopCount; k++)
-//                        {
-//                            joiningNetworkVertex->addNextHop((*newNextHops)[k]);
-//                        }
-//                        delete newNextHops;
-//                        // justAdded is source vertex
-//                        // joining is destination vertex
-//                        // joiningNetworkVertex == joiningVertex
-//                        RoutingInfo *vertexRoutingInfo = check_and_cast<RoutingInfo *>(joiningNetworkVertex);
-//                        vertexRoutingInfo->setParent(justAddedVertex);
-//
-//                        candidateVertices.push_back(joiningNetworkVertex);
-//                   }
-//
-//                }
-//              }  // end of for
-//         }    //   (vertexType == ROUTER_LSA)
-//
-//        if (vertexType == NETWORK_LSA)
-//        {
-//            NetworkLSA *networkVertex = check_and_cast<NetworkLSA *>(justAddedVertex);
-//            unsigned int routerCount = networkVertex->getAttachedRouterArraySize();
-//
-//            for (i = 0; i < routerCount; i++) {    // (2)
-//                RouterLSA *joiningVertex = findRouterLSA(networkVertex->getAttachedRouter(i));
-//                if ((joiningVertex == nullptr) ||
-//                    (joiningVertex->getHeader().getLsaAge() == MAX_AGE) ||
-//                    (!hasLink(joiningVertex, justAddedVertex)))    // (from, to)     (2) (b)
-//                {
-//                    continue;
-//                }
-//
-//                unsigned int treeSize = treeVertices.size();
-//                bool alreadyOnTree = false;
-//
-//                for (j = 0; j < treeSize; j++) {
-//                    if (treeVertices[j] == joiningVertex) {
-//                        alreadyOnTree = true;
-//                        break;
-//                    }
-//                }
-//                if (alreadyOnTree) {    // (2) (c) already on tree, continue
-//                    EV_DEBUG << "already on tree, continue\n"; // LG
-//                    continue;
-//                }
-//
-//                unsigned long linkStateCost = networkVertex->getDistance();    // link cost from network to router is always 0
-//                unsigned int candidateCount = candidateVertices.size();
-//                OSPFv3LSA *candidate = nullptr;
-//
-//                for (j = 0; j < candidateCount; j++) {
-//                    if (candidateVertices[j] == joiningVertex) {
-//                        candidate = candidateVertices[j];
-//                    }
-//                }
-//                if (candidate != nullptr) {    // (2) (d)
-//                    RoutingInfo *routingInfo = check_and_cast<RoutingInfo *>(candidate);
-//                    unsigned long candidateDistance = routingInfo->getDistance();
-//
-//                    if (linkStateCost > candidateDistance) {
-//                        continue;
-//                    }
-//                    if (linkStateCost < candidateDistance) {
-//                        routingInfo->setDistance(linkStateCost);
-//                        routingInfo->clearNextHops();
-//                    }
-//                    std::vector<NextHop> *newNextHops = calculateNextHops(joiningVertex, justAddedVertex);    // (destination, parent)
-//                    unsigned int nextHopCount = newNextHops->size();
-//                    for (k = 0; k < nextHopCount; k++) {
-//                        routingInfo->addNextHop((*newNextHops)[k]);
-//                    }
-//                    delete newNextHops;
-//                }
-//                else {
-//                    joiningVertex->setDistance(linkStateCost);
-//                    std::vector<NextHop> *newNextHops = calculateNextHops(joiningVertex, justAddedVertex);    // (destination, parent)
-//
-//                    unsigned int nextHopCount = newNextHops->size();
-//                    for (k = 0; k < nextHopCount; k++) {
-//                        joiningVertex->addNextHop((*newNextHops)[k]);
-//                    }
-//                    delete newNextHops;
-//                    RoutingInfo *vertexRoutingInfo = check_and_cast<RoutingInfo *>(joiningVertex);
-//                    vertexRoutingInfo->setParent(justAddedVertex);
-//
-//                    candidateVertices.push_back(joiningVertex);
-//                }
+                    continue;
+                }
+
+                unsigned long linkStateCost = routerVertex->getDistance() + routerVertex->getRouters(iteration).metric;
+                unsigned int candidateCount = candidateVertices.size();     //candidateVertices is zero at the beginning
+                OSPFv3LSA *candidate = nullptr;
+
+                for (j = 0; j < candidateCount; j++) {
+                    if (candidateVertices[j] == joiningVertex) {
+                        candidate = candidateVertices[j];
+                    }
+                }
+                if (candidate != nullptr) { // (2) (d)               // first iteration, candidate is nullptr
+                    RoutingInfo *routingInfo = check_and_cast<RoutingInfo *>(candidate);
+                    unsigned long candidateDistance = routingInfo->getDistance();
+
+                    if (linkStateCost > candidateDistance) {
+                       continue;
+                    }
+                    if (linkStateCost < candidateDistance) {
+                       routingInfo->setDistance(linkStateCost);
+                       routingInfo->clearNextHops();
+                    }
+                    std::vector<NextHop> *newNextHops = calculateNextHops(joiningVertex, justAddedVertex);    // (destination, parent)
+                    unsigned int nextHopCount = newNextHops->size();
+                    for (k = 0; k < nextHopCount; k++) {
+                       routingInfo->addNextHop((*newNextHops)[k]);
+                    }
+                    delete newNextHops;
+                }
+                else
+                {
+                   if (joiningVertexType == ROUTER_LSA)
+                   {
+                       RouterLSA *joiningRouterVertex = check_and_cast<RouterLSA *>(joiningVertex);
+                       joiningRouterVertex->setDistance(linkStateCost);
+                       std::vector<NextHop> *newNextHops = calculateNextHops(joiningVertex, justAddedVertex);    // (destination, parent)
+                       unsigned int nextHopCount = newNextHops->size();
+                       for (k = 0; k < nextHopCount; k++) {
+                           joiningRouterVertex->addNextHop((*newNextHops)[k]);
+                       }
+                       delete newNextHops;
+                       RoutingInfo *vertexRoutingInfo = check_and_cast<RoutingInfo *>(joiningRouterVertex);
+                       vertexRoutingInfo->setParent(justAddedVertex);
+
+                       candidateVertices.push_back(joiningRouterVertex);
+//                           cout << "joiningVertexType == ROUTERLSA_TYPE === false" << endl;
+                   }
+                   else
+                   {    //joiningVertexType == NETWORK_LSA
+                        NetworkLSA *joiningNetworkVertex = check_and_cast<NetworkLSA *>(joiningVertex);
+                        joiningNetworkVertex->setDistance(linkStateCost);
+                        std::vector<NextHop> *newNextHops = calculateNextHops(joiningVertex, justAddedVertex);    // (destination, parent)
+
+                        unsigned int nextHopCount = newNextHops->size();
+                        for (k = 0; k < nextHopCount; k++)
+                        {
+                            joiningNetworkVertex->addNextHop((*newNextHops)[k]);
+                        }
+                        delete newNextHops;
+                        // justAdded is source vertex
+                        // joining is destination vertex
+                        // joiningNetworkVertex == joiningVertex
+                        RoutingInfo *vertexRoutingInfo = check_and_cast<RoutingInfo *>(joiningNetworkVertex);
+                        vertexRoutingInfo->setParent(justAddedVertex);
+
+                        candidateVertices.push_back(joiningNetworkVertex);
+                   }
+
+                }
+              }  // end of for
+         }    //   (vertexType == ROUTER_LSA)
+
+        if (vertexType == NETWORK_LSA)
+        {
+            NetworkLSA *networkVertex = check_and_cast<NetworkLSA *>(justAddedVertex);
+            unsigned int routerCount = networkVertex->getAttachedRouterArraySize();
+
+            for (i = 0; i < routerCount; i++) {    // (2)
+                RouterLSA *joiningVertex = findRouterLSA(networkVertex->getAttachedRouter(i));
+                if ((joiningVertex == nullptr) ||
+                    (joiningVertex->getHeader().getLsaAge() == MAX_AGE) ||
+                    (!hasLink(joiningVertex, justAddedVertex)))    // (from, to)     (2) (b)
+                {
+                    continue;
+                }
+
+                unsigned int treeSize = treeVertices.size();
+                bool alreadyOnTree = false;
+
+                for (j = 0; j < treeSize; j++) {
+                    if (treeVertices[j] == joiningVertex) {
+                        alreadyOnTree = true;
+                        break;
+                    }
+                }
+                if (alreadyOnTree) {    // (2) (c) already on tree, continue
+                    continue;
+                }
+
+                unsigned long linkStateCost = networkVertex->getDistance();    // link cost from network to router is always 0
+                unsigned int candidateCount = candidateVertices.size();
+                OSPFv3LSA *candidate = nullptr;
+
+                for (j = 0; j < candidateCount; j++) {
+                    if (candidateVertices[j] == joiningVertex) {
+                        candidate = candidateVertices[j];
+                    }
+                }
+                if (candidate != nullptr) {    // (2) (d)
+                    RoutingInfo *routingInfo = check_and_cast<RoutingInfo *>(candidate);
+                    unsigned long candidateDistance = routingInfo->getDistance();
+
+                    if (linkStateCost > candidateDistance) {
+                        continue;
+                    }
+                    if (linkStateCost < candidateDistance) {
+                        routingInfo->setDistance(linkStateCost);
+                        routingInfo->clearNextHops();
+                    }
+                    std::vector<NextHop> *newNextHops = calculateNextHops(joiningVertex, justAddedVertex);    // (destination, parent)
+                    unsigned int nextHopCount = newNextHops->size();
+                    for (k = 0; k < nextHopCount; k++) {
+                        routingInfo->addNextHop((*newNextHops)[k]);
+                    }
+                    delete newNextHops;
+                }
+                else {
+                    joiningVertex->setDistance(linkStateCost);
+                    std::vector<NextHop> *newNextHops = calculateNextHops(joiningVertex, justAddedVertex);    // (destination, parent)
+
+                    unsigned int nextHopCount = newNextHops->size();
+                    for (k = 0; k < nextHopCount; k++) {
+                        joiningVertex->addNextHop((*newNextHops)[k]);
+                    }
+                    delete newNextHops;
+                    RoutingInfo *vertexRoutingInfo = check_and_cast<RoutingInfo *>(joiningVertex);
+                    vertexRoutingInfo->setParent(justAddedVertex);
+
+                    candidateVertices.push_back(joiningVertex);
+                }
+            }
+        }
+
+        if (candidateVertices.empty()) {    // (3)
+            finished = true;
+        }
+        else
+        {
+            unsigned int candidateCount = candidateVertices.size();
+            unsigned long minDistance = LS_INFINITY;
+            OSPFv3LSA *closestVertex = candidateVertices[0];
+
+            // this for-cycle edit distane from source vertex to all others adjacent vertices by dijstra algorithm
+            for (i = 0; i < candidateCount; i++)
+            {
+                RoutingInfo *routingInfo = check_and_cast<RoutingInfo *>(candidateVertices[i]);
+                unsigned long currentDistance = routingInfo->getDistance();
+
+                if (currentDistance < minDistance) {
+                    closestVertex = candidateVertices[i];
+                    minDistance = currentDistance;
+                }
+                else {
+                    if (currentDistance == minDistance) {
+                        if ((closestVertex->getHeader().getLsaType() == ROUTER_LSA) &&
+                            (candidateVertices[i]->getHeader().getLsaType() == NETWORK_LSA))
+                        {
+                            closestVertex = candidateVertices[i];
+                        }
+                    }
+                }
+            }
+
+            treeVertices.push_back(closestVertex);      // treeVertices is the main SPF tree
+            // delete selected closestVertex  from candidateVertices
+            for (auto it = candidateVertices.begin(); it != candidateVertices.end(); it++) {
+                if ((*it) == closestVertex) {
+                    candidateVertices.erase(it);
+                    break;
+                }
+            }
+
+            if (closestVertex->getHeader().getLsaType() == ROUTER_LSA) {
+                RouterLSA *routerLSA = check_and_cast<RouterLSA *>(closestVertex);
+
+                int arrSiz = routerLSA->getRoutersArraySize();
+                // find intraAreaPrefix LSA  for this vertex
+                if ((routerLSA->getBBit() || routerLSA->getEBit()) &&
+                     (routerLSA->getHeader().getAdvertisingRouter() != this->getInstance()->getProcess()->getRouterID())) //in broadcast network, only if this is ABR or ASBR
+                {
+                    int attached = -1; // find out which route from Router_LSA is already in treeVertices
+
+                    //check routeCounts and if it is more than 1, visited Vertex take bigger priority
+                    if (arrSiz > 1)
+                    {
+                        unsigned int tree = treeVertices.size();    // already visited vertices (at the beginning, only root)
+
+                        for (int t = 0; t < tree; t++)
+                        {
+                            for (int r = 0; r < arrSiz; r++)
+                            {
+                                if (treeVertices[t]->getHeader().getAdvertisingRouter() == routerLSA->getRouters(r).neighborRouterID )
+                                {
+                                  attached = r;
+                                  break;
+                                }
+                            }
+                            if (attached >= 0) //found match
+                                break;
+                        }
+                    }
+
+                    if (attached < 0) //if no match was found, use first in routerArray of this router-LSA
+                        attached = 0;
+
+                    if (arrSiz > 0)
+                    {
+                        LSAKeyType lsaKey;
+                        if (routerLSA->getRouters(attached).type == POINT_TO_POINT)
+                        {
+                            lsaKey.linkStateID = (Ipv4Address)routerLSA->getHeader().getLinkStateID();
+                            lsaKey.advertisingRouter = routerLSA->getHeader().getAdvertisingRouter();
+                        }
+                        else if(routerLSA->getRouters(attached).type == TRANSIT_NETWORK) //link is connected into BROADCAST network
+                        {
+                            lsaKey.linkStateID = (Ipv4Address)routerLSA->getRouters(attached).neighborInterfaceID;
+                            lsaKey.advertisingRouter = routerLSA->getRouters(attached).neighborRouterID;
+                        }
+                        else
+                            continue;
+                        lsaKey.LSType = routerLSA->getRouters(attached).type ;
+                        addRouterEntry(routerLSA, lsaKey, newTableIPv6, newTableIPv4);
+                    }
+                }
+
+                // check if router has any host networks
+                if (routerLSA->getHeader().getAdvertisingRouter() != this->getInstance()->getProcess()->getRouterID())
+                {
+                    LSAKeyType lsaKey;
+                    lsaKey.linkStateID = (Ipv4Address)routerLSA->getHeader().getLinkStateID();
+                    lsaKey.advertisingRouter = routerLSA->getHeader().getAdvertisingRouter();
+                    lsaKey.LSType = ROUTER_LSA;
+                    addRouterEntry(routerLSA, lsaKey, newTableIPv6, newTableIPv4);
+                }
+            }
+
+            if (closestVertex->getHeader().getLsaType() == NETWORK_LSA) {
+                NetworkLSA *networkLSA = check_and_cast<NetworkLSA *>(closestVertex);
+
+                // address is extracted from Intra-Area-Prefix-LSA
+                LSAKeyType lsaKey;
+                lsaKey.linkStateID = networkLSA->getHeader().getLinkStateID();
+                lsaKey.advertisingRouter = networkLSA->getHeader().getAdvertisingRouter();
+                lsaKey.LSType = NETWORK_LSA;  //navyse
+
+                L3Address destinationID;
+                uint8_t prefixLen;
+                OSPFv3IntraAreaPrefixLSA *iapLSA = findIntraAreaPrefixLSAByReference(lsaKey);
+                if (iapLSA != nullptr)
+                {
+                    for (int i = 0; i < iapLSA->getPrefixesArraySize(); i++) {
+                        destinationID = iapLSA->getPrefixes(i).addressPrefix;
+                        prefixLen = iapLSA->getPrefixes(i).prefixLen;
+                        unsigned int nextHopCount = networkLSA->getNextHopCount();
+                        bool overWrite = false;
+                        if (destinationID.getType() == L3Address::IPv6)         // for ipv6 AF
+                        {
+                            OSPFv3RoutingTableEntry *entry = nullptr;
+                            unsigned long routeCount = newTableIPv6.size();
+                            Ipv6Address longestMatch(Ipv6Address::UNSPECIFIED_ADDRESS);
+
+                            for (int rt = 0; rt < routeCount; rt++) {
+                                if (newTableIPv6[rt]->getDestinationType() == OSPFv3RoutingTableEntry::NETWORK_DESTINATION) {
+                                    OSPFv3RoutingTableEntry *routingEntry = newTableIPv6[rt];
+                                    Ipv6Address entryAddress = routingEntry->getDestPrefix();
+
+                                    if (entryAddress == destinationID.toIpv6())
+                                    {
+                                        if (destinationID.toIpv6() > longestMatch) {
+                                            longestMatch = destinationID.toIpv6();
+                                            entry = routingEntry;
+                                        }
+                                    }
+                                }
+                            }
+                            if (entry != nullptr) {
+                                const OSPFv3LSA *entryOrigin = entry->getLinkStateOrigin();
+                                if ((entry->getCost() != networkLSA->getDistance()) ||
+                                    (entryOrigin->getHeader().getLinkStateID() >= networkLSA->getHeader().getLinkStateID()))
+                                {
+                                    overWrite = true;
+                                }
+                            }
+
+                            if ((entry == nullptr) || (overWrite)) {
+                                if (entry == nullptr) {
+                                    entry = new OSPFv3RoutingTableEntry(this->getInstance()->ift, destinationID.toIpv6(), prefixLen, IRoute::OSPF);
+                                }
+                                entry->setLinkStateOrigin(networkLSA);
+                                entry->setArea(areaID);
+                                entry->setPathType(OSPFv3RoutingTableEntry::INTRAAREA);
+                                entry->setCost(networkLSA->getDistance());
+                                entry->setDestinationType(OSPFv3RoutingTableEntry::NETWORK_DESTINATION);
+                                entry->setOptionalCapabilities(networkLSA->getOspfOptions());
+
+
+                                for (int j = 0; j < nextHopCount; j++) {
+                                    entry->addNextHop(networkLSA->getNextHop(j));
+                                }
+
+
+                                if (!overWrite) {
+                                    newTableIPv6.push_back(entry);
+                                }
+                            }
+                        }
+                        else        // for IPv4 AF
+                        {
+                            OSPFv3IPv4RoutingTableEntry *entry = nullptr;
+                            unsigned long routeCount = newTableIPv4.size();
+                            Ipv4Address longestMatch(Ipv4Address::UNSPECIFIED_ADDRESS);
+
+                            for (int rt = 0; rt < routeCount; rt++) {
+                                if (newTableIPv4[rt]->getDestinationType() == OSPFv3IPv4RoutingTableEntry::NETWORK_DESTINATION) {
+                                    OSPFv3IPv4RoutingTableEntry *routingEntry = newTableIPv4[rt];
+                                    Ipv4Address entryAddress = routingEntry->getDestination();
+
+                                    if (entryAddress == destinationID.toIpv4())
+                                    {
+                                        if (destinationID.toIpv4() > longestMatch) {
+                                            longestMatch = destinationID.toIpv4();
+                                            entry = routingEntry;
+                                        }
+                                    }
+                                }
+                            }
+                            if (entry != nullptr) {
+                                const OSPFv3LSA *entryOrigin = entry->getLinkStateOrigin();
+                                if ((entry->getCost() != networkLSA->getDistance()) ||
+                                    (entryOrigin->getHeader().getLinkStateID() >= networkLSA->getHeader().getLinkStateID()))
+                                {
+                                    overWrite = true;
+                                }
+                            }
+
+                            if ((entry == nullptr) || (overWrite)) {
+                                if (entry == nullptr) {
+            //                      OSPFv3RoutingTableEntry(IInterfaceTable *ift, Ipv6Address destPrefix, int prefixLength, SourceType sourceType)
+                                    entry = new OSPFv3IPv4RoutingTableEntry(this->getInstance()->ift, destinationID.toIpv4(), prefixLen, IRoute::OSPF);
+                                }
+                                entry->setLinkStateOrigin(networkLSA);
+                                entry->setArea(areaID);
+                                entry->setPathType(OSPFv3IPv4RoutingTableEntry::INTRAAREA);
+                                entry->setCost(networkLSA->getDistance());
+                                entry->setDestinationType(OSPFv3IPv4RoutingTableEntry::NETWORK_DESTINATION);
+                                entry->setOptionalCapabilities(networkLSA->getOspfOptions());
+
+
+                                for (int j = 0; j < nextHopCount; j++) {
+                                    entry->addNextHop(networkLSA->getNextHop(j)); // tu mi to vklada IPv6 next hop pre IPv4 AF
+                                }
+
+
+                                if (!overWrite) {
+                                    newTableIPv4.push_back(entry);
+                                }
+                            }
+                        }
+                    }
+                }
+                else {
+                    continue; // there is no LSA type 9 which would care a IP addresses for this calculating route, so skip to next one.
+                }
+            }
+            justAddedVertex = closestVertex;
+            }// end of else not empty()
+    } while (!finished);
+
+        //FAR FAR AWAY LG
+//        unsigned int treeSize = treeVertices.size();
+//        for (i = 0; i < treeSize; i++) {
+//        RouterLSA *routerVertex = dynamic_cast<RouterLSA *>(treeVertices[i]);
+//            if (routerVertex == nullptr) {
+//                continue;
 //            }
 //        }
-//
-//        if (candidateVertices.empty()) {    // (3)
-//            finished = true;
-//        }
-//        else
-//        {
-//            unsigned int candidateCount = candidateVertices.size();
-//            unsigned long minDistance = LS_INFINITY;
-//            OSPFv3LSA *closestVertex = candidateVertices[0];
-//
-//            // this for-cycle edit distane from source vertex to all others adjacent vertices by dijstra algorithm
-//            for (i = 0; i < candidateCount; i++)
-//            {
-//                RoutingInfo *routingInfo = check_and_cast<RoutingInfo *>(candidateVertices[i]);
-//                unsigned long currentDistance = routingInfo->getDistance();
-//
-//                if (currentDistance < minDistance) {
-//                    closestVertex = candidateVertices[i];
-//                    minDistance = currentDistance;
-//                }
-//                else {
-//                    if (currentDistance == minDistance) {
-//                        if ((closestVertex->getHeader().getLsaType() == ROUTER_LSA) &&
-//                            (candidateVertices[i]->getHeader().getLsaType() == NETWORK_LSA))
-//                        {
-//                            closestVertex = candidateVertices[i];
-//                        }
-//                    }
-//                }
-//            }
-//
-//            treeVertices.push_back(closestVertex);      // treeVertices is the main SPF tree
-//            // delete selected closestVertex  from candidateVertices
-//            for (auto it = candidateVertices.begin(); it != candidateVertices.end(); it++) {
-//                if ((*it) == closestVertex) {
-//                    candidateVertices.erase(it);
-//                    break;
-//                }
-//            }
-//
-//            if (closestVertex->getHeader().getLsaType() == ROUTER_LSA) {
-//                EV_DEBUG << "closestVertex->getHeader().getLsType() == ROUTERLSA_TYPE  ---- malo by navstivit\n";
-//                RouterLSA *routerLSA = check_and_cast<RouterLSA *>(closestVertex);
-//
-//                int arrSiz = routerLSA->getRoutersArraySize();
-//                // find intraAreaPrefix LSA  for this vertex
-//                if ((routerLSA->getBBit() || routerLSA->getEBit()) &&
-//                     (routerLSA->getHeader().getAdvertisingRouter() != this->getInstance()->getProcess()->getRouterID())) //in broadcast network, only if this is ABR or ASBR
-//                {
-//                    int attached = -1; // find out which route from Router_LSA is already in treeVertices
-//
-//                    //check routeCounts and if it is more than 1, visited Vertex take bigger priority
-//                    if (arrSiz > 1)
-//                    {
-//                        unsigned int tree = treeVertices.size();    // already visited vertices (at the beginning, only root)
-//
-//                        for (int t = 0; t < tree; t++)
-//                        {
-//                            for (int r = 0; r < arrSiz; r++)
-//                            {
-//                                if (treeVertices[t]->getHeader().getAdvertisingRouter() == routerLSA->getRouters(r).neighborRouterID )
-//                                {
-//                                  attached = r;
-//                                  break;
-//                                }
-//                            }
-//                            if (attached >= 0) //found match
-//                                break;
-//                        }
-//                    }
-//
-//                    if (attached < 0) //if no match was found, use first in routerArray of this router-LSA
-//                        attached = 0;
-//
-//                    if (arrSiz > 0)
-//                    {
-//                        LSAKeyType lsaKey;
-//                        if (routerLSA->getRouters(attached).type == POINT_TO_POINT)
-//                        {
-//                            lsaKey.linkStateID = (Ipv4Address)routerLSA->getHeader().getLinkStateID();
-//                            lsaKey.advertisingRouter = routerLSA->getHeader().getAdvertisingRouter();
-//                        }
-//                        else if(routerLSA->getRouters(attached).type == TRANSIT_NETWORK) //link is connected into BROADCAST network
-//                        {
-//                            lsaKey.linkStateID = (Ipv4Address)routerLSA->getRouters(attached).neighborInterfaceID;
-//                            lsaKey.advertisingRouter = routerLSA->getRouters(attached).neighborRouterID;
-//                        }
-//                        else
-//                            continue;
-//                        lsaKey.LSType = routerLSA->getRouters(attached).type ;
-//                        addRouterEntry(routerLSA, lsaKey, newTableIPv6, newTableIPv4);
-//                    }
-//                }
-//
-//                // check if router has any host networks
-//                if (routerLSA->getHeader().getAdvertisingRouter() != this->getInstance()->getProcess()->getRouterID())
-//                {
-//                    LSAKeyType lsaKey;
-//                    lsaKey.linkStateID = (Ipv4Address)routerLSA->getHeader().getLinkStateID();
-//                    lsaKey.advertisingRouter = routerLSA->getHeader().getAdvertisingRouter();
-//                    lsaKey.LSType = ROUTER_LSA;
-//                    addRouterEntry(routerLSA, lsaKey, newTableIPv6, newTableIPv4);
-//                }
-//            }
-//
-//            if (closestVertex->getHeader().getLsaType() == NETWORK_LSA) {
-//                NetworkLSA *networkLSA = check_and_cast<NetworkLSA *>(closestVertex);
-//
-//                // address is extracted from Intra-Area-Prefix-LSA
-//                LSAKeyType lsaKey;
-//                lsaKey.linkStateID = networkLSA->getHeader().getLinkStateID();
-//                lsaKey.advertisingRouter = networkLSA->getHeader().getAdvertisingRouter();
-//                lsaKey.LSType = NETWORK_LSA;  //navyse
-//
-//                L3Address destinationID;
-//                uint8_t prefixLen;
-//                OSPFv3IntraAreaPrefixLSA *iapLSA = findIntraAreaPrefixLSAByReference(lsaKey);
-//                if (iapLSA != nullptr)
-//                {
-//                    for (int i = 0; i < iapLSA->getPrefixesArraySize(); i++) {
-//                        EV_DEBUG << "addressPrefix = "<< iapLSA->getPrefixes(i).addressPrefix << "\n";  //this is my destinationID
-//                        EV_DEBUG << "prefixLen = "<< int(iapLSA->getPrefixes(i).prefixLen) << "\n";
-//                        destinationID = iapLSA->getPrefixes(i).addressPrefix;
-//                        prefixLen = iapLSA->getPrefixes(i).prefixLen;
-//                       /* if(i > 0){
-//                            EV_DEBUG << "Mam tam viac adries, WTF?\n"; //LG
-//                            break;
-//                        }*/
-//                        unsigned int nextHopCount = networkLSA->getNextHopCount();
-//                        bool overWrite = false;
-//                        cout << "type of dest is  = " <<  destinationID.getType() << "\n";
-//                        if (destinationID.getType() == L3Address::IPv6)         // for ipv6 AF
-//                        {
-//                            cout << "SOM ZA TYM FOKIN DESTINATION TYPE\n";
-//                            OSPFv3RoutingTableEntry *entry = nullptr;
-//                            unsigned long routeCount = newTableIPv6.size();
-//                            Ipv6Address longestMatch(Ipv6Address::UNSPECIFIED_ADDRESS);
-//
-//                            for (int rt = 0; rt < routeCount; rt++) {
-//                                EV_DEBUG << "for (i = 0; i < routeCount; i++)\n";
-//                                if (newTableIPv6[rt]->getDestinationType() == OSPFv3RoutingTableEntry::NETWORK_DESTINATION) {
-//                                    OSPFv3RoutingTableEntry *routingEntry = newTableIPv6[rt];
-//                                    Ipv6Address entryAddress = routingEntry->getDestPrefix();
-//
-//                                    if (entryAddress == destinationID.toIpv6())
-//                                    {
-//                                        if (destinationID.toIpv6() > longestMatch) {
-//                                            longestMatch = destinationID.toIpv6();
-//                                            entry = routingEntry;
-//                                        }
-//                                    }
-//                                }
-//                            }
-//                            if (entry != nullptr) {
-//                                EV_DEBUG << "entry != nullptr - TOTO JE NOVE !\n";
-//                                const OSPFv3LSA *entryOrigin = entry->getLinkStateOrigin();
-//                                if ((entry->getCost() != networkLSA->getDistance()) ||
-//                                    (entryOrigin->getHeader().getLinkStateID() >= networkLSA->getHeader().getLinkStateID()))
-//                                {
-//                                    overWrite = true;
-//                                }
-//                            }
-//
-//                            if ((entry == nullptr) || (overWrite)) {
-//                                if (entry == nullptr) {
-//                                    EV_DEBUG << "v Area destinationID = " << destinationID << "\n";
-//            //                      OSPFv3RoutingTableEntry(IInterfaceTable *ift, Ipv6Address destPrefix, int prefixLength, SourceType sourceType)
-//                                    entry = new OSPFv3RoutingTableEntry(this->getInstance()->ift, destinationID.toIpv6(), prefixLen, IRoute::OSPF);
-//                                }
-//                                entry->setLinkStateOrigin(networkLSA);
-//                                entry->setArea(areaID);
-//                                entry->setPathType(OSPFv3RoutingTableEntry::INTRAAREA);
-//                                entry->setCost(networkLSA->getDistance());
-//                                entry->setDestinationType(OSPFv3RoutingTableEntry::NETWORK_DESTINATION);
-//                                entry->setOptionalCapabilities(networkLSA->getOspfOptions());
-//
-//
-//                                for (int j = 0; j < nextHopCount; j++) {
-//                                    entry->addNextHop(networkLSA->getNextHop(j));
-//                                }
-//
-//
-//                                if (!overWrite) {
-//                                    newTableIPv6.push_back(entry);
-//                                }
-//                            }
-//                        }
-//                        else        // for IPv4 AF
-//                        {
-//                            OSPFv3IPv4RoutingTableEntry *entry = nullptr;
-//                            unsigned long routeCount = newTableIPv4.size();
-//                            Ipv4Address longestMatch(Ipv4Address::UNSPECIFIED_ADDRESS);
-//
-//                            for (int rt = 0; rt < routeCount; rt++) {
-//                                EV_DEBUG << "for (i = 0; i < routeCount; i++)\n";
-//                                if (newTableIPv4[rt]->getDestinationType() == OSPFv3IPv4RoutingTableEntry::NETWORK_DESTINATION) {
-//                                    OSPFv3IPv4RoutingTableEntry *routingEntry = newTableIPv4[rt];
-//                                    Ipv4Address entryAddress = routingEntry->getDestination();
-//
-//                                    if (entryAddress == destinationID.toIpv4())
-//                                    {
-//                                        if (destinationID.toIpv4() > longestMatch) {
-//                                            longestMatch = destinationID.toIpv4();
-//                                            entry = routingEntry;
-//                                        }
-//                                    }
-//                                }
-//                            }
-//                            if (entry != nullptr) {
-//                                EV_DEBUG << "entry != nullptr - TOTO JE NOVE !\n";
-//                                const OSPFv3LSA *entryOrigin = entry->getLinkStateOrigin();
-//                                if ((entry->getCost() != networkLSA->getDistance()) ||
-//                                    (entryOrigin->getHeader().getLinkStateID() >= networkLSA->getHeader().getLinkStateID()))
-//                                {
-//                                    overWrite = true;
-//                                }
-//                            }
-//
-//                            if ((entry == nullptr) || (overWrite)) {
-//                                if (entry == nullptr) {
-//                                    EV_DEBUG << "v Area destinationID = " << destinationID << "\n";
-//            //                      OSPFv3RoutingTableEntry(IInterfaceTable *ift, Ipv6Address destPrefix, int prefixLength, SourceType sourceType)
-//                                    entry = new OSPFv3IPv4RoutingTableEntry(this->getInstance()->ift, destinationID.toIpv4(), prefixLen, IRoute::OSPF);
-//                                }
-//                                entry->setLinkStateOrigin(networkLSA);
-//                                entry->setArea(areaID);
-//                                entry->setPathType(OSPFv3IPv4RoutingTableEntry::INTRAAREA);
-//                                entry->setCost(networkLSA->getDistance());
-//                                entry->setDestinationType(OSPFv3IPv4RoutingTableEntry::NETWORK_DESTINATION);
-//                                entry->setOptionalCapabilities(networkLSA->getOspfOptions());
-//
-//
-//                                for (int j = 0; j < nextHopCount; j++) {
-//                                    entry->addNextHop(networkLSA->getNextHop(j)); // tu mi to vklada IPv6 next hop pre IPv4 AF
-//                                }
-//
-//
-//                                if (!overWrite) {
-//                                    newTableIPv4.push_back(entry);
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//                else {
-//                    continue; // there is no LSA type 9 which would care a IP addresses for this calculating route, so skip to next one.
-//                }
-//
-//
-//            }
-//
-//            justAddedVertex = closestVertex;
-//            }// end of else not empty()
-//    } while (!finished);
-//
-//
-//
-//
-//        //FAR FAR AWAY LG
-////        unsigned int treeSize = treeVertices.size();
-////        for (i = 0; i < treeSize; i++) {
-////        RouterLSA *routerVertex = dynamic_cast<RouterLSA *>(treeVertices[i]);
-////            if (routerVertex == nullptr) {
-////                continue;
-////            }
-////        }
-//
-//
-//    EV_DEBUG << "SPFTree calculation finished\n";
-//}
-//
-//
-//// add Router-LSA  entry into newTable based on AF which is for this process active
-//void OSPFv3Area::addRouterEntry(RouterLSA* routerLSA, LSAKeyType lsaKey, std::vector<OSPFv3RoutingTableEntry *>& newTableIPv6, std::vector<OSPFv3IPv4RoutingTableEntry *>& newTableIPv4 )
-//{
-//    L3Address destinationID;
-//    uint8_t prefixLen;
-//
-//    OSPFv3IntraAreaPrefixLSA *iapLSA = findIntraAreaPrefixLSAByReference(lsaKey); //find appropriate LSA type 9 based on reference in packet.
-//
-//    if (iapLSA != nullptr)
-//    {
-//        for (int i = 0; i < iapLSA->getPrefixesArraySize(); i++)
-//        {
-//            destinationID = iapLSA->getPrefixes(i).addressPrefix;
-//            prefixLen = iapLSA->getPrefixes(i).prefixLen;
-//
-//            // if this LSA is part of IPv6 AF
-//            if (destinationID.getType() == L3Address::IPv6)
-//            {
-//                OSPFv3RoutingTableEntry *entry = new OSPFv3RoutingTableEntry(this->getInstance()->ift, destinationID.toIpv6(), prefixLen, IRoute::OSPF);
-//                unsigned int nextHopCount = routerLSA->getNextHopCount();
-//                OSPFv3RoutingTableEntry::RoutingDestinationType destinationType = OSPFv3RoutingTableEntry::NETWORK_DESTINATION;
-//
-//                entry->setLinkStateOrigin(routerLSA);
-//                entry->setArea(areaID);
-//                entry->setPathType(OSPFv3RoutingTableEntry::INTRAAREA);
-//                entry->setCost(routerLSA->getDistance());
-//                if (routerLSA->getBBit())
-//                    destinationType |= OSPFv3RoutingTableEntry::AREA_BORDER_ROUTER_DESTINATION;
-//
-//                if (routerLSA->getEBit())
-//                    destinationType |= OSPFv3RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION;
-//
-//                entry->setDestinationType(destinationType);
-//                entry->setOptionalCapabilities(routerLSA->getOspfOptions());
-//                for (int j = 0; j < nextHopCount; j++) {
-//                    entry->addNextHop(routerLSA->getNextHop(j));
-//                }
-//
-//                newTableIPv6.push_back(entry);
-//            }
-//            else // if this LSA is part of IPv4 AF
-//            {
-//                OSPFv3IPv4RoutingTableEntry *entry = new OSPFv3IPv4RoutingTableEntry(this->getInstance()->ift, destinationID.toIpv4(), prefixLen, IRoute::OSPF);
-//                unsigned int nextHopCount = routerLSA->getNextHopCount();
-//                OSPFv3RoutingTableEntry::RoutingDestinationType destinationType = OSPFv3RoutingTableEntry::NETWORK_DESTINATION;
-//
-//                entry->setLinkStateOrigin(routerLSA);
-//                entry->setArea(areaID);
-//                entry->setPathType(OSPFv3IPv4RoutingTableEntry::INTRAAREA);
-//                entry->setCost(routerLSA->getDistance());
-//                if (routerLSA->getBBit()) {
-//                destinationType |= OSPFv3RoutingTableEntry::AREA_BORDER_ROUTER_DESTINATION;
-//                }
-//                if (routerLSA->getEBit()) {
-//                destinationType |= OSPFv3RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION;
-//                }
-//
-//                entry->setDestinationType(destinationType);
-//                entry->setOptionalCapabilities(routerLSA->getOspfOptions());
-//                for (int j = 0; j < nextHopCount; j++) {
-//                    entry->addNextHop(routerLSA->getNextHop(j));
-//                }
-//
-//                newTableIPv4.push_back(entry);
-//            }
-//
-//        }
-//    }
-//}
-//
-///**
-// * Browse through the newTable looking for entries describing the same destination
-// * as the currentLSA. If a cheaper route is found then skip this LSA(return true), else
-// * note those which are of equal or worse cost than the currentCost.
-// */
-//// for IPv6 AF
-//bool OSPFv3Area::findSameOrWorseCostRoute(const std::vector<OSPFv3RoutingTableEntry *>& newTable,
-//        const InterAreaPrefixLSA& interAreaPrefixLSA,
-//        unsigned short currentCost,
-//        bool& destinationInRoutingTable,
-//        std::list<OSPFv3RoutingTableEntry *>& sameOrWorseCost) const
-//{
-//    destinationInRoutingTable = false;
-//    sameOrWorseCost.clear();
-//
-//    long routeCount = newTable.size();
-//    Ipv6AddressRange destination;
-//    destination.prefix = interAreaPrefixLSA.getPrefix().toIpv6();
-//    destination.prefixLength = interAreaPrefixLSA.getPrefixLen();
-//
-//    for (long j = 0; j < routeCount; j++) {
-//        OSPFv3RoutingTableEntry *routingEntry = newTable[j];
-//        bool foundMatching = false;
-//        EV_DEBUG << "FIND SAME OR WORSE, ROUTING ENTRY routecount = " << routeCount << "\n";
-//        EV_DEBUG << " pathtype,prefix, prefixLen, cost, area, cost \n";
-//        EV_DEBUG << routingEntry->getDestinationType() << "\n";
-//        EV_DEBUG << routingEntry->getPathType() << "\n";
-//        EV_DEBUG << routingEntry->getDestPrefix() << "\n";
-//        EV_DEBUG << routingEntry->getPrefixLength() << "\n";
-//        EV_DEBUG << routingEntry->getArea() << "\n";
-//        EV_DEBUG << routingEntry->getCost() << "\n";
-//        EV_DEBUG << "And in destiantion range :" << destination.prefix  << " / " << destination.prefixLength << "\n";
-//        EV_DEBUG << "interAreaPrefixLSA.TYPE  = " << interAreaPrefixLSA.getHeader().getLsaType() << "\n";
-//
-//        if (interAreaPrefixLSA.getHeader().getLsaType() == INTER_AREA_PREFIX_LSA) {
-//            if ((routingEntry->getDestinationType() == OSPFv3RoutingTableEntry::NETWORK_DESTINATION) &&
-//                isSameNetwork(destination.prefix, destination.prefixLength, routingEntry->getDestPrefix(), routingEntry->getPrefixLength()))    //TODO  or use containing ?
-//            {
-//                EV_DEBUG << "if if foundMatching = true;\n";
-//                foundMatching = true;
-//            }
-//        }
-//        else {
-//            if ((((routingEntry->getDestinationType() & OSPFv3RoutingTableEntry::AREA_BORDER_ROUTER_DESTINATION) != 0) ||
-//                 ((routingEntry->getDestinationType() & OSPFv3RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION) != 0)) &&
-//                (destination.prefix == routingEntry->getDestPrefix()) &&
-//                (destination.prefixLength == routingEntry->getPrefixLength()))
-//            {
-//                EV_DEBUG << "else if foundMatching = true;\n";
-//                foundMatching = true;
-//            }
-//        }
-//
-//        if (foundMatching) {
-//            destinationInRoutingTable = true;
-//
-//            /* If the matching entry is an INTRAAREA getRoute(intra-area paths are
-//             * always preferred to other paths of any cost), or it's a cheaper INTERAREA
-//             * route, then skip this LSA.
-//             */
-//            if ((routingEntry->getPathType() == OSPFv3RoutingTableEntry::INTRAAREA) ||
-//                ((routingEntry->getPathType() == OSPFv3RoutingTableEntry::INTERAREA) &&
-//                 (routingEntry->getCost() < currentCost)))
-//            {
-//                EV_DEBUG << "return true\n";
-//                return true;
-//            }
-//            else {
-//                // if it's an other INTERAREA path
-//                if ((routingEntry->getPathType() == OSPFv3RoutingTableEntry::INTERAREA) &&
-//                    (routingEntry->getCost() >= currentCost))
-//                {
-//                    EV_DEBUG << "sameOrWorseCost.push_back(routingEntry)\n";
-//                    sameOrWorseCost.push_back(routingEntry);
-//                }    // else it's external -> same as if not in the table
-//            }
-//        }
-//    }
-//    EV_DEBUG << "return false\n";
-//    return false;
-//}
-//
-////  for IPv4 AF
-//bool OSPFv3Area::findSameOrWorseCostRoute(const std::vector<OSPFv3IPv4RoutingTableEntry *>& newTable,
-//        const InterAreaPrefixLSA& interAreaPrefixLSA,
-//        unsigned short currentCost,
-//        bool& destinationInRoutingTable,
-//        std::list<OSPFv3IPv4RoutingTableEntry *>& sameOrWorseCost) const
-//{
-//    destinationInRoutingTable = false;
-//    sameOrWorseCost.clear();
-//
-//    long routeCount = newTable.size();
-//    Ipv4AddressRange destination;
-//    destination.address = interAreaPrefixLSA.getPrefix().toIpv4();
-//    destination.mask = destination.address.makeNetmask(interAreaPrefixLSA.getPrefixLen());
-//
-//    for (long j = 0; j < routeCount; j++) {
-//        OSPFv3IPv4RoutingTableEntry *routingEntry = newTable[j];
-//        bool foundMatching = false;
-//
-//        if (interAreaPrefixLSA.getHeader().getLsaType() == INTER_AREA_PREFIX_LSA) {
-//            if ((routingEntry->getDestinationType() == OSPFv3IPv4RoutingTableEntry::NETWORK_DESTINATION) &&
-//                isSameNetwork(destination.address, destination.mask, routingEntry->getDestination(), routingEntry->getNetmask()))
-//            {
-//                EV_DEBUG << "if if foundMatching = true;\n";
-//                foundMatching = true;
-//            }
-//        }
-//        else {
-//            if ((((routingEntry->getDestinationType() & OSPFv3IPv4RoutingTableEntry::AREA_BORDER_ROUTER_DESTINATION) != 0) ||
-//                 ((routingEntry->getDestinationType() & OSPFv3IPv4RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION) != 0)) &&
-//                (destination.address == routingEntry->getDestination()) &&
-//                (destination.mask == routingEntry->getNetmask()))
-//            {
-//                EV_DEBUG << "else if foundMatching = true;\n";
-//                foundMatching = true;
-//            }
-//        }
-//
-//        if (foundMatching) {
-//            destinationInRoutingTable = true;
-//
-//            /* If the matching entry is an INTRAAREA getRoute(intra-area paths are
-//             * always preferred to other paths of any cost), or it's a cheaper INTERAREA
-//             * route, then skip this LSA.
-//             */
-//            if ((routingEntry->getPathType() == OSPFv3IPv4RoutingTableEntry::INTRAAREA) ||
-//                ((routingEntry->getPathType() == OSPFv3IPv4RoutingTableEntry::INTERAREA) &&
-//                 (routingEntry->getCost() < currentCost)))
-//            {
-//                EV_DEBUG << "return true\n";
-//                return true;
-//            }
-//            else {
-//                // if it's an other INTERAREA path
-//                if ((routingEntry->getPathType() == OSPFv3IPv4RoutingTableEntry::INTERAREA) &&
-//                    (routingEntry->getCost() >= currentCost))
-//                {
-//                    EV_DEBUG << "sameOrWorseCost.push_back(routingEntry)\n";
-//                    sameOrWorseCost.push_back(routingEntry);
-//                }    // else it's external -> same as if not in the table
-//            }
-//        }
-//    }
-//    EV_DEBUG << "return false\n";
-//    return false;
-//}
-//
-///**
-// * Returns a new RoutingTableEntry based on the input SummaryLSA, with the input cost
-// * and the borderRouterEntry's next hops.
-// */
-//// for IPv6 AF
-//OSPFv3RoutingTableEntry *OSPFv3Area::createRoutingTableEntryFromInterAreaPrefixLSA(const InterAreaPrefixLSA& interAreaPrefixLSA,
-//        unsigned short entryCost,
-//        const OSPFv3RoutingTableEntry& borderRouterEntry) const
-//{
-//    Ipv6AddressRange destination;
-//
-//    destination.prefix = interAreaPrefixLSA.getPrefix().toIpv6();
-//    destination.prefixLength = interAreaPrefixLSA.getPrefixLen();
-//    //TODO: AS boundary is not implemented
-//    OSPFv3RoutingTableEntry *newEntry = new OSPFv3RoutingTableEntry(this->getInstance()->ift, destination.prefix, destination.prefixLength,IRoute::OSPF);
-//
-//    if (interAreaPrefixLSA.getHeader().getLsaType() == INTER_AREA_PREFIX_LSA)
-//    {
-//        newEntry->setDestinationType(OSPFv3RoutingTableEntry::NETWORK_DESTINATION);
-//    }
-//    else {
-//        newEntry->setDestinationType(OSPFv3RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION);
-//    }
-//    newEntry->setLinkStateOrigin(&interAreaPrefixLSA);
-//    newEntry->setArea(areaID);
-//    newEntry->setPathType(OSPFv3RoutingTableEntry::INTERAREA);
-//    newEntry->setCost(entryCost);
-//
-//    unsigned int nextHopCount = borderRouterEntry.getNextHopCount();
-//    for (unsigned int j = 0; j < nextHopCount; j++) {
-//        newEntry->addNextHop(borderRouterEntry.getNextHop(j));
-//    }
-//
-//    return newEntry;
-//}
-//
-//// for IPv4 AF
-//OSPFv3IPv4RoutingTableEntry *OSPFv3Area::createRoutingTableEntryFromInterAreaPrefixLSA(const InterAreaPrefixLSA& interAreaPrefixLSA,
-//        unsigned short entryCost,
-//        const OSPFv3IPv4RoutingTableEntry& borderRouterEntry) const
-//{
-//    Ipv4AddressRange destination;
-//
-//    destination.address = interAreaPrefixLSA.getPrefix().toIpv4();
-//    destination.mask = destination.address.makeNetmask(interAreaPrefixLSA.getPrefixLen());
-//    OSPFv3IPv4RoutingTableEntry *newEntry = new OSPFv3IPv4RoutingTableEntry(this->getInstance()->ift, destination.address, destination.mask.getNetmaskLength(),IRoute::OSPF);
-//
-//    if (interAreaPrefixLSA.getHeader().getLsaType() == INTER_AREA_PREFIX_LSA)
-//        newEntry->setDestinationType(OSPFv3IPv4RoutingTableEntry::NETWORK_DESTINATION);
-//    else
-//        newEntry->setDestinationType(OSPFv3IPv4RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION);
-//
-//    newEntry->setLinkStateOrigin(&interAreaPrefixLSA);
-//    newEntry->setArea(areaID);
-//    newEntry->setPathType(OSPFv3IPv4RoutingTableEntry::INTERAREA);
-//    newEntry->setCost(entryCost);
-//
-//    unsigned int nextHopCount = borderRouterEntry.getNextHopCount();
-//    for (unsigned int j = 0; j < nextHopCount; j++) {
-//        newEntry->addNextHop(borderRouterEntry.getNextHop(j));
-//    }
-//
-//    return newEntry;
-//}
-//
-//
-//
-//void OSPFv3Area::calculateInterAreaRoutes(std::vector<OSPFv3RoutingTableEntry* >& newTableIPv6, std::vector<OSPFv3IPv4RoutingTableEntry* >& newTableIPv4)
-//{
-//    EV_DEBUG << "Calculating Inter-Area Routes for Backbone\n";
-//    unsigned long i = 0;
-//    unsigned long j = 0;
-//    unsigned long lsaCount = interAreaPrefixLSAList.size();
-//
-//
-//    // go through all LSA 3
-//    for (i = 0; i < lsaCount; i++)
-//    {
-//        InterAreaPrefixLSA *currentLSA = interAreaPrefixLSAList[i];
-//        OSPFv3LSAHeader& currentHeader = currentLSA->getHeader();
-//
-//        unsigned long routeCost = currentLSA->getMetric();
-//        unsigned short lsAge = currentHeader.getLsaAge();
-//        Ipv4Address originatingRouter = currentHeader.getAdvertisingRouter();
-//        bool selfOriginated = (originatingRouter == this->getInstance()->getProcess()->getRouterID());
-//
-//       /* (1) If the cost specified by the LSA is LSInfinity, or if the
-//            LSA's LS age is equal to MaxAge, then examine the the next
-//            LSA.
-//
-//        (2) If the LSA was originated by the calculating router itself,
-//            examine the next LSA.*/
-//        if ((routeCost == LS_INFINITY) || (lsAge == MAX_AGE) || (selfOriginated)) {    // (1) and(2)
-//            continue;
-//        }
-//
-//        char lsType = currentHeader.getLsaType();
-//
-//        // for IPv6 AF
-//        if (this->getInstance()->getAddressFamily() == IPV6INSTANCE)
-//        {
-//            unsigned long routeCount = newTableIPv6.size();
-//            Ipv6AddressRange destination;
-//
-//            // get Prefix and Prefix length from LSA 3
-//            destination.prefix = currentLSA->getPrefix().toIpv6();
-//            destination.prefixLength = currentLSA->getPrefixLen();
-//
-//            if ((lsType == INTER_AREA_PREFIX_LSA) && (this->getInstance()->getProcess()->hasAddressRange(destination))) {    // (3)
-//                bool foundIntraAreaRoute = false;
-//                // look for an "Active" INTRAAREA route
-//                for (j = 0; j < routeCount; j++) {
-//                    OSPFv3RoutingTableEntry *routingEntry = newTableIPv6[j];
-//
-//                    if ((routingEntry->getDestinationType() == OSPFv3RoutingTableEntry::NETWORK_DESTINATION) &&
-//                        (routingEntry->getPathType() == OSPFv3RoutingTableEntry::INTRAAREA) &&
+
+}
+
+
+// add Router-LSA  entry into newTable based on AF which is for this process active
+void OSPFv3Area::addRouterEntry(RouterLSA* routerLSA, LSAKeyType lsaKey, std::vector<OSPFv3RoutingTableEntry *>& newTableIPv6, std::vector<OSPFv3IPv4RoutingTableEntry *>& newTableIPv4 )
+{
+    L3Address destinationID;
+    uint8_t prefixLen;
+
+    OSPFv3IntraAreaPrefixLSA *iapLSA = findIntraAreaPrefixLSAByReference(lsaKey); //find appropriate LSA type 9 based on reference in packet.
+
+    if (iapLSA != nullptr)
+    {
+        for (int i = 0; i < iapLSA->getPrefixesArraySize(); i++)
+        {
+            destinationID = iapLSA->getPrefixes(i).addressPrefix;
+            prefixLen = iapLSA->getPrefixes(i).prefixLen;
+
+            // if this LSA is part of IPv6 AF
+            if (destinationID.getType() == L3Address::IPv6)
+            {
+                OSPFv3RoutingTableEntry *entry = new OSPFv3RoutingTableEntry(this->getInstance()->ift, destinationID.toIpv6(), prefixLen, IRoute::OSPF);
+                unsigned int nextHopCount = routerLSA->getNextHopCount();
+                OSPFv3RoutingTableEntry::RoutingDestinationType destinationType = OSPFv3RoutingTableEntry::NETWORK_DESTINATION;
+
+                entry->setLinkStateOrigin(routerLSA);
+                entry->setArea(areaID);
+                entry->setPathType(OSPFv3RoutingTableEntry::INTRAAREA);
+                entry->setCost(routerLSA->getDistance());
+                if (routerLSA->getBBit())
+                    destinationType |= OSPFv3RoutingTableEntry::AREA_BORDER_ROUTER_DESTINATION;
+
+                if (routerLSA->getEBit())
+                    destinationType |= OSPFv3RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION;
+
+                entry->setDestinationType(destinationType);
+                entry->setOptionalCapabilities(routerLSA->getOspfOptions());
+                for (int j = 0; j < nextHopCount; j++) {
+                    entry->addNextHop(routerLSA->getNextHop(j));
+                }
+
+                newTableIPv6.push_back(entry);
+            }
+            else // if this LSA is part of IPv4 AF
+            {
+                OSPFv3IPv4RoutingTableEntry *entry = new OSPFv3IPv4RoutingTableEntry(this->getInstance()->ift, destinationID.toIpv4(), prefixLen, IRoute::OSPF);
+                unsigned int nextHopCount = routerLSA->getNextHopCount();
+                OSPFv3RoutingTableEntry::RoutingDestinationType destinationType = OSPFv3RoutingTableEntry::NETWORK_DESTINATION;
+
+                entry->setLinkStateOrigin(routerLSA);
+                entry->setArea(areaID);
+                entry->setPathType(OSPFv3IPv4RoutingTableEntry::INTRAAREA);
+                entry->setCost(routerLSA->getDistance());
+                if (routerLSA->getBBit()) {
+                destinationType |= OSPFv3RoutingTableEntry::AREA_BORDER_ROUTER_DESTINATION;
+                }
+                if (routerLSA->getEBit()) {
+                destinationType |= OSPFv3RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION;
+                }
+
+                entry->setDestinationType(destinationType);
+                entry->setOptionalCapabilities(routerLSA->getOspfOptions());
+                for (int j = 0; j < nextHopCount; j++) {
+                    entry->addNextHop(routerLSA->getNextHop(j));
+                }
+
+                newTableIPv4.push_back(entry);
+            }
+
+        }
+    }
+}
+
+/**
+ * Browse through the newTable looking for entries describing the same destination
+ * as the currentLSA. If a cheaper route is found then skip this LSA(return true), else
+ * note those which are of equal or worse cost than the currentCost.
+ */
+// for IPv6 AF
+bool OSPFv3Area::findSameOrWorseCostRoute(const std::vector<OSPFv3RoutingTableEntry *>& newTable,
+        const InterAreaPrefixLSA& interAreaPrefixLSA,
+        unsigned short currentCost,
+        bool& destinationInRoutingTable,
+        std::list<OSPFv3RoutingTableEntry *>& sameOrWorseCost) const
+{
+    destinationInRoutingTable = false;
+    sameOrWorseCost.clear();
+
+    long routeCount = newTable.size();
+    Ipv6AddressRange destination;
+    destination.prefix = interAreaPrefixLSA.getPrefix().toIpv6();
+    destination.prefixLength = interAreaPrefixLSA.getPrefixLen();
+
+    for (long j = 0; j < routeCount; j++) {
+        OSPFv3RoutingTableEntry *routingEntry = newTable[j];
+        bool foundMatching = false;
+        if (interAreaPrefixLSA.getHeader().getLsaType() == INTER_AREA_PREFIX_LSA) {
+            if ((routingEntry->getDestinationType() == OSPFv3RoutingTableEntry::NETWORK_DESTINATION) &&
+                isSameNetwork(destination.prefix, destination.prefixLength, routingEntry->getDestPrefix(), routingEntry->getPrefixLength()))    //TODO  or use containing ?
+            {
+                foundMatching = true;
+            }
+        }
+        else {
+            if ((((routingEntry->getDestinationType() & OSPFv3RoutingTableEntry::AREA_BORDER_ROUTER_DESTINATION) != 0) ||
+                 ((routingEntry->getDestinationType() & OSPFv3RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION) != 0)) &&
+                (destination.prefix == routingEntry->getDestPrefix()) &&
+                (destination.prefixLength == routingEntry->getPrefixLength()))
+            {
+                foundMatching = true;
+            }
+        }
+
+        if (foundMatching) {
+            destinationInRoutingTable = true;
+
+            /* If the matching entry is an INTRAAREA getRoute(intra-area paths are
+             * always preferred to other paths of any cost), or it's a cheaper INTERAREA
+             * route, then skip this LSA.
+             */
+            if ((routingEntry->getPathType() == OSPFv3RoutingTableEntry::INTRAAREA) ||
+                ((routingEntry->getPathType() == OSPFv3RoutingTableEntry::INTERAREA) &&
+                 (routingEntry->getCost() < currentCost)))
+            {
+                return true;
+            }
+            else {
+                // if it's an other INTERAREA path
+                if ((routingEntry->getPathType() == OSPFv3RoutingTableEntry::INTERAREA) &&
+                    (routingEntry->getCost() >= currentCost))
+                {
+                    sameOrWorseCost.push_back(routingEntry);
+                }    // else it's external -> same as if not in the table
+            }
+        }
+    }
+    return false;
+}
+
+//  for IPv4 AF
+bool OSPFv3Area::findSameOrWorseCostRoute(const std::vector<OSPFv3IPv4RoutingTableEntry *>& newTable,
+        const InterAreaPrefixLSA& interAreaPrefixLSA,
+        unsigned short currentCost,
+        bool& destinationInRoutingTable,
+        std::list<OSPFv3IPv4RoutingTableEntry *>& sameOrWorseCost) const
+{
+    destinationInRoutingTable = false;
+    sameOrWorseCost.clear();
+
+    long routeCount = newTable.size();
+    Ipv4AddressRange destination;
+    destination.address = interAreaPrefixLSA.getPrefix().toIpv4();
+    destination.mask = destination.address.makeNetmask(interAreaPrefixLSA.getPrefixLen());
+
+    for (long j = 0; j < routeCount; j++) {
+        OSPFv3IPv4RoutingTableEntry *routingEntry = newTable[j];
+        bool foundMatching = false;
+
+        if (interAreaPrefixLSA.getHeader().getLsaType() == INTER_AREA_PREFIX_LSA) {
+            if ((routingEntry->getDestinationType() == OSPFv3IPv4RoutingTableEntry::NETWORK_DESTINATION) &&
+                isSameNetwork(destination.address, destination.mask, routingEntry->getDestination(), routingEntry->getNetmask()))
+            {
+                foundMatching = true;
+            }
+        }
+        else {
+            if ((((routingEntry->getDestinationType() & OSPFv3IPv4RoutingTableEntry::AREA_BORDER_ROUTER_DESTINATION) != 0) ||
+                 ((routingEntry->getDestinationType() & OSPFv3IPv4RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION) != 0)) &&
+                (destination.address == routingEntry->getDestination()) &&
+                (destination.mask == routingEntry->getNetmask()))
+            {
+                foundMatching = true;
+            }
+        }
+
+        if (foundMatching) {
+            destinationInRoutingTable = true;
+
+            /* If the matching entry is an INTRAAREA getRoute(intra-area paths are
+             * always preferred to other paths of any cost), or it's a cheaper INTERAREA
+             * route, then skip this LSA.
+             */
+            if ((routingEntry->getPathType() == OSPFv3IPv4RoutingTableEntry::INTRAAREA) ||
+                ((routingEntry->getPathType() == OSPFv3IPv4RoutingTableEntry::INTERAREA) &&
+                 (routingEntry->getCost() < currentCost)))
+            {
+                return true;
+            }
+            else {
+                // if it's an other INTERAREA path
+                if ((routingEntry->getPathType() == OSPFv3IPv4RoutingTableEntry::INTERAREA) &&
+                    (routingEntry->getCost() >= currentCost))
+                {
+                    sameOrWorseCost.push_back(routingEntry);
+                }    // else it's external -> same as if not in the table
+            }
+        }
+    }
+    return false;
+}
+
+/**
+ * Returns a new RoutingTableEntry based on the input SummaryLSA, with the input cost
+ * and the borderRouterEntry's next hops.
+ */
+// for IPv6 AF
+OSPFv3RoutingTableEntry *OSPFv3Area::createRoutingTableEntryFromInterAreaPrefixLSA(const InterAreaPrefixLSA& interAreaPrefixLSA,
+        unsigned short entryCost,
+        const OSPFv3RoutingTableEntry& borderRouterEntry) const
+{
+    Ipv6AddressRange destination;
+
+    destination.prefix = interAreaPrefixLSA.getPrefix().toIpv6();
+    destination.prefixLength = interAreaPrefixLSA.getPrefixLen();
+    //TODO: AS boundary is not implemented
+    OSPFv3RoutingTableEntry *newEntry = new OSPFv3RoutingTableEntry(this->getInstance()->ift, destination.prefix, destination.prefixLength,IRoute::OSPF);
+
+    if (interAreaPrefixLSA.getHeader().getLsaType() == INTER_AREA_PREFIX_LSA)
+    {
+        newEntry->setDestinationType(OSPFv3RoutingTableEntry::NETWORK_DESTINATION);
+    }
+    else {
+        newEntry->setDestinationType(OSPFv3RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION);
+    }
+    newEntry->setLinkStateOrigin(&interAreaPrefixLSA);
+    newEntry->setArea(areaID);
+    newEntry->setPathType(OSPFv3RoutingTableEntry::INTERAREA);
+    newEntry->setCost(entryCost);
+
+    unsigned int nextHopCount = borderRouterEntry.getNextHopCount();
+    for (unsigned int j = 0; j < nextHopCount; j++) {
+        newEntry->addNextHop(borderRouterEntry.getNextHop(j));
+    }
+
+    return newEntry;
+}
+
+// for IPv4 AF
+OSPFv3IPv4RoutingTableEntry *OSPFv3Area::createRoutingTableEntryFromInterAreaPrefixLSA(const InterAreaPrefixLSA& interAreaPrefixLSA,
+        unsigned short entryCost,
+        const OSPFv3IPv4RoutingTableEntry& borderRouterEntry) const
+{
+    Ipv4AddressRange destination;
+
+    destination.address = interAreaPrefixLSA.getPrefix().toIpv4();
+    destination.mask = destination.address.makeNetmask(interAreaPrefixLSA.getPrefixLen());
+    OSPFv3IPv4RoutingTableEntry *newEntry = new OSPFv3IPv4RoutingTableEntry(this->getInstance()->ift, destination.address, destination.mask.getNetmaskLength(),IRoute::OSPF);
+
+    if (interAreaPrefixLSA.getHeader().getLsaType() == INTER_AREA_PREFIX_LSA)
+        newEntry->setDestinationType(OSPFv3IPv4RoutingTableEntry::NETWORK_DESTINATION);
+    else
+        newEntry->setDestinationType(OSPFv3IPv4RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION);
+
+    newEntry->setLinkStateOrigin(&interAreaPrefixLSA);
+    newEntry->setArea(areaID);
+    newEntry->setPathType(OSPFv3IPv4RoutingTableEntry::INTERAREA);
+    newEntry->setCost(entryCost);
+
+    unsigned int nextHopCount = borderRouterEntry.getNextHopCount();
+    for (unsigned int j = 0; j < nextHopCount; j++) {
+        newEntry->addNextHop(borderRouterEntry.getNextHop(j));
+    }
+
+    return newEntry;
+}
+
+void OSPFv3Area::calculateInterAreaRoutes(std::vector<OSPFv3RoutingTableEntry* >& newTableIPv6, std::vector<OSPFv3IPv4RoutingTableEntry* >& newTableIPv4)
+{
+    EV_DEBUG << "Calculating Inter-Area Routes for Backbone\n";
+    unsigned long i = 0;
+    unsigned long j = 0;
+    unsigned long lsaCount = interAreaPrefixLSAList.size();
+
+
+    // go through all LSA 3
+    for (i = 0; i < lsaCount; i++)
+    {
+        InterAreaPrefixLSA *currentLSA = interAreaPrefixLSAList[i];
+        const OSPFv3LSAHeader& currentHeader = currentLSA->getHeader();
+
+        unsigned long routeCost = currentLSA->getMetric();
+        unsigned short lsAge = currentHeader.getLsaAge();
+        Ipv4Address originatingRouter = currentHeader.getAdvertisingRouter();
+        bool selfOriginated = (originatingRouter == this->getInstance()->getProcess()->getRouterID());
+
+       /* (1) If the cost specified by the LSA is LSInfinity, or if the
+            LSA's LS age is equal to MaxAge, then examine the the next
+            LSA.
+
+        (2) If the LSA was originated by the calculating router itself,
+            examine the next LSA.*/
+        if ((routeCost == LS_INFINITY) || (lsAge == MAX_AGE) || (selfOriginated)) {    // (1) and(2)
+            continue;
+        }
+
+        char lsType = currentHeader.getLsaType();
+
+        // for IPv6 AF
+        if (this->getInstance()->getAddressFamily() == IPV6INSTANCE)
+        {
+            unsigned long routeCount = newTableIPv6.size();
+            Ipv6AddressRange destination;
+
+            // get Prefix and Prefix length from LSA 3
+            destination.prefix = currentLSA->getPrefix().toIpv6();
+            destination.prefixLength = currentLSA->getPrefixLen();
+
+            if ((lsType == INTER_AREA_PREFIX_LSA) && (this->getInstance()->getProcess()->hasAddressRange(destination))) {    // (3)
+                bool foundIntraAreaRoute = false;
+                // look for an "Active" INTRAAREA route
+                for (j = 0; j < routeCount; j++) {
+                    OSPFv3RoutingTableEntry *routingEntry = newTableIPv6[j];
+
+                    if ((routingEntry->getDestinationType() == OSPFv3RoutingTableEntry::NETWORK_DESTINATION) &&
+                        (routingEntry->getPathType() == OSPFv3RoutingTableEntry::INTRAAREA) &&
+                        destination.containedByRange(routingEntry->getDestPrefix(), routingEntry->getPrefixLength()))
+                    {
+                        foundIntraAreaRoute = true;
+                        break;
+                    }
+                }
+                if (foundIntraAreaRoute) {
+                    continue;
+                }
+            }
+
+            OSPFv3RoutingTableEntry *borderRouterEntry = nullptr;
+            //find Router LSA for originate router of Inter Area Prefix LSA
+            RouterLSA *routerLSA =  findRouterLSA(originatingRouter);
+
+            //if founded RouterLSA has no valuable information.
+            if (routerLSA == nullptr) {
+                continue;
+            }
+            if (routerLSA->getRoutersArraySize() < 1) {
+                continue;
+            }
+            for (int rt = 0; rt < routerLSA->getRoutersArraySize(); rt++)
+            {
+                //from Router LSA routers search for Intra Area Prefix LSA
+                LSAKeyType lsaKey;
+                lsaKey.linkStateID = (Ipv4Address)routerLSA->getRouters(rt).neighborInterfaceID;
+                lsaKey.advertisingRouter = routerLSA->getRouters(rt).neighborRouterID;
+                lsaKey.LSType = routerLSA->getRouters(rt).type;
+
+                OSPFv3IntraAreaPrefixLSA *iapLSA = findIntraAreaPrefixLSAByReference(lsaKey);
+                if (iapLSA == nullptr)
+                    continue;
+
+                EV_DEBUG << "routeCount = " << routeCount << "\n";
+                // The routingEntry describes a route to an other area -> look for the border router originating it
+                for (j = 0; j < routeCount; j++)
+                {    // (4) N == destination, BR == borderRouterEntry
+                    OSPFv3RoutingTableEntry *routingEntry = newTableIPv6[j];
+
+                    EV_DEBUG << "\n";
+                    for (int pfxs = 0; pfxs < iapLSA->getPrefixesArraySize(); pfxs++)
+                    {
+
+                    // ak mamu seba LSA 9 v ramci rovnakej area s IPckou aku obsahuje novy routingEntry zaznam, tak...
+                        if ((routingEntry->getArea() == areaID) &&
+                            (((routingEntry->getDestinationType() & OSPFv3RoutingTableEntry::AREA_BORDER_ROUTER_DESTINATION) != 0) ||
+                             ((routingEntry->getDestinationType() & OSPFv3RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION) != 0)) &&
+                            (routingEntry->getDestPrefix() == iapLSA->getPrefixes(pfxs).addressPrefix.toIpv6())) // TODO:  LG , neviem ci je spravne, povodne bolo (routingEntry->getDestination() == originatingRouter))
+                        {
+                            borderRouterEntry = routingEntry;
+                            break;
+                        }
+                    }
+                    if (borderRouterEntry != nullptr)
+                        break;
+                }
+            }
+
+            EV_DEBUG << "SOM PRED borderRouterEntry = ";
+            if (borderRouterEntry == nullptr)
+                EV_DEBUG << "nullptr\n";
+            else
+                EV_DEBUG << "OBJECT\n";
+
+            if (borderRouterEntry == nullptr) {
+                continue;
+            }
+            else
+            {    // (5)
+                /* "Else, this LSA describes an inter-area path to destination N,
+                 * whose cost is the distance to BR plus the cost specified in the LSA.
+                 * Call the cost of this inter-area path IAC."
+                 */
+                bool destinationInRoutingTable = true;
+                EV_DEBUG <<"\n";
+                unsigned short currentCost = routeCost + borderRouterEntry->getCost();
+                std::list<OSPFv3RoutingTableEntry *> sameOrWorseCost;
+
+                if (findSameOrWorseCostRoute(newTableIPv6,
+                            *currentLSA,
+                            currentCost,
+                            destinationInRoutingTable,
+                            sameOrWorseCost))
+                {
+                    continue;
+                }
+
+                if (destinationInRoutingTable && (sameOrWorseCost.size() > 0)) {
+                    OSPFv3RoutingTableEntry *equalEntry = nullptr;
+
+                    /* Look for an equal cost entry in the sameOrWorseCost list, and
+                     * also clear the more expensive entries from the newTable.
+                     */
+                    for (auto checkedEntry : sameOrWorseCost) {
+                        if (checkedEntry->getCost() > currentCost) {
+                            for (auto entryIt = newTableIPv6.begin(); entryIt != newTableIPv6.end(); entryIt++) {
+                                if (checkedEntry == (*entryIt)) {
+                                    newTableIPv6.erase(entryIt);
+                                    break;
+                                }
+                            }
+                        }
+                        else {    // EntryCost == currentCost
+                            equalEntry = checkedEntry;    // should be only one - if there are more they are ignored
+                        }
+                    }
+                    unsigned long nextHopCount = borderRouterEntry->getNextHopCount();
+                    if (equalEntry != nullptr) {
+                        /* Add the next hops of the border router advertising this destination
+                         * to the equal entry.
+                         */
+                        for (unsigned long j = 0; j < nextHopCount; j++) {
+                            equalEntry->addNextHop(borderRouterEntry->getNextHop(j));
+                        }
+                    }
+                    else {
+                        OSPFv3RoutingTableEntry *newEntry = createRoutingTableEntryFromInterAreaPrefixLSA(*currentLSA, currentCost, *borderRouterEntry);
+                        ASSERT(newEntry != nullptr);
+                        newTableIPv6.push_back(newEntry);
+                    }
+                }
+                else {
+                    OSPFv3RoutingTableEntry *newEntry = createRoutingTableEntryFromInterAreaPrefixLSA(*currentLSA, currentCost, *borderRouterEntry);
+                    ASSERT(newEntry != nullptr);
+                    newTableIPv6.push_back(newEntry);
+                }
+            }
+        } // end of if AF ipv6
+        else    // IPv4 AF
+        {
+            unsigned long routeCount = newTableIPv4.size();
+            Ipv4AddressRange destination;
+
+            // get Prefix and Prefix length from LSA 3
+            destination.address = currentLSA->getPrefix().toIpv4();
+            destination.mask = destination.address.makeNetmask(currentLSA->getPrefixLen());
+
+            if ((lsType == INTER_AREA_PREFIX_LSA) && (this->getInstance()->getProcess()->hasAddressRange(destination))) {    // (3)
+                bool foundIntraAreaRoute = false;
+                // look for an "Active" INTRAAREA route
+                for (j = 0; j < routeCount; j++) {
+                    OSPFv3IPv4RoutingTableEntry *routingEntry = newTableIPv4[j];
+
+                    if ((routingEntry->getDestinationType() == OSPFv3IPv4RoutingTableEntry::NETWORK_DESTINATION) &&
+                        (routingEntry->getPathType() == OSPFv3IPv4RoutingTableEntry::INTRAAREA) &&
+                        destination.containedByRange(routingEntry->getDestination(), routingEntry->getNetmask()))
 //                        destination.containedByRange(routingEntry->getDestPrefix(), routingEntry->getPrefixLength()))
-//                    {
-//                        foundIntraAreaRoute = true;
-//                        break;
-//                    }
-//                }
-//                if (foundIntraAreaRoute) {
-//                    continue;
-//                }
-//            }
-//
-//            OSPFv3RoutingTableEntry *borderRouterEntry = nullptr;
-//            //find Router LSA for originate router of Inter Area Prefix LSA
-//            RouterLSA *routerLSA =  findRouterLSA(originatingRouter);
-//
-//            //if founded RouterLSA has no valuable information.
-//            if (routerLSA == nullptr) {
-//                continue;
-//            }
-//            if (routerLSA->getRoutersArraySize() < 1) {
-//                continue;
-//            }
-//            for (int rt = 0; rt < routerLSA->getRoutersArraySize(); rt++)
-//            {
-//                //from Router LSA routers search for Intra Area Prefix LSA
-//                LSAKeyType lsaKey;
-//                lsaKey.linkStateID = (Ipv4Address)routerLSA->getRouters(rt).neighborInterfaceID;
-//                lsaKey.advertisingRouter = routerLSA->getRouters(rt).neighborRouterID;
-//                lsaKey.LSType = routerLSA->getRouters(rt).type;
-//
-//                OSPFv3IntraAreaPrefixLSA *iapLSA = findIntraAreaPrefixLSAByReference(lsaKey);
-//                if (iapLSA == nullptr)
-//                    continue;
-//
-//                EV_DEBUG << "routeCount = " << routeCount << "\n";
-//                // The routingEntry describes a route to an other area -> look for the border router originating it
-//                for (j = 0; j < routeCount; j++)
-//                {    // (4) N == destination, BR == borderRouterEntry
-//                    OSPFv3RoutingTableEntry *routingEntry = newTableIPv6[j];
-//
-//                    EV_DEBUG << "\n";
-//                    for (int pfxs = 0; pfxs < iapLSA->getPrefixesArraySize(); pfxs++)
-//                    {
-//
-//                    // ak mamu seba LSA 9 v ramci rovnakej area s IPckou aku obsahuje novy routingEntry zaznam, tak...
-//                        if ((routingEntry->getArea() == areaID) &&
-//                            (((routingEntry->getDestinationType() & OSPFv3RoutingTableEntry::AREA_BORDER_ROUTER_DESTINATION) != 0) ||
-//                             ((routingEntry->getDestinationType() & OSPFv3RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION) != 0)) &&
-//                            (routingEntry->getDestPrefix() == iapLSA->getPrefixes(pfxs).addressPrefix.toIpv6())) // TODO:  LG , neviem ci je spravne, povodne bolo (routingEntry->getDestination() == originatingRouter))
-//                        {
-//                            borderRouterEntry = routingEntry;
-//                            break;
-//                        }
-//                    }
-//                    if (borderRouterEntry != nullptr)
-//                        break;
-//                }
-//            }
-//
-//            EV_DEBUG << "SOM PRED borderRouterEntry = ";
-//            if (borderRouterEntry == nullptr)
-//                EV_DEBUG << "nullptr\n";
-//            else
-//                EV_DEBUG << "OBJECT\n";
-//
-//            if (borderRouterEntry == nullptr) {
-//                continue;
-//            }
-//            else
-//            {    // (5)
-//                /* "Else, this LSA describes an inter-area path to destination N,
-//                 * whose cost is the distance to BR plus the cost specified in the LSA.
-//                 * Call the cost of this inter-area path IAC."
-//                 */
-//                bool destinationInRoutingTable = true;
-//                EV_DEBUG <<"\n";
-//                unsigned short currentCost = routeCost + borderRouterEntry->getCost();
-//                EV_DEBUG << " currentCost  / routeCost / borderRouterEntry->getCost() \n";
-//                EV_DEBUG << currentCost << " / " << routeCost << " / " << borderRouterEntry->getCost() << "\n";
-//                std::list<OSPFv3RoutingTableEntry *> sameOrWorseCost;
-//
-//                if (findSameOrWorseCostRoute(newTableIPv6,
-//                            *currentLSA,
-//                            currentCost,
-//                            destinationInRoutingTable,
-//                            sameOrWorseCost))
-//                {
-//                    continue;
-//                }
-//                EV_DEBUG << "destinationInRoutingTable = " <<  destinationInRoutingTable << " && sameOrWorseCost.size()  = " <<  sameOrWorseCost.size() << "\n";
-//
-//                if (destinationInRoutingTable && (sameOrWorseCost.size() > 0)) {
-//                    OSPFv3RoutingTableEntry *equalEntry = nullptr;
-//
-//                    /* Look for an equal cost entry in the sameOrWorseCost list, and
-//                     * also clear the more expensive entries from the newTable.
-//                     */
-//                    for (auto checkedEntry : sameOrWorseCost) {
-//                        if (checkedEntry->getCost() > currentCost) {
-//                            for (auto entryIt = newTableIPv6.begin(); entryIt != newTableIPv6.end(); entryIt++) {
-//                                if (checkedEntry == (*entryIt)) {
-//                                    newTableIPv6.erase(entryIt);
-//                                    break;
-//                                }
-//                            }
-//                        }
-//                        else {    // EntryCost == currentCost
-//                            equalEntry = checkedEntry;    // should be only one - if there are more they are ignored
-//                        }
-//                    }
-//
-//                    unsigned long nextHopCount = borderRouterEntry->getNextHopCount();
-//
-//                    if (equalEntry != nullptr) {
-//                        /* Add the next hops of the border router advertising this destination
-//                         * to the equal entry.
-//                         */
-//                        for (unsigned long j = 0; j < nextHopCount; j++) {
-//                            equalEntry->addNextHop(borderRouterEntry->getNextHop(j));
-//                        }
-//                    }
-//                    else {
-//                        OSPFv3RoutingTableEntry *newEntry = createRoutingTableEntryFromInterAreaPrefixLSA(*currentLSA, currentCost, *borderRouterEntry);
-//                        ASSERT(newEntry != nullptr);
-//                        newTableIPv6.push_back(newEntry);
-//                    }
-//                }
-//                else {
-//                    OSPFv3RoutingTableEntry *newEntry = createRoutingTableEntryFromInterAreaPrefixLSA(*currentLSA, currentCost, *borderRouterEntry);
-//                    ASSERT(newEntry != nullptr);
-//                    newTableIPv6.push_back(newEntry);
-//                }
-//            }
-//        } // end of if AF ipv6
-//        else    // IPv4 AF
-//        {
-//            unsigned long routeCount = newTableIPv4.size();
-//            Ipv4AddressRange destination;
-//
-//            // get Prefix and Prefix length from LSA 3
-//            destination.address = currentLSA->getPrefix().toIpv4();
-//            destination.mask = destination.address.makeNetmask(currentLSA->getPrefixLen());
-//
-//            if ((lsType == INTER_AREA_PREFIX_LSA) && (this->getInstance()->getProcess()->hasAddressRange(destination))) {    // (3)
-//                bool foundIntraAreaRoute = false;
-//                // look for an "Active" INTRAAREA route
-//                for (j = 0; j < routeCount; j++) {
-//                    OSPFv3IPv4RoutingTableEntry *routingEntry = newTableIPv4[j];
-//
-//                    if ((routingEntry->getDestinationType() == OSPFv3IPv4RoutingTableEntry::NETWORK_DESTINATION) &&
-//                        (routingEntry->getPathType() == OSPFv3IPv4RoutingTableEntry::INTRAAREA) &&
-//                        destination.containedByRange(routingEntry->getDestination(), routingEntry->getNetmask()))
-////                        destination.containedByRange(routingEntry->getDestPrefix(), routingEntry->getPrefixLength()))
-//                    {
-//                        foundIntraAreaRoute = true;
-//                        break;
-//                    }
-//                }
-//                if (foundIntraAreaRoute) {
-//                    continue;
-//                }
-//            }
-//
-//            OSPFv3IPv4RoutingTableEntry *borderRouterEntry = nullptr;
-//            //find Router LSA for originate router of Inter Area Prefix LSA
-//            RouterLSA *routerLSA =  findRouterLSA(originatingRouter);
-//
-//            //if founded RouterLSA has no valuable information.
-//            if (routerLSA == nullptr) {
-//                continue;
-//            }
-//            if (routerLSA->getRoutersArraySize() < 1) {
-//                continue;
-//            }
-//            //from Router LSA routers search for Intra Area Prefix LSA
-//            // FIXME : preco tu je ako index natvrdo nula ? LG
-//            LSAKeyType lsaKey;
-//            lsaKey.linkStateID = (Ipv4Address)routerLSA->getRouters(0).neighborInterfaceID; //TODO : what if it is another link for network
-//            lsaKey.advertisingRouter = routerLSA->getRouters(0).neighborRouterID;
-//            lsaKey.LSType = NETWORK_LSA;
-//
-//            OSPFv3IntraAreaPrefixLSA *iapLSA = findIntraAreaPrefixLSAByReference(lsaKey);
-//            if (iapLSA == nullptr)
-//                continue;
-//
-//            EV_DEBUG << "routeCount = " << routeCount << "\n";
-//            // The routingEntry describes a route to an other area -> look for the border router originating it
-//            for (j = 0; j < routeCount; j++) {    // (4) N == destination, BR == borderRouterEntry
-//                OSPFv3IPv4RoutingTableEntry *routingEntry = newTableIPv4[j];
-//
-//                EV_DEBUG << "\n";
-//                for (int pfxs = 0; pfxs < iapLSA->getPrefixesArraySize(); pfxs++)
-//                {
-////                    EV_DEBUG << "routingEntry->getDestinationType() = " << routingEntry->getDestinationType() << "\n";
-////                    EV_DEBUG << "routingEntry->getDestPrefix()= " << routingEntry->getDestPrefix() << "\n";
-////                    EV_DEBUG << "iapLSA->getPrefixes(pfxs).addressPrefix.toIpv6() = " << iapLSA->getPrefixes(pfxs).addressPrefix.toIpv6().str() << "\n";
-//
-//                // ak mam u seba LSA 9 v ramci rovnakej area s IPckou aku obsahuje novy routingEntry zaznam, tak...
-//                    if ((routingEntry->getArea() == areaID) &&
-//                        (((routingEntry->getDestinationType() & OSPFv3IPv4RoutingTableEntry::AREA_BORDER_ROUTER_DESTINATION) != 0) ||
-//                         ((routingEntry->getDestinationType() & OSPFv3IPv4RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION) != 0)) &&
-//                        (routingEntry->getDestination() == iapLSA->getPrefixes(pfxs).addressPrefix.toIpv4())) // TODO:  LG , neviem ci je spravne, povodne bolo (routingEntry->getDestination() == originatingRouter))
-//                    {
-//                        borderRouterEntry = routingEntry;
-//                        break;
-//                    }
-//                }
-//                if (borderRouterEntry != nullptr)
-//                    break;
-//            }
-//
-//            EV_DEBUG << "SOM PRED borderRouterEntry = ";
-//            if (borderRouterEntry == nullptr)
-//                EV_DEBUG << "nullptr\n";
-//            else
-//                EV_DEBUG << "OBJECT\n";
-//
-//            if (borderRouterEntry == nullptr) {
-//                continue;
-//            }
-//            else
-//            {    // (5)
-//                /* "Else, this LSA describes an inter-area path to destination N,
-//                 * whose cost is the distance to BR plus the cost specified in the LSA.
-//                 * Call the cost of this inter-area path IAC."
-//                 */
-//                bool destinationInRoutingTable = true;
-//                EV_DEBUG <<"\n";
-//                unsigned short currentCost = routeCost + borderRouterEntry->getCost();
-//                EV_DEBUG << " currentCost  / routeCost / borderRouterEntry->getCost() \n";
-//                EV_DEBUG << currentCost << " / " << routeCost << " / " << borderRouterEntry->getCost() << "\n";
-//                std::list<OSPFv3IPv4RoutingTableEntry *> sameOrWorseCost;
-//
-//                if (findSameOrWorseCostRoute(newTableIPv4,
-//                            *currentLSA,
-//                            currentCost,
-//                            destinationInRoutingTable,
-//                            sameOrWorseCost))
-//                {
-//                    continue;
-//                }
-//                EV_DEBUG << "destinationInRoutingTable = " <<  destinationInRoutingTable << " && sameOrWorseCost.size()  = " <<  sameOrWorseCost.size() << "\n";
-//
-//                if (destinationInRoutingTable && (sameOrWorseCost.size() > 0)) {
-//                    OSPFv3IPv4RoutingTableEntry *equalEntry = nullptr;
-//
-//                    /* Look for an equal cost entry in the sameOrWorseCost list, and
-//                     * also clear the more expensive entries from the newTable.
-//                     */
-//                    for (auto checkedEntry : sameOrWorseCost) {
-//                        if (checkedEntry->getCost() > currentCost) {
-//                            for (auto entryIt = newTableIPv4.begin(); entryIt != newTableIPv4.end(); entryIt++) {
-//                                if (checkedEntry == (*entryIt)) {
-//                                    newTableIPv4.erase(entryIt);
-//                                    break;
-//                                }
-//                            }
-//                        }
-//                        else {    // EntryCost == currentCost
-//                            equalEntry = checkedEntry;    // should be only one - if there are more they are ignored
-//                        }
-//                    }
-//
-//                    unsigned long nextHopCount = borderRouterEntry->getNextHopCount();
-//
-//                    if (equalEntry != nullptr) {
-//                        /* Add the next hops of the border router advertising this destination
-//                         * to the equal entry.
-//                         */
-//                        for (unsigned long j = 0; j < nextHopCount; j++) {
-//                            equalEntry->addNextHop(borderRouterEntry->getNextHop(j));
-//                        }
-//                    }
-//                    else {
-//                        OSPFv3IPv4RoutingTableEntry *newEntry = createRoutingTableEntryFromInterAreaPrefixLSA(*currentLSA, currentCost, *borderRouterEntry);
-//                        ASSERT(newEntry != nullptr);
-//                        newTableIPv4.push_back(newEntry);
-//                    }
-//                }
-//                else {
-//                    OSPFv3IPv4RoutingTableEntry *newEntry = createRoutingTableEntryFromInterAreaPrefixLSA(*currentLSA, currentCost, *borderRouterEntry);
-//                    ASSERT(newEntry != nullptr);
-//                    newTableIPv4.push_back(newEntry);
-//                }
-//            }
-//        }
-//    }
-//}
-//
-//
-//bool OSPFv3Area::hasLink(OSPFv3LSA *fromLSA, OSPFv3LSA *toLSA) const
-//{
-//    unsigned int i;
-//
-//    RouterLSA *fromRouterLSA = dynamic_cast<RouterLSA *>(fromLSA);
-//    if (fromRouterLSA != nullptr) {
-//        unsigned int linkCount = fromRouterLSA->getRoutersArraySize();
-//        RouterLSA *toRouterLSA = dynamic_cast<RouterLSA *>(toLSA);
-//        if (toRouterLSA != nullptr) {
-//            for (i = 0; i < linkCount; i++) {
-//                OSPFv3RouterLSABody& link = fromRouterLSA->getRouters(i);
-//                OSPFv3RouterLSAType linkType = static_cast<OSPFv3RouterLSAType>(link.type);
-//
-//                if (((linkType == POINT_TO_POINT) ||
-//                     (linkType == VIRTUAL_LINK)) &&
-//                    (link.neighborRouterID == toRouterLSA->getHeader().getAdvertisingRouter()))
-//                {
-//                    return true;
-//                }
-//            }
-//        }
-//        else {
-//            NetworkLSA *toNetworkLSA = dynamic_cast<NetworkLSA *>(toLSA);
-//            if (toNetworkLSA != nullptr) {
-//                for (i = 0; i < linkCount; i++) {
-//                    OSPFv3RouterLSABody& link = fromRouterLSA->getRouters(i);
-//
-//                    if ((link.type == TRANSIT_NETWORK) &&
-//                        (link.neighborRouterID == toNetworkLSA->getHeader().getAdvertisingRouter()))
-//                    {
-//                        return true;
-//                    }
-//                    if (link.type == RESERVED)
-//                    {
-//                        cout << "return RESERVED HAS LINK" << endl;
-//                        EV_DEBUG << "return RESERVED HAS LINK\n";
-//                        return true;
-//                    }
-//                }
-//            }
-//        }
-//    }
-//    else {
-//        NetworkLSA *fromNetworkLSA = dynamic_cast<NetworkLSA *>(fromLSA);
-//        if (fromNetworkLSA != nullptr) {
-//            unsigned int routerCount = fromNetworkLSA->getAttachedRouterArraySize();
-//            RouterLSA *toRouterLSA = dynamic_cast<RouterLSA *>(toLSA);
-//            if (toRouterLSA != nullptr) {
-//                for (i = 0; i < routerCount; i++) {
-//                    if (fromNetworkLSA->getAttachedRouter(i) == toRouterLSA->getHeader().getAdvertisingRouter()) {
-//                        return true;
-//                    }
-//                }
-//            }
-//        }
-//    }
-//
-//    return false;
-//}
-//
+                    {
+                        foundIntraAreaRoute = true;
+                        break;
+                    }
+                }
+                if (foundIntraAreaRoute) {
+                    continue;
+                }
+            }
+
+            OSPFv3IPv4RoutingTableEntry *borderRouterEntry = nullptr;
+            //find Router LSA for originate router of Inter Area Prefix LSA
+            RouterLSA *routerLSA =  findRouterLSA(originatingRouter);
+
+            //if founded RouterLSA has no valuable information.
+            if (routerLSA == nullptr) {
+                continue;
+            }
+            if (routerLSA->getRoutersArraySize() < 1) {
+                continue;
+            }
+            //from Router LSA routers search for Intra Area Prefix LSA
+            // FIXME : preco tu je ako index natvrdo nula ? LG
+            LSAKeyType lsaKey;
+            lsaKey.linkStateID = (Ipv4Address)routerLSA->getRouters(0).neighborInterfaceID; //TODO : what if it is another link for network
+            lsaKey.advertisingRouter = routerLSA->getRouters(0).neighborRouterID;
+            lsaKey.LSType = NETWORK_LSA;
+
+            OSPFv3IntraAreaPrefixLSA *iapLSA = findIntraAreaPrefixLSAByReference(lsaKey);
+            if (iapLSA == nullptr)
+                continue;
+
+            EV_DEBUG << "routeCount = " << routeCount << "\n";
+            // The routingEntry describes a route to an other area -> look for the border router originating it
+            for (j = 0; j < routeCount; j++) {    // (4) N == destination, BR == borderRouterEntry
+                OSPFv3IPv4RoutingTableEntry *routingEntry = newTableIPv4[j];
+
+                EV_DEBUG << "\n";
+                for (int pfxs = 0; pfxs < iapLSA->getPrefixesArraySize(); pfxs++)
+                {
+                    // if I have LSA9 in same area with IP same as in new calculated routingEntry, then...
+                    if ((routingEntry->getArea() == areaID) &&
+                        (((routingEntry->getDestinationType() & OSPFv3IPv4RoutingTableEntry::AREA_BORDER_ROUTER_DESTINATION) != 0) ||
+                         ((routingEntry->getDestinationType() & OSPFv3IPv4RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION) != 0)) &&
+                        (routingEntry->getDestination() == iapLSA->getPrefixes(pfxs).addressPrefix.toIpv4())) // TODO:  LG , neviem ci je spravne, povodne bolo (routingEntry->getDestination() == originatingRouter))
+                    {
+                        borderRouterEntry = routingEntry;
+                        break;
+                    }
+                }
+                if (borderRouterEntry != nullptr)
+                    break;
+            }
+
+            if (borderRouterEntry == nullptr) {
+                continue;
+            }
+            else
+            {    // (5)
+                /* "Else, this LSA describes an inter-area path to destination N,
+                 * whose cost is the distance to BR plus the cost specified in the LSA.
+                 * Call the cost of this inter-area path IAC."
+                 */
+                bool destinationInRoutingTable = true;
+                unsigned short currentCost = routeCost + borderRouterEntry->getCost();
+                std::list<OSPFv3IPv4RoutingTableEntry *> sameOrWorseCost;
+
+                if (findSameOrWorseCostRoute(newTableIPv4,
+                            *currentLSA,
+                            currentCost,
+                            destinationInRoutingTable,
+                            sameOrWorseCost))
+                {
+                    continue;
+                }
+
+                if (destinationInRoutingTable && (sameOrWorseCost.size() > 0)) {
+                    OSPFv3IPv4RoutingTableEntry *equalEntry = nullptr;
+
+                    /* Look for an equal cost entry in the sameOrWorseCost list, and
+                     * also clear the more expensive entries from the newTable.
+                     */
+                    for (auto checkedEntry : sameOrWorseCost) {
+                        if (checkedEntry->getCost() > currentCost) {
+                            for (auto entryIt = newTableIPv4.begin(); entryIt != newTableIPv4.end(); entryIt++) {
+                                if (checkedEntry == (*entryIt)) {
+                                    newTableIPv4.erase(entryIt);
+                                    break;
+                                }
+                            }
+                        }
+                        else {    // EntryCost == currentCost
+                            equalEntry = checkedEntry;    // should be only one - if there are more they are ignored
+                        }
+                    }
+                    unsigned long nextHopCount = borderRouterEntry->getNextHopCount();
+
+                    if (equalEntry != nullptr) {
+                        /* Add the next hops of the border router advertising this destination
+                         * to the equal entry.
+                         */
+                        for (unsigned long j = 0; j < nextHopCount; j++) {
+                            equalEntry->addNextHop(borderRouterEntry->getNextHop(j));
+                        }
+                    }
+                    else {
+                        OSPFv3IPv4RoutingTableEntry *newEntry = createRoutingTableEntryFromInterAreaPrefixLSA(*currentLSA, currentCost, *borderRouterEntry);
+                        ASSERT(newEntry != nullptr);
+                        newTableIPv4.push_back(newEntry);
+                    }
+                }
+                else {
+                    OSPFv3IPv4RoutingTableEntry *newEntry = createRoutingTableEntryFromInterAreaPrefixLSA(*currentLSA, currentCost, *borderRouterEntry);
+                    ASSERT(newEntry != nullptr);
+                    newTableIPv4.push_back(newEntry);
+                }
+            }
+        }
+    }
+}
+
+// chcek if router has link into calculating router through LSAs
+bool OSPFv3Area::hasLink(OSPFv3LSA *fromLSA, OSPFv3LSA *toLSA) const
+{
+    unsigned int i;
+
+    RouterLSA *fromRouterLSA = dynamic_cast<RouterLSA *>(fromLSA);
+    if (fromRouterLSA != nullptr) {
+        unsigned int linkCount = fromRouterLSA->getRoutersArraySize();
+        RouterLSA *toRouterLSA = dynamic_cast<RouterLSA *>(toLSA);
+        if (toRouterLSA != nullptr) {
+            for (i = 0; i < linkCount; i++) {
+                OSPFv3RouterLSABody& link = fromRouterLSA->getRoutersForUpdate(i);
+                OSPFv3RouterLSAType linkType = static_cast<OSPFv3RouterLSAType>(link.type);
+
+                if (((linkType == POINT_TO_POINT) ||
+                     (linkType == VIRTUAL_LINK)) &&
+                    (link.neighborRouterID == toRouterLSA->getHeader().getAdvertisingRouter()))
+                {
+                    return true;
+                }
+            }
+        }
+        else {
+            NetworkLSA *toNetworkLSA = dynamic_cast<NetworkLSA *>(toLSA);
+            if (toNetworkLSA != nullptr) {
+                for (i = 0; i < linkCount; i++) {
+                    OSPFv3RouterLSABody& link = fromRouterLSA->getRoutersForUpdate(i);
+
+                    if ((link.type == TRANSIT_NETWORK) &&
+                        (link.neighborRouterID == toNetworkLSA->getHeader().getAdvertisingRouter()))
+                    {
+                        return true;
+                    }
+                    if (link.type == RESERVED)
+                    {
+                        cout << "return RESERVED HAS LINK" << endl;
+                        EV_DEBUG << "return RESERVED HAS LINK\n";
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    else {
+        NetworkLSA *fromNetworkLSA = dynamic_cast<NetworkLSA *>(fromLSA);
+        if (fromNetworkLSA != nullptr) {
+            unsigned int routerCount = fromNetworkLSA->getAttachedRouterArraySize();
+            RouterLSA *toRouterLSA = dynamic_cast<RouterLSA *>(toLSA);
+            if (toRouterLSA != nullptr) {
+                for (i = 0; i < routerCount; i++) {
+                    if (fromNetworkLSA->getAttachedRouter(i) == toRouterLSA->getHeader().getAdvertisingRouter()) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    return false;
+}
+
 //std::vector<NextHop> *OSPFv3Area::calculateNextHops(OSPFv3SPFVertex* destination, OSPFv3SPFVertex *parent) const
 //{
-//    EV_DEBUG << "Calculating Next Hops VERTEX NOT IMPLEMENTED NIY\n"; // LG
+//    EV_DEBUG << "Calculating Next Hops VERTEX NOT IMPLEMENTED NIY\n"; // LG DELETE ?
 //    return nullptr;
 //}
-//
-//std::vector<NextHop> *OSPFv3Area::calculateNextHops(OSPFv3LSA *destination, OSPFv3LSA *parent) const
-//{
-//    EV_DEBUG << "Calculating Next Hops\n";
-//    std::vector<NextHop> *hops = new std::vector<NextHop>;
-//    unsigned long i, j;
-//
-//    RouterLSA *routerLSA = dynamic_cast<RouterLSA *>(parent); // OSPFLSA -> RouterLSA
-//    if (routerLSA != nullptr) { // if parrent is ROUTER_LSA
-//        if (routerLSA != spfTreeRoot) {
-//            unsigned int nextHopCount = routerLSA->getNextHopCount();
-//            for (i = 0; i < nextHopCount; i++) {
-//                hops->push_back(routerLSA->getNextHop(i));
-//            }
-//            return hops;
-//        }
-//        else {
-//            RouterLSA *destinationRouterLSA = dynamic_cast<RouterLSA *>(destination);
-//            if (destinationRouterLSA != nullptr) {  // if destination is ROUTER_LSA  (for P2P connection (?) LG )
-//                unsigned long interfaceNum = interfaceList.size();
-//                for (i = 0; i < interfaceNum; i++) {
-//                    OSPFv3Interface::OSPFv3InterfaceType intfType = interfaceList[i]->getType();
-//
-//                    //ak je to P2P interface, nastav jedného neighbora a ak je aj destination, nastav jeden nexthop a push_back do hops
-//
-//                    // ak je to P2MP int, nastav viacerých neighborov a pushni ich do hopsov
-//
-//                    if ((intfType == OSPFv3Interface::POINTTOPOINT_TYPE) ||
-//                        ((intfType == OSPFv3Interface::VIRTUAL_TYPE) &&
-//                         (interfaceList[i]->getState() > OSPFv3Interface::INTERFACE_STATE_LOOPBACK)))
-//                    {
-//
-//                        OSPFv3Neighbor *ptpNeighbor = interfaceList[i]->getNeighborCount() > 0 ? interfaceList[i]->getNeighbor(0) : nullptr;
-//
-//                       // by neighbor find appropriate Link LSA
-//                       if (ptpNeighbor != nullptr)
-//                       {
-//                           NextHop nextHop;
-//                           // ak je najbližší neigbor aj destination, vykonaj toto a ukonèi for :
-//                            LSAKeyType lsaKey;
-//                            lsaKey.linkStateID = Ipv4Address(ptpNeighbor->getNeighborInterfaceID());
-//                            lsaKey.advertisingRouter = ptpNeighbor->getNeighborID();
-//                            lsaKey.LSType = LINK_LSA;
-//
-//                            LinkLSA* linklsa = interfaceList[i]->getLinkLSAbyKey(lsaKey);
-//
-//                            if (linklsa != nullptr)
-//                            {
-//                                nextHop.ifIndex = interfaceList[i]->getInterfaceId();
-//                                nextHop.hopAddress = linklsa->getLinkLocalInterfaceAdd();
-//                                nextHop.advertisingRouter = destinationRouterLSA->getHeader().getAdvertisingRouter();
-//
-//                                hops->push_back(nextHop);
-//                                break;
-//                           }
-//                       }
-//                    }
-//                    if (intfType == OSPFv3Interface::POINTTOMULTIPOINT_TYPE) {
-//
-//                        // NOT POSSIBLE SITATION
-//                       /* OSPFv3Neighbor *ptmpNeighbor = interfaceList[i]->getNeighborByID(destinationRouterLSA->getHeader().getLinkStateID());
-//                        if (ptmpNeighbor != nullptr) {
-//                            unsigned int linkCount = destinationRouterLSA->getLinksArraySize();
-//                            Ipv4Address rootID = Ipv4Address(parentRouter->getRouterID());
-//                            for (j = 0; j < linkCount; j++) {
-//                                Link& link = destinationRouterLSA->getLinks(j);
-//                                if (link.getLinkID() == rootID) {
-//                                    NextHop nextHop;
-//                                    nextHop.ifIndex = interfaceList[i]->getIfIndex();
-//                                    nextHop.hopAddress = Ipv4Address(link.getLinkData());
-//                                    nextHop.advertisingRouter = destinationRouterLSA->getHeader().getAdvertisingRouter();
-//                                    hops->push_back(nextHop);
-//                                }
-//                            }
-//                            break;
-//                        }*/
-//                    }
-//                } // for ()
-//            }
-//            else {          //  else destination is NETWORK_LSA
-//                NetworkLSA *destinationNetworkLSA = dynamic_cast<NetworkLSA *>(destination);
-//                if (destinationNetworkLSA != nullptr) {
-////                    Ipv4Address networkDesignatedRouter = destinationNetworkLSA->getHeader().getLinkStateID(); LG
-//                    Ipv4Address networkDesignatedRouter = destinationNetworkLSA->getHeader().getAdvertisingRouter();
-//                    Ipv4Address networkDRintID = destinationNetworkLSA->getHeader().getLinkStateID();
-//                    unsigned long interfaceNum = interfaceList.size();
-//                    for (i = 0; i < interfaceNum; i++) {        // jedna iteracia
-//
-//                        EV_DEBUG << "interfaceList[i]->getDesignatedID() = " << interfaceList[i]->getDesignatedID() << "\n"; //LG
-//                        EV_DEBUG << "networkDesignatedRouter = " << networkDesignatedRouter << "     intf-DRID = " << interfaceList[i]->getDesignatedID() << "\n";
-//                        EV_DEBUG << "networkDRintID = " << networkDRintID << "    intf-DRintID = " << (Ipv4Address)interfaceList[i]->getDesignatedIntID() << "\n";
-//
-//                        OSPFv3Interface::OSPFv3InterfaceType intfType = interfaceList[i]->getType();
-//                        if (((intfType == OSPFv3Interface::BROADCAST_TYPE) ||
-//                             (intfType == OSPFv3Interface::NBMA_TYPE)) &&
-//                            (interfaceList[i]->getDesignatedID() == networkDesignatedRouter)
-//                            && ((Ipv4Address)interfaceList[i]->getDesignatedIntID() == networkDRintID))
-//                        {
-//                            NextHop nextHop;
-//
-//                            nextHop.ifIndex = interfaceList[i]->getInterfaceId();
-//                            if (v6)
-//                                nextHop.hopAddress = Ipv6Address::UNSPECIFIED_ADDRESS;    //TODO revise it!
-//                            else
-//                                nextHop.hopAddress = Ipv4Address::UNSPECIFIED_ADDRESS;
-//
-//                            nextHop.advertisingRouter = destinationNetworkLSA->getHeader().getAdvertisingRouter();
-//                            hops->push_back(nextHop);
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//
-//    }
-//    else { // if parent is NETWORK_LSA
-//        EV_DEBUG <<  " PARENT JE NETWORK_LSA\n"; //LG
-//        //           cout <<  "AK PARENT JE NETWORK_LSA" << endl;
-//        NetworkLSA *networkLSA = dynamic_cast<NetworkLSA *>(parent);
-//        if (networkLSA != nullptr)
-//        {
-//           if (networkLSA->getParent() != spfTreeRoot) { //ak som network a moj parent nie je spfTreeRoot, vrat všetky nexthopy
-//               unsigned int nextHopCount = networkLSA->getNextHopCount();
-//               for (i = 0; i < nextHopCount; i++) {
-//                   hops->push_back(networkLSA->getNextHop(i));
-//               }
-//               return hops;
-//           }
-//           else
-//           {
-//               // for Network-LSA, Link State ID is ID of interface by which it is connected into network LG
-//               Ipv4Address parentLinkStateID = parent->getHeader().getAdvertisingRouter();
-//
-//               RouterLSA *destinationRouterLSA = dynamic_cast<RouterLSA *>(destination);
-//               if (destinationRouterLSA != nullptr) {
-//                   Ipv4Address& destinationRouterID = destinationRouterLSA->getHeader().getLinkStateID();
-//                   unsigned int linkCount = destinationRouterLSA->getRoutersArraySize();
-//                   for (i = 0; i < linkCount; i++) {
-//                       OSPFv3RouterLSABody& link = destinationRouterLSA->getRouters(i);
-//                       NextHop nextHop;
-//
-//                       if (((link.type == TRANSIT_NETWORK) &&
-//                            (link.neighborRouterID == parentLinkStateID))
-////                               ||  ((link.getType() == STUB_LINK) &&       LG
-////                            ((link.getLinkID() & Ipv4Address(link.getLinkData())) == (parentLinkStateID & networkLSA->getNetworkMask())))
-//                            )
-//                       {
-//                           unsigned long interfaceNum = interfaceList.size();
-//                           for (j = 0; j < interfaceNum; j++) {
-//                               OSPFv3Interface::OSPFv3InterfaceType intfType = interfaceList[j]->getType();
-//                               if (((intfType == OSPFv3Interface::BROADCAST_TYPE) ||
-//                                    (intfType == OSPFv3Interface::NBMA_TYPE)) &&
-//                                   (interfaceList[j]->getDesignatedID() == parentLinkStateID))
-//                               {
-//                                   OSPFv3Neighbor *nextHopNeighbor = interfaceList[j]->getNeighborById(destinationRouterID);
-//
-//                                   // by neighbor find appropriate Link LSA
-//                                   if (nextHopNeighbor != nullptr)
-//                                   {
-//                                        LSAKeyType lsaKey;
-//                                        lsaKey.linkStateID = Ipv4Address(nextHopNeighbor->getNeighborInterfaceID());
-//                                        lsaKey.advertisingRouter = nextHopNeighbor->getNeighborID();
-//                                        lsaKey.LSType = LINK_LSA;
-//
-//                                        LinkLSA* linklsa = interfaceList[j]->getLinkLSAbyKey(lsaKey);
-//
-//                                        if (linklsa != nullptr)
-//                                        {
-//                                            nextHop.ifIndex = interfaceList[j]->getInterfaceId();
-//    //                                        nextHop.hopAddress = nextHopNeighbor->getNeighborIP();
-//                                            nextHop.hopAddress = linklsa->getLinkLocalInterfaceAdd();
-//                                            nextHop.advertisingRouter = destinationRouterLSA->getHeader().getAdvertisingRouter();
-//
-//                                            hops->push_back(nextHop);
-//                                       }
-//                                   }
-//                               }
-//                           }
-//                       }
-//                   }
-//               }
-//               else
-//               {
-//                   EV_DEBUG << "DESTINATION IS NOT ROUTER, nemalo by nastat NIY\n";  // LG
-//                   cout << "DESTINATION IS NOT ROUTER, nemalo by nastat NIY\n";
-//               }
-//           }
-//        }
-//    }
-//
-//
-//    return hops;
-//
-//}
-//
-//void OSPFv3Area::recheckInterAreaPrefixLSAs( std::vector<OSPFv3RoutingTableEntry* >& newTableIPv6)
-//{
-//    unsigned long i = 0;
-//    unsigned long j = 0;
-//    unsigned long lsaCount = interAreaPrefixLSAList.size();
-//
-//    for (i = 0; i < lsaCount; i++)
-//    {
-//        InterAreaPrefixLSA *currentLSA = interAreaPrefixLSAList[i];
-//        OSPFv3LSAHeader& currentHeader = currentLSA->getHeader();
-//
-//        unsigned long routeCost = currentLSA->getMetric();
-//        unsigned short lsAge = currentHeader.getLsaAge();
-//        Ipv4Address originatingRouter = currentHeader.getAdvertisingRouter();
-//        bool selfOriginated = (originatingRouter == this->getInstance()->getProcess()->getRouterID());
-//
-//        if ((routeCost == LS_INFINITY) || (lsAge == MAX_AGE) || (selfOriginated)) {    // (1) and(2)
-//            continue;
-//        }
-//
-//        unsigned long routeCount = newTableIPv6.size();
-//        char lsaType = currentHeader.getLsaType();
-//        OSPFv3RoutingTableEntry *destinationEntry = nullptr;
-//        Ipv6AddressRange destination;
-//
-//        destination.prefix = currentLSA->getPrefix().toIpv6(); //from LSA type 3
-//        destination.prefixLength = currentLSA->getPrefixLen();
-//
-////        destination.address = currentHeader.getLinkStateID();
-////        destination.mask = currentLSA->getNetworkMask();
-//
-//        for (j = 0; j < routeCount; j++) {    // (3)
-//            OSPFv3RoutingTableEntry *routingEntry = newTableIPv6[j];
-//            bool foundMatching = false;
-//
-//            if (lsaType == INTER_AREA_PREFIX_LSA) {
-//                if ((routingEntry->getDestinationType() == OSPFv3RoutingTableEntry::NETWORK_DESTINATION) &&
-//                    (destination.prefix == routingEntry->getDestPrefix()) &&
-//                    (destination.prefixLength == routingEntry->getPrefixLength())) //TODO: LG zeby nebola treba aj maska ?
-//                {
-//                    foundMatching = true;
-//                }
-//            }
-//            else {
-//                if (
-//                    (
-//                            ((routingEntry->getDestinationType() & OSPFv3RoutingTableEntry::AREA_BORDER_ROUTER_DESTINATION) != 0) ||
-//                            ((routingEntry->getDestinationType() & OSPFv3RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION) != 0)
-//                    ) &&
-//                    (destination.prefix == routingEntry->getDestPrefix()) &&
-//                    (destination.prefixLength == routingEntry->getPrefixLength())
-//                    )
-//                {
-//                    foundMatching = true;
-//                }
-//            }
-//
-//            if (foundMatching) {
-//                OSPFv3RoutingTableEntry::RoutingPathType pathType = routingEntry->getPathType();
-//
-//                if ((pathType == OSPFv3RoutingTableEntry::TYPE1_EXTERNAL) ||
-//                    (pathType == OSPFv3RoutingTableEntry::TYPE2_EXTERNAL) ||
-//                    (routingEntry->getArea() != BACKBONE_AREAID))
-//                {
-//                    break;
-//                }
-//                else {
-//                    destinationEntry = routingEntry;
-//                    break;
-//                }
-//            }
-//        }
-//        if (destinationEntry == nullptr) {
-//            continue;
-//        }
-//
-//        OSPFv3RoutingTableEntry *borderRouterEntry = nullptr;
-//        unsigned short currentCost = routeCost;
-//
-//        RouterLSA *routerLSA =  findRouterLSA(originatingRouter);
-//
-//        //if founded RouterLSA has no valuable information.
-//        if (routerLSA == nullptr) {
-//           continue;
-//        }
-//        if (routerLSA->getRoutersArraySize() < 1) {
-//           continue;
-//        }
-//        //from Router LSA routers search for Intra Area Prefix LSA
-//       LSAKeyType lsaKey;
-//       lsaKey.linkStateID = (Ipv4Address)routerLSA->getRouters(0).neighborInterfaceID; //TODO : what if it is another link for network
-//       lsaKey.advertisingRouter = routerLSA->getRouters(0).neighborRouterID;
-//       lsaKey.LSType = routerLSA->getRouters(0).type;
-//
-//       OSPFv3IntraAreaPrefixLSA *iapLSA = findIntraAreaPrefixLSAByReference(lsaKey);
-//       if (iapLSA == nullptr)
-//           continue;
-//
-//       // potrebujem sa dostat k IPcke ABRka a porovnat s destPrefix routing Entry.
-//
-//       ///////////////////////////////////////////////////////////////////////////////////////
-//     /*  if ((routerLSA->getBBit() || routerLSA->getEBit()) &&
-//           (routerLSA->getHeader().getAdvertisingRouter() != this->getInstance()->getProcess()->getRouterID())) //in broadcast network, only if this is ABR or ASBR
-//       {
-//           lsaKey.linkStateID = (Ipv4Address)routerLSA->getRouters(linkCnt).neighborInterfaceID;
-//           lsaKey.advertisingRouter = routerLSA->getRouters(linkCnt).neighborRouterID;
-//       }
-//       else
-//           continue;
-//       lsaKey.LSType = routerLSA->getRouters(linkCnt).type ;
-//
-//
-//       OSPFv3IntraAreaPrefixLSA *iapLSA = findIntraAreaPrefixLSAByReference(lsaKey);
-//
-//       if (iapLSA != nullptr){
-//           for (int i = 0; i < iapLSA->getPrefixesArraySize(); i++)
-//           {
-//               EV_DEBUG << "prechadzam forom\n";
-//               EV_DEBUG << "addressPrefix = "<< iapLSA->getPrefixes(i).addressPrefix << "\n";  //this is my destinationID
-//               EV_DEBUG << "prefixLen = "<< int(iapLSA->getPrefixes(i).prefixLen) << "\n";
-//               destinationID = iapLSA->getPrefixes(i).addressPrefix;
-//               prefixLen = iapLSA->getPrefixes(i).prefixLen;*/
-//       ///////////////////////////////////////////////////////////////////////////////////////
-//
-//
-//
-//
-//
-//
-//
-//       EV_DEBUG << "recheck SUMMARY routeCount = " << routeCount << "\n";
-//       for (j = 0; j < routeCount; j++) {    // (4) BR == borderRouterEntry
-//            OSPFv3RoutingTableEntry *routingEntry = newTableIPv6[j];
-//            for (int pfxs = 0; pfxs < iapLSA->getPrefixesArraySize(); pfxs++)
-//            {
-//
-//
-//                if ((routingEntry->getArea() == areaID) &&
-//                    (((routingEntry->getDestinationType() & OSPFv3RoutingTableEntry::AREA_BORDER_ROUTER_DESTINATION) != 0) ||
-//                     ((routingEntry->getDestinationType() & OSPFv3RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION) != 0)) &&
-//                    (routingEntry->getDestPrefix() == iapLSA->getPrefixes(pfxs).addressPrefix.toIpv6())) // zistujem ci destination je router, ktory tuto LSA 3 spravu vytvoril
-//                {
-//                    borderRouterEntry = routingEntry;;
-//                    currentCost += borderRouterEntry->getCost();
-//                    break;
-//                }
-//            }
-//        }
-//        if (borderRouterEntry == nullptr) {
-//            continue;
-//        }
-//        else {    // (5)
-//            if (currentCost <= destinationEntry->getCost()) {
-//                if (currentCost < destinationEntry->getCost()) {
-//                    destinationEntry->clearNextHops();
-//                }
-//
-//                unsigned long nextHopCount = borderRouterEntry->getNextHopCount();
-//
-//                for (j = 0; j < nextHopCount; j++) {
-//                    destinationEntry->addNextHop(borderRouterEntry->getNextHop(j));
-//                }
-//            }
-//        }
-//    }
-//}
-//
-//
-//
-//void OSPFv3Area::recheckInterAreaPrefixLSAs( std::vector<OSPFv3IPv4RoutingTableEntry* >& newTableIPv4)
-//{
-//    unsigned long i = 0;
-//    unsigned long j = 0;
-//    unsigned long lsaCount = interAreaPrefixLSAList.size();
-//
-//    for (i = 0; i < lsaCount; i++)
-//    {
-//        InterAreaPrefixLSA *currentLSA = interAreaPrefixLSAList[i];
-//        OSPFv3LSAHeader& currentHeader = currentLSA->getHeader();
-//
-//        unsigned long routeCost = currentLSA->getMetric();
-//        unsigned short lsAge = currentHeader.getLsaAge();
-//        Ipv4Address originatingRouter = currentHeader.getAdvertisingRouter();
-//        bool selfOriginated = (originatingRouter == this->getInstance()->getProcess()->getRouterID());
-//
-//        if ((routeCost == LS_INFINITY) || (lsAge == MAX_AGE) || (selfOriginated)) {    // (1) and(2)
-//            continue;
-//        }
-//
-//        unsigned long routeCount = newTableIPv4.size();
-//        char lsaType = currentHeader.getLsaType();
-//        OSPFv3IPv4RoutingTableEntry *destinationEntry = nullptr;
-//        Ipv4AddressRange destination;
-//
-//        destination.address = currentLSA->getPrefix().toIpv4(); //from LSA type 3
-//        destination.mask = destination.address.makeNetmask(currentLSA->getPrefixLen());
-//
-////        destination.address = currentHeader.getLinkStateID();
-////        destination.mask = currentLSA->getNetworkMask();
-//
-//        for (j = 0; j < routeCount; j++) {    // (3)
-//            OSPFv3IPv4RoutingTableEntry *routingEntry = newTableIPv4[j];
-//            bool foundMatching = false;
-//
-//            if (lsaType == INTER_AREA_PREFIX_LSA) {
-//                if ((routingEntry->getDestinationType() == OSPFv3IPv4RoutingTableEntry::NETWORK_DESTINATION) &&
-//                    (destination.address == routingEntry->getDestination()) &&
-//                    (destination.mask == routingEntry->getDestination().makeNetmask(routingEntry->getPrefixLength())))
-//                {
-//                    foundMatching = true;
-//                }
-//            }
-//            else {
-//                if (
-//                    (
-//                            ((routingEntry->getDestinationType() & OSPFv3IPv4RoutingTableEntry::AREA_BORDER_ROUTER_DESTINATION) != 0) ||
-//                            ((routingEntry->getDestinationType() & OSPFv3IPv4RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION) != 0)
-//                    ) &&
-//                    (destination.address == routingEntry->getDestination()) &&
-//                    (destination.mask == routingEntry->getDestination().makeNetmask(routingEntry->getPrefixLength()))
-//                    )
-//                {
-//                    foundMatching = true;
-//                }
-//            }
-//
-//            if (foundMatching) {
-//                OSPFv3IPv4RoutingTableEntry::RoutingPathType pathType = routingEntry->getPathType();
-//
-//                if ((pathType == OSPFv3IPv4RoutingTableEntry::TYPE1_EXTERNAL) ||
-//                    (pathType == OSPFv3IPv4RoutingTableEntry::TYPE2_EXTERNAL) ||
-//                    (routingEntry->getArea() != BACKBONE_AREAID))
-//                {
-//                    break;
-//                }
-//                else {
-//                    destinationEntry = routingEntry;
-//                    break;
-//                }
-//            }
-//        }
-//        if (destinationEntry == nullptr) {
-//            continue;
-//        }
-//
-//        OSPFv3IPv4RoutingTableEntry *borderRouterEntry = nullptr;
-//        unsigned short currentCost = routeCost;
-//
-//        RouterLSA *routerLSA =  findRouterLSA(originatingRouter);
-//
-//        //if founded RouterLSA has no valuable information.
-//        if (routerLSA == nullptr) {
-//           continue;
-//        }
-//        if (routerLSA->getRoutersArraySize() < 1) {
-//           continue;
-//        }
-//        //from Router LSA routers search for Intra Area Prefix LSA
-//       LSAKeyType lsaKey;
-//       lsaKey.linkStateID = (Ipv4Address)routerLSA->getRouters(0).neighborInterfaceID; //TODO : what if it is another link for network
-//       lsaKey.advertisingRouter = routerLSA->getRouters(0).neighborRouterID;
-//       lsaKey.LSType = routerLSA->getRouters(0).type;
-//
-//       OSPFv3IntraAreaPrefixLSA *iapLSA = findIntraAreaPrefixLSAByReference(lsaKey);
-//       if (iapLSA == nullptr)
-//           continue;
-//
-//
-//       EV_DEBUG << "recheck SUMMARY routeCount = " << routeCount << "\n";
-//       for (j = 0; j < routeCount; j++) {    // (4) BR == borderRouterEntry
-//           OSPFv3IPv4RoutingTableEntry *routingEntry = newTableIPv4[j];
-//            for (int pfxs = 0; pfxs < iapLSA->getPrefixesArraySize(); pfxs++)
-//            {
-//
-//
-//                if ((routingEntry->getArea() == areaID) &&
-//                    (((routingEntry->getDestinationType() & OSPFv3IPv4RoutingTableEntry::AREA_BORDER_ROUTER_DESTINATION) != 0) ||
-//                     ((routingEntry->getDestinationType() & OSPFv3IPv4RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION) != 0)) &&
-//                    (routingEntry->getDestination() == iapLSA->getPrefixes(pfxs).addressPrefix.toIpv4())) // zistujem ci destination je router, ktory tuto LSA 3 spravu vytvoril
-//                {
-//                    borderRouterEntry = routingEntry;;
-//                    currentCost += borderRouterEntry->getCost();
-//                    break;
-//                }
-//            }
-//        }
-//        if (borderRouterEntry == nullptr) {
-//            continue;
-//        }
-//        else {    // (5)
-//            if (currentCost <= destinationEntry->getCost()) {
-//                if (currentCost < destinationEntry->getCost()) {
-//                    destinationEntry->clearNextHops();
-//                }
-//
-//                unsigned long nextHopCount = borderRouterEntry->getNextHopCount();
-//
-//                for (j = 0; j < nextHopCount; j++) {
-//                    destinationEntry->addNextHop(borderRouterEntry->getNextHop(j));
-//                }
-//            }
-//        }
-//    }
-//}
+
+std::vector<NextHop> *OSPFv3Area::calculateNextHops(OSPFv3LSA *destination, OSPFv3LSA *parent) const
+{
+    EV_DEBUG << "Calculating Next Hops\n";
+    std::vector<NextHop> *hops = new std::vector<NextHop>;
+    unsigned long i, j;
+    RouterLSA *routerLSA = dynamic_cast<RouterLSA *>(parent);
+    if (routerLSA != nullptr) { // if parrent is ROUTER_LSA
+        if (routerLSA != spfTreeRoot) {
+            unsigned int nextHopCount = routerLSA->getNextHopCount();
+            for (i = 0; i < nextHopCount; i++) {
+                hops->push_back(routerLSA->getNextHop(i));
+            }
+            return hops;
+        }
+        else {
+            RouterLSA *destinationRouterLSA = dynamic_cast<RouterLSA *>(destination);
+            if (destinationRouterLSA != nullptr) {  // if destination is ROUTER_LSA  (for P2P connection (?) LG )
+                unsigned long interfaceNum = interfaceList.size();
+                for (i = 0; i < interfaceNum; i++) {
+                    OSPFv3Interface::OSPFv3InterfaceType intfType = interfaceList[i]->getType();
+                    // if its P2P interface, set one neighbor and if it is destination too, set one nexthop and store it into hosts
+                    if ((intfType == OSPFv3Interface::POINTTOPOINT_TYPE) ||
+                        ((intfType == OSPFv3Interface::VIRTUAL_TYPE) &&
+                         (interfaceList[i]->getState() > OSPFv3Interface::INTERFACE_STATE_LOOPBACK)))
+                    {
+
+                        OSPFv3Neighbor *ptpNeighbor = interfaceList[i]->getNeighborCount() > 0 ? interfaceList[i]->getNeighbor(0) : nullptr;
+
+                       // by neighbor find appropriate Link LSA
+                       if (ptpNeighbor != nullptr)
+                       {
+                           NextHop nextHop;
+                           // ak je najbližší neigbor aj destination, vykonaj toto a ukonèi for :
+                            LSAKeyType lsaKey;
+                            lsaKey.linkStateID = Ipv4Address(ptpNeighbor->getNeighborInterfaceID());
+                            lsaKey.advertisingRouter = ptpNeighbor->getNeighborID();
+                            lsaKey.LSType = LINK_LSA;
+
+                            LinkLSA* linklsa = interfaceList[i]->getLinkLSAbyKey(lsaKey);
+
+                            if (linklsa != nullptr)
+                            {
+                                nextHop.ifIndex = interfaceList[i]->getInterfaceId();
+                                nextHop.hopAddress = linklsa->getLinkLocalInterfaceAdd();
+                                nextHop.advertisingRouter = destinationRouterLSA->getHeader().getAdvertisingRouter();
+
+                                hops->push_back(nextHop);
+                                break;
+                           }
+                       }
+                    }
+                    if (intfType == OSPFv3Interface::POINTTOMULTIPOINT_TYPE) {
+                        // TODO P2MP is not implemented yet
+                    }
+                } // for ()
+            }
+            else {          //  else destination is NETWORK_LSA
+                NetworkLSA *destinationNetworkLSA = dynamic_cast<NetworkLSA *>(destination);
+                if (destinationNetworkLSA != nullptr) {
+//                    Ipv4Address networkDesignatedRouter = destinationNetworkLSA->getHeader().getLinkStateID(); LG
+                    Ipv4Address networkDesignatedRouter = destinationNetworkLSA->getHeader().getAdvertisingRouter();
+                    Ipv4Address networkDRintID = destinationNetworkLSA->getHeader().getLinkStateID();
+                    unsigned long interfaceNum = interfaceList.size();
+                    for (i = 0; i < interfaceNum; i++)
+                    {
+                        OSPFv3Interface::OSPFv3InterfaceType intfType = interfaceList[i]->getType();
+                        if (((intfType == OSPFv3Interface::BROADCAST_TYPE) ||
+                             (intfType == OSPFv3Interface::NBMA_TYPE)) &&
+                            (interfaceList[i]->getDesignatedID() == networkDesignatedRouter)
+                            && ((Ipv4Address)interfaceList[i]->getDesignatedIntID() == networkDRintID))
+                        {
+                            NextHop nextHop;
+
+                            nextHop.ifIndex = interfaceList[i]->getInterfaceId();
+                            if (v6)
+                                nextHop.hopAddress = Ipv6Address::UNSPECIFIED_ADDRESS;
+                            else
+                                nextHop.hopAddress = Ipv4Address::UNSPECIFIED_ADDRESS;
+
+                            nextHop.advertisingRouter = destinationNetworkLSA->getHeader().getAdvertisingRouter();
+                            hops->push_back(nextHop);
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+    else { // if parent is NETWORK_LSA
+        NetworkLSA *networkLSA = dynamic_cast<NetworkLSA *>(parent);
+        if (networkLSA != nullptr)
+        {
+           if (networkLSA->getParent() != spfTreeRoot) { //ak som network a moj parent nie je spfTreeRoot, vrat všetky nexthopy
+               unsigned int nextHopCount = networkLSA->getNextHopCount();
+               for (i = 0; i < nextHopCount; i++) {
+                   hops->push_back(networkLSA->getNextHop(i));
+               }
+               return hops;
+           }
+           else
+           {
+               // for Network-LSA, Link State ID is ID of interface by which it is connected into network LG
+               Ipv4Address parentLinkStateID = parent->getHeader().getAdvertisingRouter();
+
+               RouterLSA *destinationRouterLSA = dynamic_cast<RouterLSA *>(destination);
+               if (destinationRouterLSA != nullptr) {
+                   const Ipv4Address& destinationRouterID = destinationRouterLSA->getHeaderForUpdate().getLinkStateID();
+                   unsigned int linkCount = destinationRouterLSA->getRoutersArraySize();
+                   for (i = 0; i < linkCount; i++) {
+                       OSPFv3RouterLSABody& link = destinationRouterLSA->getRoutersForUpdate(i);
+                       NextHop nextHop;
+
+                       if (((link.type == TRANSIT_NETWORK) &&
+                            (link.neighborRouterID == parentLinkStateID))
+//                               ||  ((link.getType() == STUB_LINK) &&       LG
+//                            ((link.getLinkID() & Ipv4Address(link.getLinkData())) == (parentLinkStateID & networkLSA->getNetworkMask())))
+                            )
+                       {
+                           unsigned long interfaceNum = interfaceList.size();
+                           for (j = 0; j < interfaceNum; j++) {
+                               OSPFv3Interface::OSPFv3InterfaceType intfType = interfaceList[j]->getType();
+                               if (((intfType == OSPFv3Interface::BROADCAST_TYPE) ||
+                                    (intfType == OSPFv3Interface::NBMA_TYPE)) &&
+                                   (interfaceList[j]->getDesignatedID() == parentLinkStateID))
+                               {
+                                   OSPFv3Neighbor *nextHopNeighbor = interfaceList[j]->getNeighborById(destinationRouterID);
+
+                                   // by neighbor find appropriate Link LSA
+                                   if (nextHopNeighbor != nullptr)
+                                   {
+                                        LSAKeyType lsaKey;
+                                        lsaKey.linkStateID = Ipv4Address(nextHopNeighbor->getNeighborInterfaceID());
+                                        lsaKey.advertisingRouter = nextHopNeighbor->getNeighborID();
+                                        lsaKey.LSType = LINK_LSA;
+
+                                        LinkLSA* linklsa = interfaceList[j]->getLinkLSAbyKey(lsaKey);
+
+                                        if (linklsa != nullptr)
+                                        {
+                                            nextHop.ifIndex = interfaceList[j]->getInterfaceId();
+    //                                        nextHop.hopAddress = nextHopNeighbor->getNeighborIP();
+                                            nextHop.hopAddress = linklsa->getLinkLocalInterfaceAdd();
+                                            nextHop.advertisingRouter = destinationRouterLSA->getHeader().getAdvertisingRouter();
+
+                                            hops->push_back(nextHop);
+                                       }
+                                   }
+                               }
+                           }
+                       }
+                   }
+               }
+               else
+               {
+                   EV_DEBUG << "DESTINATION IS NOT ROUTER, nemalo by nastat NIY\n";  // LG
+                   cout << "DESTINATION IS NOT ROUTER, nemalo by nastat NIY\n";
+               }
+           }
+        }
+    }
+
+
+    return hops;
+
+}
+
+void OSPFv3Area::recheckInterAreaPrefixLSAs( std::vector<OSPFv3RoutingTableEntry* >& newTableIPv6)
+{
+    unsigned long i = 0;
+    unsigned long j = 0;
+    unsigned long lsaCount = interAreaPrefixLSAList.size();
+
+    for (i = 0; i < lsaCount; i++)
+    {
+        InterAreaPrefixLSA *currentLSA = interAreaPrefixLSAList[i];
+        const OSPFv3LSAHeader& currentHeader = currentLSA->getHeader();
+
+        unsigned long routeCost = currentLSA->getMetric();
+        unsigned short lsAge = currentHeader.getLsaAge();
+        Ipv4Address originatingRouter = currentHeader.getAdvertisingRouter();
+        bool selfOriginated = (originatingRouter == this->getInstance()->getProcess()->getRouterID());
+
+        if ((routeCost == LS_INFINITY) || (lsAge == MAX_AGE) || (selfOriginated)) {    // (1) and(2)
+            continue;
+        }
+
+        unsigned long routeCount = newTableIPv6.size();
+        char lsaType = currentHeader.getLsaType();
+        OSPFv3RoutingTableEntry *destinationEntry = nullptr;
+        Ipv6AddressRange destination;
+
+        destination.prefix = currentLSA->getPrefix().toIpv6(); //from LSA type 3
+        destination.prefixLength = currentLSA->getPrefixLen();
+
+//        destination.address = currentHeader.getLinkStateID();
+//        destination.mask = currentLSA->getNetworkMask();
+
+        for (j = 0; j < routeCount; j++) {    // (3)
+            OSPFv3RoutingTableEntry *routingEntry = newTableIPv6[j];
+            bool foundMatching = false;
+
+            if (lsaType == INTER_AREA_PREFIX_LSA) {
+                if ((routingEntry->getDestinationType() == OSPFv3RoutingTableEntry::NETWORK_DESTINATION) &&
+                    (destination.prefix == routingEntry->getDestPrefix()) &&
+                    (destination.prefixLength == routingEntry->getPrefixLength())) //TODO: LG zeby nebola treba aj maska ?
+                {
+                    foundMatching = true;
+                }
+            }
+            else {
+                if (
+                    (
+                            ((routingEntry->getDestinationType() & OSPFv3RoutingTableEntry::AREA_BORDER_ROUTER_DESTINATION) != 0) ||
+                            ((routingEntry->getDestinationType() & OSPFv3RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION) != 0)
+                    ) &&
+                    (destination.prefix == routingEntry->getDestPrefix()) &&
+                    (destination.prefixLength == routingEntry->getPrefixLength())
+                    )
+                {
+                    foundMatching = true;
+                }
+            }
+
+            if (foundMatching) {
+                OSPFv3RoutingTableEntry::RoutingPathType pathType = routingEntry->getPathType();
+
+                if ((pathType == OSPFv3RoutingTableEntry::TYPE1_EXTERNAL) ||
+                    (pathType == OSPFv3RoutingTableEntry::TYPE2_EXTERNAL) ||
+                    (routingEntry->getArea() != BACKBONE_AREAID))
+                {
+                    break;
+                }
+                else {
+                    destinationEntry = routingEntry;
+                    break;
+                }
+            }
+        }
+        if (destinationEntry == nullptr) {
+            continue;
+        }
+
+        OSPFv3RoutingTableEntry *borderRouterEntry = nullptr;
+        unsigned short currentCost = routeCost;
+
+        RouterLSA *routerLSA =  findRouterLSA(originatingRouter);
+
+        //if founded RouterLSA has no valuable information.
+        if (routerLSA == nullptr) {
+           continue;
+        }
+        if (routerLSA->getRoutersArraySize() < 1) {
+           continue;
+        }
+        //from Router LSA routers search for Intra Area Prefix LSA
+       LSAKeyType lsaKey;
+       lsaKey.linkStateID = (Ipv4Address)routerLSA->getRouters(0).neighborInterfaceID; //TODO : what if it is another link for network
+       lsaKey.advertisingRouter = routerLSA->getRouters(0).neighborRouterID;
+       lsaKey.LSType = routerLSA->getRouters(0).type;
+
+       OSPFv3IntraAreaPrefixLSA *iapLSA = findIntraAreaPrefixLSAByReference(lsaKey);
+       if (iapLSA == nullptr)
+           continue;
+
+       // potrebujem sa dostat k IPcke ABRka a porovnat s destPrefix routing Entry.
+
+       ///////////////////////////////////////////////////////////////////////////////////////
+     /*  if ((routerLSA->getBBit() || routerLSA->getEBit()) &&
+           (routerLSA->getHeader().getAdvertisingRouter() != this->getInstance()->getProcess()->getRouterID())) //in broadcast network, only if this is ABR or ASBR
+       {
+           lsaKey.linkStateID = (Ipv4Address)routerLSA->getRouters(linkCnt).neighborInterfaceID;
+           lsaKey.advertisingRouter = routerLSA->getRouters(linkCnt).neighborRouterID;
+       }
+       else
+           continue;
+       lsaKey.LSType = routerLSA->getRouters(linkCnt).type ;
+
+
+       OSPFv3IntraAreaPrefixLSA *iapLSA = findIntraAreaPrefixLSAByReference(lsaKey);
+
+       if (iapLSA != nullptr){
+           for (int i = 0; i < iapLSA->getPrefixesArraySize(); i++)
+           {
+               EV_DEBUG << "prechadzam forom\n";
+               EV_DEBUG << "addressPrefix = "<< iapLSA->getPrefixes(i).addressPrefix << "\n";  //this is my destinationID
+               EV_DEBUG << "prefixLen = "<< int(iapLSA->getPrefixes(i).prefixLen) << "\n";
+               destinationID = iapLSA->getPrefixes(i).addressPrefix;
+               prefixLen = iapLSA->getPrefixes(i).prefixLen;*/
+       ///////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+       EV_DEBUG << "recheck SUMMARY routeCount = " << routeCount << "\n";
+       for (j = 0; j < routeCount; j++) {    // (4) BR == borderRouterEntry
+            OSPFv3RoutingTableEntry *routingEntry = newTableIPv6[j];
+            for (int pfxs = 0; pfxs < iapLSA->getPrefixesArraySize(); pfxs++)
+            {
+
+
+                if ((routingEntry->getArea() == areaID) &&
+                    (((routingEntry->getDestinationType() & OSPFv3RoutingTableEntry::AREA_BORDER_ROUTER_DESTINATION) != 0) ||
+                     ((routingEntry->getDestinationType() & OSPFv3RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION) != 0)) &&
+                    (routingEntry->getDestPrefix() == iapLSA->getPrefixes(pfxs).addressPrefix.toIpv6())) // zistujem ci destination je router, ktory tuto LSA 3 spravu vytvoril
+                {
+                    borderRouterEntry = routingEntry;;
+                    currentCost += borderRouterEntry->getCost();
+                    break;
+                }
+            }
+        }
+        if (borderRouterEntry == nullptr) {
+            continue;
+        }
+        else {    // (5)
+            if (currentCost <= destinationEntry->getCost()) {
+                if (currentCost < destinationEntry->getCost()) {
+                    destinationEntry->clearNextHops();
+                }
+
+                unsigned long nextHopCount = borderRouterEntry->getNextHopCount();
+
+                for (j = 0; j < nextHopCount; j++) {
+                    destinationEntry->addNextHop(borderRouterEntry->getNextHop(j));
+                }
+            }
+        }
+    }
+}
+
+
+
+void OSPFv3Area::recheckInterAreaPrefixLSAs( std::vector<OSPFv3IPv4RoutingTableEntry* >& newTableIPv4)
+{
+    unsigned long i = 0;
+    unsigned long j = 0;
+    unsigned long lsaCount = interAreaPrefixLSAList.size();
+
+    for (i = 0; i < lsaCount; i++)
+    {
+        InterAreaPrefixLSA *currentLSA = interAreaPrefixLSAList[i];
+        const OSPFv3LSAHeader& currentHeader = currentLSA->getHeader();
+
+        unsigned long routeCost = currentLSA->getMetric();
+        unsigned short lsAge = currentHeader.getLsaAge();
+        Ipv4Address originatingRouter = currentHeader.getAdvertisingRouter();
+        bool selfOriginated = (originatingRouter == this->getInstance()->getProcess()->getRouterID());
+
+        if ((routeCost == LS_INFINITY) || (lsAge == MAX_AGE) || (selfOriginated)) {    // (1) and(2)
+            continue;
+        }
+
+        unsigned long routeCount = newTableIPv4.size();
+        char lsaType = currentHeader.getLsaType();
+        OSPFv3IPv4RoutingTableEntry *destinationEntry = nullptr;
+        Ipv4AddressRange destination;
+
+        destination.address = currentLSA->getPrefix().toIpv4(); //from LSA type 3
+        destination.mask = destination.address.makeNetmask(currentLSA->getPrefixLen());
+
+//        destination.address = currentHeader.getLinkStateID();
+//        destination.mask = currentLSA->getNetworkMask();
+
+        for (j = 0; j < routeCount; j++) {    // (3)
+            OSPFv3IPv4RoutingTableEntry *routingEntry = newTableIPv4[j];
+            bool foundMatching = false;
+
+            if (lsaType == INTER_AREA_PREFIX_LSA) {
+                if ((routingEntry->getDestinationType() == OSPFv3IPv4RoutingTableEntry::NETWORK_DESTINATION) &&
+                    (destination.address == routingEntry->getDestination()) &&
+                    (destination.mask == routingEntry->getDestination().makeNetmask(routingEntry->getPrefixLength())))
+                {
+                    foundMatching = true;
+                }
+            }
+            else {
+                if (
+                    (
+                            ((routingEntry->getDestinationType() & OSPFv3IPv4RoutingTableEntry::AREA_BORDER_ROUTER_DESTINATION) != 0) ||
+                            ((routingEntry->getDestinationType() & OSPFv3IPv4RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION) != 0)
+                    ) &&
+                    (destination.address == routingEntry->getDestination()) &&
+                    (destination.mask == routingEntry->getDestination().makeNetmask(routingEntry->getPrefixLength()))
+                    )
+                {
+                    foundMatching = true;
+                }
+            }
+
+            if (foundMatching) {
+                OSPFv3IPv4RoutingTableEntry::RoutingPathType pathType = routingEntry->getPathType();
+
+                if ((pathType == OSPFv3IPv4RoutingTableEntry::TYPE1_EXTERNAL) ||
+                    (pathType == OSPFv3IPv4RoutingTableEntry::TYPE2_EXTERNAL) ||
+                    (routingEntry->getArea() != BACKBONE_AREAID))
+                {
+                    break;
+                }
+                else {
+                    destinationEntry = routingEntry;
+                    break;
+                }
+            }
+        }
+        if (destinationEntry == nullptr) {
+            continue;
+        }
+
+        OSPFv3IPv4RoutingTableEntry *borderRouterEntry = nullptr;
+        unsigned short currentCost = routeCost;
+
+        RouterLSA *routerLSA =  findRouterLSA(originatingRouter);
+
+        //if founded RouterLSA has no valuable information.
+        if (routerLSA == nullptr) {
+           continue;
+        }
+        if (routerLSA->getRoutersArraySize() < 1) {
+           continue;
+        }
+        //from Router LSA routers search for Intra Area Prefix LSA
+       LSAKeyType lsaKey;
+       lsaKey.linkStateID = (Ipv4Address)routerLSA->getRouters(0).neighborInterfaceID; //TODO : what if it is another link for network
+       lsaKey.advertisingRouter = routerLSA->getRouters(0).neighborRouterID;
+       lsaKey.LSType = routerLSA->getRouters(0).type;
+
+       OSPFv3IntraAreaPrefixLSA *iapLSA = findIntraAreaPrefixLSAByReference(lsaKey);
+       if (iapLSA == nullptr)
+           continue;
+
+
+       EV_DEBUG << "recheck SUMMARY routeCount = " << routeCount << "\n";
+       for (j = 0; j < routeCount; j++) {    // (4) BR == borderRouterEntry
+           OSPFv3IPv4RoutingTableEntry *routingEntry = newTableIPv4[j];
+            for (int pfxs = 0; pfxs < iapLSA->getPrefixesArraySize(); pfxs++)
+            {
+
+
+                if ((routingEntry->getArea() == areaID) &&
+                    (((routingEntry->getDestinationType() & OSPFv3IPv4RoutingTableEntry::AREA_BORDER_ROUTER_DESTINATION) != 0) ||
+                     ((routingEntry->getDestinationType() & OSPFv3IPv4RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION) != 0)) &&
+                    (routingEntry->getDestination() == iapLSA->getPrefixes(pfxs).addressPrefix.toIpv4())) // zistujem ci destination je router, ktory tuto LSA 3 spravu vytvoril
+                {
+                    borderRouterEntry = routingEntry;;
+                    currentCost += borderRouterEntry->getCost();
+                    break;
+                }
+            }
+        }
+        if (borderRouterEntry == nullptr) {
+            continue;
+        }
+        else {    // (5)
+            if (currentCost <= destinationEntry->getCost()) {
+                if (currentCost < destinationEntry->getCost()) {
+                    destinationEntry->clearNextHops();
+                }
+
+                unsigned long nextHopCount = borderRouterEntry->getNextHopCount();
+
+                for (j = 0; j < nextHopCount; j++) {
+                    destinationEntry->addNextHop(borderRouterEntry->getNextHop(j));
+                }
+            }
+        }
+    }
+}
 
 
 void OSPFv3Area::debugDump()
