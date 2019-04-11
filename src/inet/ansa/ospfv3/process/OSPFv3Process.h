@@ -54,25 +54,28 @@ class INET_API OSPFv3Process : protected cListener, public cSimpleModule
     void addInstance(OSPFv3Instance* newInstance);
     void sendPacket(Packet *packet, Ipv6Address destination, const char* ifName, short hopLimit = 1);
     OSPFv3LSA* findLSA(LSAKeyType lsaKey, Ipv4Address areaID, int instanceID);
-    bool floodLSA(OSPFv3LSA* lsa, Ipv4Address areaID=Ipv4Address::UNSPECIFIED_ADDRESS, OSPFv3Interface* intf=nullptr, OSPFv3Neighbor* neighbor=nullptr);
-    bool installLSA(OSPFv3LSA *lsa, int instanceID, Ipv4Address areaID=Ipv4Address::UNSPECIFIED_ADDRESS, OSPFv3Interface* intf=nullptr);
+    bool floodLSA(const OSPFv3LSA* lsa, Ipv4Address areaID=Ipv4Address::UNSPECIFIED_ADDRESS, OSPFv3Interface* intf=nullptr, OSPFv3Neighbor* neighbor=nullptr);
+    bool installLSA(const OSPFv3LSA *lsaC, int instanceID, Ipv4Address areaID=Ipv4Address::UNSPECIFIED_ADDRESS, OSPFv3Interface* intf=nullptr);
     void rebuildRoutingTable();
     void calculateASExternalRoutes(std::vector<OSPFv3RoutingTableEntry* > newTableIPv6, std::vector<OSPFv3IPv4RoutingTableEntry* > newTableIPv4);
 
-//    void ageDatabase();
-//    cMessage* getAgeTimer(){return this->ageTimer;}
+    void ageDatabase();
+    cMessage* getAgeTimer(){return this->ageTimer;}
 
     /**
      * Returns true if one of the Router's Areas the same address range configured as the
      * input address , false otherwise.
      * @param addressRange [in] The IPv6 address  to look for.
      */
+    int isInRoutingTable(IIpv4RoutingTable *rtTable, Ipv4Address addr);
+    int isInRoutingTable6(Ipv6RoutingTable *rtTable, Ipv6Address addr);
+
     bool hasAddressRange(const Ipv6AddressRange& addressRange) const;
     bool hasAddressRange(const Ipv4AddressRange& addressRange) const;
 
   public:
     IInterfaceTable* ift = nullptr;
-    Ipv6RoutingTable *rt = nullptr;
+    Ipv6RoutingTable *rt6 = nullptr;
     IIpv4RoutingTable *rt4 = nullptr;
     cModule* containingModule=nullptr;
 

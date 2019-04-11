@@ -31,65 +31,65 @@ void OSPFv3NeighborState::changeState(OSPFv3Neighbor *neighbor, OSPFv3NeighborSt
 
     neighbor->changeState(newState, currentState);
 
-//    if ((oldState == OSPFv3Neighbor::FULL_STATE) || (nextState == OSPFv3Neighbor::FULL_STATE)) {
-//        Ipv4Address routerID = neighbor->getInterface()->getArea()->getInstance()->getProcess()->getRouterID();
-////        Ipv4Address routerID = neighbor->getContainingInterface()->getContainingArea()->getContainingInstance()->getContainingProcess()->getRouterID();
-//        RouterLSA *routerLSA = neighbor->getInterface()->getArea()->findRouterLSA(routerID);
-//
-//        if (routerLSA != nullptr) {
-//            long sequenceNumber = routerLSA->getHeader().getLsaSequenceNumber();
-//            if (sequenceNumber == MAX_SEQUENCE_NUMBER) {
-//                routerLSA->getHeaderForUpdate().setLsaAge(MAX_AGE);
-//                neighbor->getInterface()->getArea()->floodLSA(routerLSA);
-//                routerLSA->incrementInstallTime();
-//            }
-//            else {
-//                RouterLSA *newLSA = neighbor->getInterface()->getArea()->originateRouterLSA();
-//
-//                newLSA->getHeaderForUpdate().setLsaSequenceNumber(sequenceNumber + 1);
-////                shouldRebuildRoutingTable |= routerLSA->update(newLSA);
-//                shouldRebuildRoutingTable |= neighbor->getInterface()->getArea()->updateRouterLSA(routerLSA, newLSA);
-//                if (shouldRebuildRoutingTable)
-//                    neighbor->getInterface()->getArea()->setSpfTreeRoot(routerLSA);
-//                delete newLSA;
-//
-//                neighbor->getInterface()->getArea()->floodLSA(routerLSA);
-//            }
-//        }
-//
-//        // FIXME: Sposobuje, za v sieti 2 routerov v stave kedy prejdu do FULLstate a podmienka je true
-//        // ma DR NetworkLSAList.size() = 2 , napriek tomu, ze v DB ma NetworkLSA len jedno LG
-//        if (neighbor->getInterface()->getState() == OSPFv3Interface::INTERFACE_STATE_DESIGNATED) {
-//            NetworkLSA *networkLSA = neighbor->getInterface()->getArea()->findNetworkLSAByLSID(
-//                    Ipv4Address(neighbor->getInterface()->getInterfaceId()));
-//
-//            if (networkLSA != nullptr) {
-//                long sequenceNumber = networkLSA->getHeader().getLsaSequenceNumber();
-//                if (sequenceNumber == MAX_SEQUENCE_NUMBER) {
-//                    networkLSA->getHeaderForUpdate()().setLsaAge(MAX_AGE);
-//                    neighbor->getInterface()->getArea()->floodLSA(networkLSA);
-//                    networkLSA->incrementInstallTime();
-//                }
-//                else {
-//                    NetworkLSA *newLSA = neighbor->getInterface()->getArea()->originateNetworkLSA(neighbor->getInterface());
-//
-//                    if (newLSA != nullptr) {
-//                        newLSA->getHeader().setLsaSequenceNumber(sequenceNumber + 1);
-//                        shouldRebuildRoutingTable |= neighbor->getInterface()->getArea()->updateNetworkLSA(networkLSA, newLSA);
-//                        delete newLSA;
-//                    }
-//                    else {    // no neighbors on the network -> old NetworkLSA must be flushed
-//                        networkLSA->getHeaderForUpdate().setLsaAge(MAX_AGE);
-//                        networkLSA->incrementInstallTime();
-//                    }
-//                    std::cout << "neighbor router ID = " << neighbor->getInterface()->getArea()->getInstance()->getProcess()->getRouterID() << endl;
-//                    std::cout << "neighbor NetworkLSA getCount = " << neighbor->getInterface()->getArea()->getNetworkLSACount() << endl;
-//
-//                    neighbor->getInterface()->getArea()->floodLSA(networkLSA);
-//                }
-//            }
-//        }
-//    }
+    if ((oldState == OSPFv3Neighbor::FULL_STATE) || (nextState == OSPFv3Neighbor::FULL_STATE)) {
+        Ipv4Address routerID = neighbor->getInterface()->getArea()->getInstance()->getProcess()->getRouterID();
+//        Ipv4Address routerID = neighbor->getContainingInterface()->getContainingArea()->getContainingInstance()->getContainingProcess()->getRouterID();
+        RouterLSA *routerLSA = neighbor->getInterface()->getArea()->findRouterLSA(routerID);
+
+        if (routerLSA != nullptr) {
+            long sequenceNumber = routerLSA->getHeader().getLsaSequenceNumber();
+            if (sequenceNumber == MAX_SEQUENCE_NUMBER) {
+                routerLSA->getHeaderForUpdate().setLsaAge(MAX_AGE);
+                neighbor->getInterface()->getArea()->floodLSA(routerLSA);
+                routerLSA->incrementInstallTime();
+            }
+            else {
+                RouterLSA *newLSA = neighbor->getInterface()->getArea()->originateRouterLSA();
+
+                newLSA->getHeaderForUpdate().setLsaSequenceNumber(sequenceNumber + 1);
+//                shouldRebuildRoutingTable |= routerLSA->update(newLSA);
+                shouldRebuildRoutingTable |= neighbor->getInterface()->getArea()->updateRouterLSA(routerLSA, newLSA);
+                if (shouldRebuildRoutingTable)
+                    neighbor->getInterface()->getArea()->setSpfTreeRoot(routerLSA);
+                delete newLSA;
+
+                neighbor->getInterface()->getArea()->floodLSA(routerLSA);
+            }
+        }
+
+        // FIXME: Sposobuje, za v sieti 2 routerov v stave kedy prejdu do FULLstate a podmienka je true
+        // ma DR NetworkLSAList.size() = 2 , napriek tomu, ze v DB ma NetworkLSA len jedno LG
+        if (neighbor->getInterface()->getState() == OSPFv3Interface::INTERFACE_STATE_DESIGNATED) {
+            NetworkLSA *networkLSA = neighbor->getInterface()->getArea()->findNetworkLSAByLSID(
+                    Ipv4Address(neighbor->getInterface()->getInterfaceId()));
+
+            if (networkLSA != nullptr) {
+                long sequenceNumber = networkLSA->getHeader().getLsaSequenceNumber();
+                if (sequenceNumber == MAX_SEQUENCE_NUMBER) {
+                    networkLSA->getHeaderForUpdate().setLsaAge(MAX_AGE);
+                    neighbor->getInterface()->getArea()->floodLSA(networkLSA);
+                    networkLSA->incrementInstallTime();
+                }
+                else {
+                    NetworkLSA *newLSA = neighbor->getInterface()->getArea()->originateNetworkLSA(neighbor->getInterface());
+
+                    if (newLSA != nullptr) {
+                        newLSA->getHeaderForUpdate().setLsaSequenceNumber(sequenceNumber + 1);
+                        shouldRebuildRoutingTable |= neighbor->getInterface()->getArea()->updateNetworkLSA(networkLSA, newLSA);
+                        delete newLSA;
+                    }
+                    else {    // no neighbors on the network -> old NetworkLSA must be flushed
+                        networkLSA->getHeaderForUpdate().setLsaAge(MAX_AGE);
+                        networkLSA->incrementInstallTime();
+                    }
+                    std::cout << "neighbor router ID = " << neighbor->getInterface()->getArea()->getInstance()->getProcess()->getRouterID() << endl;
+                    std::cout << "neighbor NetworkLSA getCount = " << neighbor->getInterface()->getArea()->getNetworkLSACount() << endl;
+
+                    neighbor->getInterface()->getArea()->floodLSA(networkLSA);
+                }
+            }
+        }
+    }
 
     if (shouldRebuildRoutingTable) {
         neighbor->getInterface()->getArea()->getInstance()->getProcess()->rebuildRoutingTable();

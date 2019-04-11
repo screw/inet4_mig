@@ -68,7 +68,7 @@ class INET_API OSPFv3Area : public cObject
     int getRouterLSACount(){return this->routerLSAList.size();}
     RouterLSA* getRouterLSA(int i){return this->routerLSAList.at(i);}
     RouterLSA* getRouterLSAbyKey(LSAKeyType lsaKey);
-    bool installRouterLSA(OSPFv3RouterLSA *lsa);
+    bool installRouterLSA(const OSPFv3RouterLSA *lsaC);
     bool updateRouterLSA(RouterLSA* currentLsa, OSPFv3RouterLSA* newLsa);
     bool routerLSADiffersFrom(OSPFv3RouterLSA* currentLsa, OSPFv3RouterLSA* newLsa);
     Ipv4Address getNewRouterLinkStateID();
@@ -79,66 +79,66 @@ class INET_API OSPFv3Area : public cObject
     RouterLSA* findRouterLSA(Ipv4Address routerID);
     void deleteRouterLSA(int index);
     void addRouterLSA(RouterLSA* newLSA){this->routerLSAList.push_back(newLSA);}
-//
-//    /*NETWORK LSA */
-//    void addNetworkLSA(NetworkLSA* newLSA){this->networkLSAList.push_back(newLSA);}
-//    NetworkLSA* originateNetworkLSA(OSPFv3Interface* interface);//this originates one router LSA for one area
-//    int getNetworkLSACount(){return this->networkLSAList.size();}
-//    NetworkLSA* getNetworkLSA(int i){return this->networkLSAList.at(i);}
-//    bool installNetworkLSA(OSPFv3NetworkLSA *lsa);
-//    bool updateNetworkLSA(NetworkLSA* currentLsa, OSPFv3NetworkLSA* newLsa);
-//    bool networkLSADiffersFrom(OSPFv3NetworkLSA* currentLsa, OSPFv3NetworkLSA* newLsa);
-//    Ipv4Address getNewNetworkLinkStateID();
-//    Ipv4Address getNetworkLinkStateID(){return this->networkLsID;}
-//    uint32_t getCurrentNetworkSequence(){return this->networkLSASequenceNumber;}
-//    void incrementNetworkSequence(){this->networkLSASequenceNumber++;}
-//    NetworkLSA* findNetworkLSAByLSID(Ipv4Address linkStateID);
-//    NetworkLSA* getNetworkLSAbyKey(LSAKeyType LSAKey);
-//    NetworkLSA* findNetworkLSA(uint32_t intID, Ipv4Address routerID);
-//
-//    /* INTER AREA PREFIX LSA */
-//    void addInterAreaPrefixLSA(InterAreaPrefixLSA* newLSA){this->interAreaPrefixLSAList.push_back(newLSA);};
-//    int getInterAreaPrefixLSACount(){return this->interAreaPrefixLSAList.size();}
-//    InterAreaPrefixLSA* getInterAreaPrefixLSA(int i){return this->interAreaPrefixLSAList.at(i);}
-//    void originateDefaultInterAreaPrefixLSA(OSPFv3Area* toArea);
-//    void originateInterAreaPrefixLSA(OSPFv3IntraAreaPrefixLSA* lsa, OSPFv3Area* fromArea);
-//    void originateInterAreaPrefixLSA(OSPFv3LSA* prefLsa, OSPFv3Area* fromArea);
-//    bool installInterAreaPrefixLSA(OSPFv3InterAreaPrefixLSA* lsa);
-//    bool updateInterAreaPrefixLSA(InterAreaPrefixLSA* currentLsa, OSPFv3InterAreaPrefixLSA* newLsa);      // TODO: resetInstallTime
-//    bool interAreaPrefixLSADiffersFrom(OSPFv3InterAreaPrefixLSA* currentLsa, OSPFv3InterAreaPrefixLSA* newLsa);
-//    Ipv4Address getNewInterAreaPrefixLinkStateID();
-//    uint32_t getCurrentInterAreaPrefixSequence(){return this->interAreaPrefixLSASequenceNumber;}
-//    void incrementInterAreaPrefixSequence(){this->interAreaPrefixLSASequenceNumber++;}
-//    InterAreaPrefixLSA* InterAreaPrefixLSAAlreadyExists(OSPFv3InterAreaPrefixLSA *newLsa);
-//
-//
-//    //* INTRA AREA PREFIX LSA */
-//    void addIntraAreaPrefixLSA(IntraAreaPrefixLSA* newLSA){this->intraAreaPrefixLSAList.push_back(newLSA);}
-//    IntraAreaPrefixLSA* originateIntraAreaPrefixLSA();//this is for non-BROADCAST links
-//    int getIntraAreaPrefixLSACount(){return this->intraAreaPrefixLSAList.size();}
-//    IntraAreaPrefixLSA* getIntraAreaPrefixLSA(int i){return this->intraAreaPrefixLSAList.at(i);}
-//    IntraAreaPrefixLSA* getNetIntraAreaPrefixLSA(L3Address prefix, int prefLen);
-//    bool installIntraAreaPrefixLSA(OSPFv3IntraAreaPrefixLSA *lsa);
-//    bool updateIntraAreaPrefixLSA(IntraAreaPrefixLSA* currentLsa, OSPFv3IntraAreaPrefixLSA* newLsa);
-//    bool intraAreaPrefixLSADiffersFrom(OSPFv3IntraAreaPrefixLSA* currentLsa, OSPFv3IntraAreaPrefixLSA* newLsa);
-//    Ipv4Address getNewIntraAreaPrefixLinkStateID();
-//    void subtractIntraAreaPrefixLinkStateID();
-//    Ipv4Address getIntraAreaPrefixLinkStateID(){return this->intraAreaPrefixLsID;}
-//    uint32_t getCurrentIntraAreaPrefixSequence(){return this->intraAreaPrefixLSASequenceNumber;}
-//    void incrementIntraAreaPrefixSequence(){this->intraAreaPrefixLSASequenceNumber++;}
-//
-//    IntraAreaPrefixLSA* originateNetIntraAreaPrefixLSA(NetworkLSA* networkLSA, OSPFv3Interface* interface);//this originates one router LSA for one area
-//    Ipv4Address getNewNetIntraAreaPrefixLinkStateID();
-//    Ipv4Address getNetIntraAreaPrefixLinkStateID(){return this->netIntraAreaPrefixLsID;}
-//    uint32_t getCurrentNetIntraAreaPrefixSequence(){return this->netIntraAreaPrefixLSASequenceNumber;}
-//    void incrementNetIntraAreaPrefixSequence(){this->netIntraAreaPrefixLSASequenceNumber++;}
-//    IntraAreaPrefixLSA*  findIntraAreaPrefixByAdvRouter(Ipv4Address advRouter);
-//    IntraAreaPrefixLSA* findIntraAreaPrefixLSAByReference(LSAKeyType lsaKey);
-//    IntraAreaPrefixLSA* IntraAreaPrefixLSAAlreadyExists(OSPFv3IntraAreaPrefixLSA *newLsa);
+
+    /*NETWORK LSA */
+    void addNetworkLSA(NetworkLSA* newLSA){this->networkLSAList.push_back(newLSA);}
+    NetworkLSA* originateNetworkLSA(OSPFv3Interface* interface);//this originates one router LSA for one area
+    int getNetworkLSACount(){return this->networkLSAList.size();}
+    NetworkLSA* getNetworkLSA(int i){return this->networkLSAList.at(i);}
+    bool installNetworkLSA(const OSPFv3NetworkLSA *lsaC);
+    bool updateNetworkLSA(NetworkLSA* currentLsa, OSPFv3NetworkLSA* newLsa);
+    bool networkLSADiffersFrom(OSPFv3NetworkLSA* currentLsa, OSPFv3NetworkLSA* newLsa);
+    Ipv4Address getNewNetworkLinkStateID();
+    Ipv4Address getNetworkLinkStateID(){return this->networkLsID;}
+    uint32_t getCurrentNetworkSequence(){return this->networkLSASequenceNumber;}
+    void incrementNetworkSequence(){this->networkLSASequenceNumber++;}
+    NetworkLSA* findNetworkLSAByLSID(Ipv4Address linkStateID);
+    NetworkLSA* getNetworkLSAbyKey(LSAKeyType LSAKey);
+    NetworkLSA* findNetworkLSA(uint32_t intID, Ipv4Address routerID);
+
+    /* INTER AREA PREFIX LSA */
+    void addInterAreaPrefixLSA(InterAreaPrefixLSA* newLSA){this->interAreaPrefixLSAList.push_back(newLSA);};
+    int getInterAreaPrefixLSACount(){return this->interAreaPrefixLSAList.size();}
+    InterAreaPrefixLSA* getInterAreaPrefixLSA(int i){return this->interAreaPrefixLSAList.at(i);}
+    void originateDefaultInterAreaPrefixLSA(OSPFv3Area* toArea);
+    void originateInterAreaPrefixLSA(OSPFv3IntraAreaPrefixLSA* lsa, OSPFv3Area* fromArea);
+    void originateInterAreaPrefixLSA(OSPFv3LSA* prefLsa, OSPFv3Area* fromArea);
+    bool installInterAreaPrefixLSA(const OSPFv3InterAreaPrefixLSA* lsaC);
+    bool updateInterAreaPrefixLSA(InterAreaPrefixLSA* currentLsa, OSPFv3InterAreaPrefixLSA* newLsa);      // TODO: resetInstallTime
+    bool interAreaPrefixLSADiffersFrom(OSPFv3InterAreaPrefixLSA* currentLsa, OSPFv3InterAreaPrefixLSA* newLsa);
+    Ipv4Address getNewInterAreaPrefixLinkStateID();
+    uint32_t getCurrentInterAreaPrefixSequence(){return this->interAreaPrefixLSASequenceNumber;}
+    void incrementInterAreaPrefixSequence(){this->interAreaPrefixLSASequenceNumber++;}
+    InterAreaPrefixLSA* InterAreaPrefixLSAAlreadyExists(OSPFv3InterAreaPrefixLSA *newLsa);
+
+
+    //* INTRA AREA PREFIX LSA */
+    void addIntraAreaPrefixLSA(IntraAreaPrefixLSA* newLSA){this->intraAreaPrefixLSAList.push_back(newLSA);}
+    IntraAreaPrefixLSA* originateIntraAreaPrefixLSA();//this is for non-BROADCAST links
+    int getIntraAreaPrefixLSACount(){return this->intraAreaPrefixLSAList.size();}
+    IntraAreaPrefixLSA* getIntraAreaPrefixLSA(int i){return this->intraAreaPrefixLSAList.at(i);}
+    IntraAreaPrefixLSA* getNetIntraAreaPrefixLSA(L3Address prefix, int prefLen);
+    bool installIntraAreaPrefixLSA(const OSPFv3IntraAreaPrefixLSA *lsaC);
+    bool updateIntraAreaPrefixLSA(IntraAreaPrefixLSA* currentLsa, OSPFv3IntraAreaPrefixLSA* newLsa);
+    bool intraAreaPrefixLSADiffersFrom(OSPFv3IntraAreaPrefixLSA* currentLsa, OSPFv3IntraAreaPrefixLSA* newLsa);
+    Ipv4Address getNewIntraAreaPrefixLinkStateID();
+    void subtractIntraAreaPrefixLinkStateID();
+    Ipv4Address getIntraAreaPrefixLinkStateID(){return this->intraAreaPrefixLsID;}
+    uint32_t getCurrentIntraAreaPrefixSequence(){return this->intraAreaPrefixLSASequenceNumber;}
+    void incrementIntraAreaPrefixSequence(){this->intraAreaPrefixLSASequenceNumber++;}
+
+    IntraAreaPrefixLSA* originateNetIntraAreaPrefixLSA(NetworkLSA* networkLSA, OSPFv3Interface* interface);//this originates one router LSA for one area
+    Ipv4Address getNewNetIntraAreaPrefixLinkStateID();
+    Ipv4Address getNetIntraAreaPrefixLinkStateID(){return this->netIntraAreaPrefixLsID;}
+    uint32_t getCurrentNetIntraAreaPrefixSequence(){return this->netIntraAreaPrefixLSASequenceNumber;}
+    void incrementNetIntraAreaPrefixSequence(){this->netIntraAreaPrefixLSASequenceNumber++;}
+    IntraAreaPrefixLSA*  findIntraAreaPrefixByAdvRouter(Ipv4Address advRouter);
+    IntraAreaPrefixLSA* findIntraAreaPrefixLSAByReference(LSAKeyType lsaKey);
+    IntraAreaPrefixLSA* IntraAreaPrefixLSAAlreadyExists(OSPFv3IntraAreaPrefixLSA *newLsa);
 
     const OSPFv3LSAHeader* findLSA(LSAKeyType lsaKey);
-    bool floodLSA(OSPFv3LSA* lsa, OSPFv3Interface* interface=nullptr, OSPFv3Neighbor* neighbor=nullptr);
-//
+    bool floodLSA(const OSPFv3LSA* lsa, OSPFv3Interface* interface=nullptr, OSPFv3Neighbor* neighbor=nullptr);
+
     void removeFromAllRetransmissionLists(LSAKeyType lsaKey);
     bool isOnAnyRetransmissionList(LSAKeyType lsaKey) const;
     bool hasAnyNeighborInStates(int states) const;

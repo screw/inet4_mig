@@ -186,7 +186,7 @@ class INET_API OSPFv3SPFVertex
 
 };
 
-unsigned int calculateLSASize(OSPFv3LSA *routerLSA);
+unsigned int calculateLSASize(const OSPFv3LSA *lsaC);
 std::ostream& operator<<(std::ostream& ostr, const OSPFv3LSAHeader& lsa);
 inline std::ostream& operator<<(std::ostream& ostr, const OSPFv3LSA& lsa) { ostr << lsa.getHeader(); return ostr; }
 std::ostream& operator<<(std::ostream& ostr, const OSPFv3NetworkLSA& lsa);

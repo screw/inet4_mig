@@ -183,7 +183,7 @@ void OSPFv3Neighbor::clearRequestRetransmissionTimer()
     this->requestRetransmissionTimerActive = false;
 }
 
-//void OSPFv3Neighbor::setLastReceivedDDPacket(OSPFv3DatabaseDescription* ddPacket){
+//void OSPFv3Neighbor::setLastReceivedDDPacket(OSPFv3DatabaseDescription* ddPacket){    LG TOTO MI NAHRADIL OBYCAJNY SETTER V h SUBORE
 //    OSPFv3DDOptions& ddOptions = ddPacket->getDdOptions();
 //    OSPFv3DDPacketID packetID;
 //    packetID.ddOptions = ddOptions;
@@ -333,40 +333,40 @@ void OSPFv3Neighbor::createDatabaseSummary()
         this->databaseSummaryList.push_back(lsaHeader);
     }
 
-//    int networkLSACount = area->getNetworkLSACount();         MIGRACIA LG
-//    for(int i=0; i<networkLSACount; i++) {
-//        OSPFv3LSAHeader* lsaHeader = new OSPFv3LSAHeader(area->getNetworkLSA(i)->getHeader());
-//        this->databaseSummaryList.push_back(lsaHeader);
-//    }
-//
-//    int interAreaPrefixCount = area->getInterAreaPrefixLSACount();
-//    for(int i=0; i<interAreaPrefixCount; i++) {
-//        OSPFv3LSAHeader* lsaHeader = new OSPFv3LSAHeader(area->getInterAreaPrefixLSA(i)->getHeader());
-//        this->databaseSummaryList.push_back(lsaHeader);
-//    }
-//
-//    int linkLsaCount = this->getInterface()->getLinkLSACount();
-//    for(int i=0; i<linkLsaCount; i++) {
-//        OSPFv3LSAHeader* lsaHeader = new OSPFv3LSAHeader(this->getInterface()->getLinkLSA(i)->getHeader());
-//        this->databaseSummaryList.push_back(lsaHeader);
-//    }
-//
-//    int intraAreaPrefixCnt = area->getIntraAreaPrefixLSACount();
-//    for(int i=0; i<intraAreaPrefixCnt; i++) {
-//        OSPFv3LSAHeader* lsaHeader = new OSPFv3LSAHeader(area->getIntraAreaPrefixLSA(i)->getHeader());
-//        this->databaseSummaryList.push_back(lsaHeader);
-//    }
-//
-//
-//    EV_DEBUG << this->getNeighborID() << " -  Database Summary List \n";
-//    EV_DEBUG << "advR\t\tLSID\t\tLSA Type\n";
-//    for (auto it = databaseSummaryList.begin(); it != databaseSummaryList.end(); it++)
-//    {
-//
-//        OSPFv3LSAHeader* hd =  (*it);
-//        EV_DEBUG << hd->getAdvertisingRouter() << "\t" << hd->getLinkStateID() << "\t" << hd->getLsaType() << "\n";
-//    }
-//    EV_DEBUG << "------------------ LG\n";
+    int networkLSACount = area->getNetworkLSACount();
+    for(int i=0; i<networkLSACount; i++) {
+        OSPFv3LSAHeader* lsaHeader = new OSPFv3LSAHeader(area->getNetworkLSA(i)->getHeader());
+        this->databaseSummaryList.push_back(lsaHeader);
+    }
+
+    int interAreaPrefixCount = area->getInterAreaPrefixLSACount();
+    for(int i=0; i<interAreaPrefixCount; i++) {
+        OSPFv3LSAHeader* lsaHeader = new OSPFv3LSAHeader(area->getInterAreaPrefixLSA(i)->getHeader());
+        this->databaseSummaryList.push_back(lsaHeader);
+    }
+
+    int linkLsaCount = this->getInterface()->getLinkLSACount();
+    for(int i=0; i<linkLsaCount; i++) {
+        OSPFv3LSAHeader* lsaHeader = new OSPFv3LSAHeader(this->getInterface()->getLinkLSA(i)->getHeader());
+        this->databaseSummaryList.push_back(lsaHeader);
+    }
+
+    int intraAreaPrefixCnt = area->getIntraAreaPrefixLSACount();
+    for(int i=0; i<intraAreaPrefixCnt; i++) {
+        OSPFv3LSAHeader* lsaHeader = new OSPFv3LSAHeader(area->getIntraAreaPrefixLSA(i)->getHeader());
+        this->databaseSummaryList.push_back(lsaHeader);
+    }
+
+
+    EV_DEBUG << this->getNeighborID() << " -  Database Summary List \n";
+    EV_DEBUG << "advR\t\tLSID\t\tLSA Type\n";
+    for (auto it = databaseSummaryList.begin(); it != databaseSummaryList.end(); it++)
+    {
+
+        OSPFv3LSAHeader* hd =  (*it);
+        EV_DEBUG << hd->getAdvertisingRouter() << "\t" << hd->getLinkStateID() << "\t" << hd->getLsaType() << "\n";
+    }
+    EV_DEBUG << "------------------ LG\n";
 }
 
 void OSPFv3Neighbor::retransmitUpdatePacket() //vyprsi timer Acku a zasle znovu
@@ -550,8 +550,9 @@ void OSPFv3Neighbor::retransmitUpdatePacket() //vyprsi timer Acku a zasle znovu
 //    messageHandler->sendPacket(updatePacket, neighborIPAddress, parentInterface->getIfIndex(), ttl);
 }
 
-void OSPFv3Neighbor::addToRetransmissionList(OSPFv3LSA *lsa)
+void OSPFv3Neighbor::addToRetransmissionList(const OSPFv3LSA *lsaC)
 {
+    auto lsa = lsaC->dup(); // make editable copy of lsa
     auto it = linkStateRetransmissionList.begin();
     for ( ; it != linkStateRetransmissionList.end(); it++) {
         if (((*it)->getHeader().getLinkStateID() == lsa->getHeader().getLinkStateID()) &&

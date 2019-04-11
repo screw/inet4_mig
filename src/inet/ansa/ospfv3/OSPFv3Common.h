@@ -360,6 +360,26 @@ inline bool operator==(OSPFv3LSAHeader& leftLSA, OSPFv3LSAHeader& rightLSA)
         return false;
     }
 }
+
+
+inline bool operator==(const OSPFv3LSAHeader& leftLSA, const OSPFv3LSAHeader& rightLSA)
+{
+    long leftSequenceNumber = leftLSA.getLsaSequenceNumber();
+    long rightSequenceNumber = rightLSA.getLsaSequenceNumber();
+    unsigned short leftAge = leftLSA.getLsaAge();
+    unsigned short rightAge = rightLSA.getLsaAge();
+
+    if ((leftSequenceNumber == rightSequenceNumber) &&
+        (((leftAge == MAX_AGE) && (rightAge == MAX_AGE)) ||
+         (((leftAge != MAX_AGE) && (rightAge != MAX_AGE)) &&
+          (abs(leftAge - rightAge) <= MAX_AGE_DIFF))))
+    {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
 //Packets
 
 }//namespace inet

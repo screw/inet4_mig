@@ -52,7 +52,6 @@ void OSPFv3Instance::processPacket(Packet* pk)
         delete pk;
         return;
     }
-//    int intfId = ctlInfo->getInterfaceId();           MIGRACIA LG
 
     int intfId = pk->getTag<InterfaceInd>()->getInterfaceId();
     Ipv4Address areaId = packet->getAreaID();
@@ -125,23 +124,23 @@ void OSPFv3Instance::processPacket(Packet* pk)
                     }
                     break;
 
-//                case OSPFv3PacketType::LSR:
-//                    if (neighbor != nullptr) {
-//                        intf->processLSR(packet, neighbor);
-//                    }
-//                    break;
-//
-//                case OSPFv3PacketType::LSU:
-//                    if (neighbor != nullptr) {
-//                        intf->processLSU(packet, neighbor);
-//                    }
-//                    break;
-//
-//                case OSPFv3PacketType::LS_ACK:
-//                    if (neighbor != nullptr) {
-//                        intf->processLSAck(packet, neighbor);
-//                    }
-//                    break;
+                case OSPFv3PacketType::LSR:
+                    if (neighbor != nullptr) {
+                        intf->processLSR(pk, neighbor);
+                    }
+                    break;
+
+                case OSPFv3PacketType::LSU:
+                    if (neighbor != nullptr) {
+                        intf->processLSU(pk, neighbor);
+                    }
+                    break;
+
+                case OSPFv3PacketType::LS_ACK:
+                    if (neighbor != nullptr) {
+                        intf->processLSAck(pk, neighbor);
+                    }
+                    break;
 
                 default:
                     break;

@@ -23,7 +23,7 @@ void OSPFv3Process::initialize(int stage){
 //        rt = check_and_cast<Ipv6RoutingTable* >(containingModule->getSubmodule("routingTable")->getSubmodule("ipv6"));
 //        rt4 = check_and_cast<Ipv4RoutingTable* >(containingModule->getSubmodule("routingTable")->getSubmodule("ipv4"));
         ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
-        rt = getModuleFromPar<Ipv6RoutingTable>(par("routingTableModule6"), this);
+        rt6 = getModuleFromPar<Ipv6RoutingTable>(par("routingTableModule6"), this);
         rt4 = getModuleFromPar<IIpv4RoutingTable>(par("routingTableModule"), this);
 
 
@@ -53,7 +53,7 @@ void OSPFv3Process::initialize(int stage){
       route->setMetric(0);
       route->setAdminDist(Ipv6Route::dDirectlyConnected);
 
-      rt->addRoutingProtocolRoute(route);*/
+      rt6->addRoutingProtocolRoute(route);*/
 
         this->routerID = Ipv4Address(par("routerID").stringValue());
         this->processID = (int)par("processID");
@@ -128,7 +128,29 @@ void OSPFv3Process::handleMessage(cMessage* msg)
 //        }
 //    }
 }//handleMessage
-//
+
+/*return index of the Ipv4 table if the route is found, -1 else*/
+int OSPFv3Process::isInRoutingTable(IIpv4RoutingTable *rtTable, Ipv4Address addr)
+{
+    for (int i = 0; i < rtTable->getNumRoutes(); i++) {
+        const Ipv4Route *entry = rtTable->getRoute(i);
+        if (Ipv4Address::maskedAddrAreEqual(addr, entry->getDestination(), entry->getNetmask())) {
+            return i;
+        }
+    }
+    return -1;
+}
+int OSPFv3Process::isInRoutingTable6(Ipv6RoutingTable *rtTable, Ipv6Address addr)
+{
+    for (int i = 0; i < rtTable->getNumRoutes(); i++) {
+        const Ipv6Route *entry = rtTable->getRoute(i);
+        if (addr ==  entry->getDestPrefix()) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
 {
     EV_DEBUG << "Parsing config on process " << this->processID << endl;
@@ -144,6 +166,100 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
         std::cout <<  myInterface->info();
         std::cout << "\n&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n";
 
+
+
+        //settin ipv4 and ipv6 addresses
+//        myInterface = (_inft->getInterfaceByName((interface)->getAttribute("id")));
+        if (myInterface->isLoopback()) {
+            const char * ipv41 = "127.0.0.0";
+            Ipv4Address tmpipv4;
+            tmpipv4.set(ipv41);
+            int i = isInRoutingTable(rt4, tmpipv4);
+            if (i != -1){
+                rt4->deleteRoute(rt4->getRoute(i));
+            }
+        }
+
+        //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+        //interface ipv6 configuration
+        cXMLElementList ipAddrList = (*interfaceIt)->getElementsByTagName("Ipv6Address");
+        for (auto & ipv6Rec : ipAddrList)
+        {
+            const char * addr6c = ipv6Rec->getNodeValue();
+
+            std::string add6 = addr6c;
+            std::string prefix6 = add6.substr(0, add6.find("/"));
+            Ipv6InterfaceData * intfData6 = myInterface->ipv6Data();
+            int prefLength;
+            Ipv6Address address6;
+            if (!(address6.tryParseAddrWithPrefix(addr6c, prefLength)))
+                 throw cRuntimeError("Cannot parse Ipv6 address: '%s", addr6c);
+
+            address6 = Ipv6Address(prefix6.c_str());
+
+            Ipv6InterfaceData::AdvPrefix p;
+            p.prefix = address6;
+            p.prefixLength = prefLength;
+
+            intfData6->assignAddress(address6, false, SIMTIME_ZERO, SIMTIME_ZERO);
+
+            // add this routes to routing table
+            Ipv6Route *route = new Ipv6Route(p.prefix.getPrefix(prefLength), p.prefixLength, IRoute::IFACENETMASK);
+            route->setInterface(myInterface);
+            route->setExpiryTime(SIMTIME_ZERO);
+            route->setMetric(0);
+            route->setAdminDist(Ipv6Route::dDirectlyConnected);
+
+            rt6->addRoutingProtocolRoute(route);
+        }
+
+
+
+         //interface ipv4 configuration
+         Ipv4Address addr;// = (Ipv4Address((*interfaceIt)->getElementsByTagName("IPAddress")));
+         Ipv4Address mask;// = (Ipv4Address((*interfaceIt)->getElementsByTagName("Mask")));
+         Ipv4InterfaceData * intfData = myInterface->ipv4Data(); //new Ipv4InterfaceData();
+
+
+         cXMLElementList ipv4AddrList = (*interfaceIt)->getElementsByTagName("IPAddress");
+         if (ipv4AddrList.size() == 1)
+         {
+
+             for (auto & ipv4Rec : ipv4AddrList)
+             {
+                 const char * addr4c = ipv4Rec->getNodeValue(); //from string make ipv4 address and store to interface config
+                 addr = (Ipv4Address(addr4c));
+                 intfData->setIPAddress(addr);
+
+             }
+
+             cXMLElementList ipv4MaskList = (*interfaceIt)->getElementsByTagName("Mask");
+             if (ipv4MaskList.size() != 1)
+                 throw cRuntimeError("Interface %s has more or less than one mask", interfaceName);
+
+             for (auto & ipv4Rec : ipv4MaskList)
+             {
+                const char * mask4c = ipv4Rec->getNodeValue();
+                mask =  (Ipv4Address(mask4c));
+                intfData->setNetmask(mask);
+
+                //add directly connected ip address to routing table
+               Ipv4Address networkAdd = (Ipv4Address((intfData->getIPAddress()).getInt() & (intfData->getNetmask()).getInt()));
+               Ipv4Route *entry = new Ipv4Route;
+
+               entry->setDestination(networkAdd);
+               entry->setNetmask(intfData->getNetmask());
+               entry->setInterface(myInterface);
+               entry->setMetric(21);
+               entry->setSourceType(IRoute::IFACENETMASK);
+
+               rt4->addRoute(entry);
+             }
+
+         }
+         else if (ipv4AddrList.size() > 1)
+             throw cRuntimeError("Interface %s has more than one IPv4 address ", interfaceName);
+        //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
 
         const char* routerPriority = nullptr;
@@ -312,7 +428,8 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
                     else
                         area = instance->getAreaById(areaIP);
 
-                    if(!area->hasInterface(std::string(interfaceName))) {
+                    if(!area->hasInterface(std::string(interfaceName)))
+                    {
                         OSPFv3Interface* newInterface = new OSPFv3Interface(interfaceName, this->containingModule, this, interfaceTypeNum, passiveInterface);
                         if(helloInterval!=nullptr)
                             newInterface->setHelloInterval(atoi(helloInterval));
@@ -333,89 +450,55 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
 
                         newInterface->setArea(area);
 
-                        // parse IPv6 adresses and add them into area's addressRanges and into interface IP addresses
-                       cXMLElementList ipAddrList = (*interfaceIt)->getElementsByTagName("Ipv6Address");
-                        for (auto & ipv6Rec : ipAddrList) {
-                               const char * addr6c = ipv6Rec->getNodeValue();
+                        cXMLElementList ipAddrList = (*interfaceIt)->getElementsByTagName("Ipv6Address");
+                        for (auto & ipv6Rec : ipAddrList)
+                        {
+                            const char * addr6c = ipv6Rec->getNodeValue();
+                            std::string add6 = addr6c;
+                            std::string prefix6 = add6.substr(0, add6.find("/"));
+                            Ipv6InterfaceData * intfData6 = myInterface->ipv6Data();
+                            int prefLength;
+                            Ipv6Address address6;
+                            if (!(address6.tryParseAddrWithPrefix(addr6c, prefLength)))
+                                 throw cRuntimeError("Cannot parse Ipv6 address: '%s", addr6c);
 
-                               std::string add6 = addr6c;
-                               std::string prefix6 = add6.substr(0, add6.find("/"));
+                            address6 = Ipv6Address(prefix6.c_str());
 
-                               //IPv6InterfaceData * intfData6 = myInterface->ipv6Data(); LG
-
-                               int prefLength;
-                               Ipv6Address address6;
-                               if (!(address6.tryParseAddrWithPrefix(addr6c, prefLength)))
-                                    throw cRuntimeError("Cannot parse Ipv6 address: '%s", addr6c);
-                   //                std::cout << "parsed prefix = " << prefLength << std::endl;
-
-                               address6 = Ipv6Address(prefix6.c_str());
-
-                               Ipv6InterfaceData::AdvPrefix p;
-                               p.prefix = address6;
-                               p.prefixLength = prefLength;
-//                               intfData6->addAdvPrefix(p);
-
-                               Ipv6AddressRange ipv6addRange;
-                               ipv6addRange.prefix = address6; //add only network prefix
-                               ipv6addRange.prefixLength = prefLength;
-                               area->addAddressRange(ipv6addRange, true); //TODO:  add tag Advertise and exclude link-local (?)
+                            Ipv6AddressRange ipv6addRange; //add directly networks into addressRange for given area
+                            ipv6addRange.prefix = address6; //add only network prefix
+                            ipv6addRange.prefixLength = prefLength;
+                            area->addAddressRange(ipv6addRange, true); //TODO:  add tag Advertise and exclude link-local (?)
                         }
-
-                        // create addressRange for IPv4
                         cXMLElementList ipv4AddrList = (*interfaceIt)->getElementsByTagName("IPAddress");
                         if (ipv4AddrList.size() == 1)
                         {
-                            Ipv4AddressRange ipv4addRange;
+                            Ipv4AddressRange ipv4addRange; // also create addressRange for IPv4
                             for (auto & ipv4Rec : ipv4AddrList)
                             {
-                                const char * addr4c = ipv4Rec->getNodeValue();
+                                const char * addr4c = ipv4Rec->getNodeValue(); //from string make ipv4 address and store to interface config
                                 ipv4addRange.address = Ipv4Address(addr4c);
                             }
+
                             cXMLElementList ipv4MaskList = (*interfaceIt)->getElementsByTagName("Mask");
                             if (ipv4MaskList.size() != 1)
-                                throw cRuntimeError("Interface %s has more or less than one mask address ", interfaceName);
+                                throw cRuntimeError("Interface %s has more or less than one mask", interfaceName);
 
                             for (auto & ipv4Rec : ipv4MaskList)
                             {
-                               const char * mask4c = ipv4Rec->getNodeValue();
-                               ipv4addRange.mask = Ipv4Address(mask4c);
+                                const char * mask4c = ipv4Rec->getNodeValue();
+                                ipv4addRange.mask = Ipv4Address(mask4c);
                             }
                             area->addAddressRange(ipv4addRange, true); //TODO:  add tag Advertise and exclude link-local (?)
-
                         }
-                        else if (ipv4AddrList.size() > 1)
-                            throw cRuntimeError("Interface %s has more than one IPv4 address ", interfaceName);
+
+
 
                         std::cout << "som za FOROM"  << endl;
                         std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
 
                         std::cout << "VYPIS IFT ZA FOROM\n";
                         std::cout <<  myInterface->info();
-                        std::cout << "\n&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n";
-
-//                        Ipv6Address *addr = new Ipv6Address();
-//                        int prefixlen;
-//                        for(auto ipIt=ipAddrList.begin(); ipIt!=ipAddrList.end(); ipIt++)
-//                        {
-//                            const char* value = (*ipIt)->getNodeValue();
-//                            std::cout << "IPcka = " << value << endl;
-//                            addr->tryParseAddrWithPrefix(value,prefixlen);
-//                            std::cout << "PO PREVOLANI : " << addr->str()  <<  "  "  << prefixlen << endl;
-//
-//                            // add to area's addressRange
-//                            Ipv6AddressRange addressRange;
-//                            addressRange.prefix = addr->getPrefix(prefixlen); //add only network prefix
-//                            addressRange.prefixLength = prefixlen;
-//                            area->addAddressRange(addressRange, true); //TODO:  add tag Advertise and exclude link-local (?)
-//
-//                            // add to interface's IPv6 addresses
-//                            Ipv6AddressRange intAddress;
-//                            intAddress.prefix = *addr;
-//                            intAddress.prefixLength = prefixlen;
-//                            newInterface->addInterfaceAddress(intAddress);
-//
-//                        }
+                        std::cout << "\n&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n"; // LG
 
 
                         std::cout << "I am " << this->getOwner()->getOwner()->getName() << " on int " << newInterface->getInterfaceLLIP() << " with area " << area->getAreaID() << endl;
@@ -426,29 +509,27 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
         }
     }
 }//parseConfig
-//
-//
-//void OSPFv3Process::ageDatabase()
-//{
-//    bool shouldRebuildRoutingTable = false;
-//
-//    long instanceCount = instances.size();
-//    for (long i = 0; i < instanceCount; i++)
-//    {
-//        long areaCount = instances[i]->getAreaCount();
-//
-//        for (long j = 0; j < areaCount; j++)
-//        {
-//            instances[i]->getArea(j)->ageDatabase();
-//        }
-//
-////        messageHandler->startTimer(ageTimer, 1.0);
-//
-//        if (shouldRebuildRoutingTable) {
-//            rebuildRoutingTable();
-//        }
-//    }
-//} // ageDatabase
+
+
+void OSPFv3Process::ageDatabase()
+{
+    bool shouldRebuildRoutingTable = false;
+
+    long instanceCount = instances.size();
+    for (long i = 0; i < instanceCount; i++)
+    {
+        long areaCount = instances[i]->getAreaCount();
+
+        for (long j = 0; j < areaCount; j++)
+        {
+            instances[i]->getArea(j)->ageDatabase();
+        }
+
+        if (shouldRebuildRoutingTable) {
+            rebuildRoutingTable();
+        }
+    }
+} // ageDatabase
 
 // for IPv6 AF
 bool OSPFv3Process::hasAddressRange(const Ipv6AddressRange& addressRange) const
@@ -511,122 +592,122 @@ void OSPFv3Process::handleTimer(cMessage* msg)
             }
         }
         break;
-//
-//        case WAIT_TIMER:
-//        {
-//            OSPFv3Interface* interface;
-//            if(!(interface=reinterpret_cast<OSPFv3Interface*>(msg->getContextPointer())))
-//            {
-//                //TODO - error
-//            }
-//            else {
-//                EV_DEBUG << "Process received msg, sending event WAIT_TIMER_EVENT\n";
-//                interface->processEvent(OSPFv3Interface::WAIT_TIMER_EVENT);
-//            }
-//        }
-//        break;
-//
-//        case ACKNOWLEDGEMENT_TIMER: {
-//            OSPFv3Interface *intf;
-//            if (!(intf = reinterpret_cast<OSPFv3Interface *>(msg->getContextPointer()))) {
-//                // should not reach this point
-//                EV_INFO << "Discarding invalid InterfaceAcknowledgementTimer.\n";
-//                delete msg;
-//            }
-//            else {
-////                printEvent("Acknowledgement Timer expired", intf);
-//                intf->processEvent(OSPFv3Interface::ACKNOWLEDGEMENT_TIMER_EVENT);
-//            }
-//        }
-//        break;
-//
-//        case NEIGHBOR_INACTIVITY_TIMER: {
-//            OSPFv3Neighbor *neighbor;
-//            if (!(neighbor = reinterpret_cast<OSPFv3Neighbor *>(msg->getContextPointer()))) {
-//                // should not reach this point
-//                EV_INFO << "Discarding invalid NeighborInactivityTimer.\n";
-//                delete msg;
-//            }
-//            else {
-////                printEvent("Inactivity Timer expired", neighbor->getInterface(), neighbor);
-////                neighbor->processEvent(OSPFv3Neighbor::INACTIVITY_TIMER);
-//                OSPFv3Interface* intf = neighbor->getInterface();
-//                int neighborCnt = intf->getNeighborCount();
-//                for(int i=0; i<neighborCnt; i++){
-//                    OSPFv3Neighbor* currNei = intf->getNeighbor(i);
-//                    if(currNei->getNeighborID() == neighbor->getNeighborID()){
-//                        intf->removeNeighborByID(neighbor->getNeighborID());
-//                        break;
-//                    }
-//                }
-//
-//                intf->processEvent(OSPFv3Interface::NEIGHBOR_CHANGE_EVENT);
-//            }
-//        }
-//        break;
-//
-//        case NEIGHBOR_POLL_TIMER: {
-//            OSPFv3Neighbor *neighbor;
-//            if (!(neighbor = reinterpret_cast<OSPFv3Neighbor *>(msg->getContextPointer()))) {
-//                // should not reach this point
-//                EV_INFO << "Discarding invalid NeighborInactivityTimer.\n";
-//                delete msg;
-//            }
-//            else {
-////                printEvent("Poll Timer expired", neighbor->getInterface(), neighbor);
-//                neighbor->processEvent(OSPFv3Neighbor::POLL_TIMER);
-//            }
-//        }
-//        break;
-//
-//        case NEIGHBOR_DD_RETRANSMISSION_TIMER: {
-//            OSPFv3Neighbor *neighbor;
-//            if (!(neighbor = reinterpret_cast<OSPFv3Neighbor *>(msg->getContextPointer()))) {
-//                // should not reach this point
-//                EV_INFO << "Discarding invalid NeighborDDRetransmissionTimer.\n";
-//                delete msg;
-//            }
-//            else {
-////                printEvent("Database Description Retransmission Timer expired", neighbor->getInterface(), neighbor);
-//                neighbor->processEvent(OSPFv3Neighbor::DD_RETRANSMISSION_TIMER);
-//            }
-//        }
-//        break;
-//
-//        case NEIGHBOR_UPDATE_RETRANSMISSION_TIMER: {
-//            OSPFv3Neighbor *neighbor;
-//            if (!(neighbor = reinterpret_cast<OSPFv3Neighbor *>(msg->getContextPointer()))) {
-//                // should not reach this point
-//                EV_INFO << "Discarding invalid NeighborUpdateRetransmissionTimer.\n";
-//                delete msg;
-//            }
-//            else {
-////                printEvent("Update Retransmission Timer expired", neighbor->getInterface(), neighbor);
-//                neighbor->processEvent(OSPFv3Neighbor::UPDATE_RETRANSMISSION_TIMER);
-//            }
-//        }
-//        break;
-//
-//        case NEIGHBOR_REQUEST_RETRANSMISSION_TIMER: {
-//            OSPFv3Neighbor *neighbor;
-//            if (!(neighbor = reinterpret_cast<OSPFv3Neighbor *>(msg->getContextPointer()))) {
-//                // should not reach this point
-//                EV_INFO << "Discarding invalid NeighborRequestRetransmissionTimer.\n";
-//                delete msg;
-//            }
-//            else {
-////                printEvent("Request Retransmission Timer expired", neighbor->getInterface(), neighbor);
-//                neighbor->processEvent(OSPFv3Neighbor::REQUEST_RETRANSMISSION_TIMER);
-//            }
-//        }
-//        break;
-//
-//        case DATABASE_AGE_TIMER: {
-//            EV_DEBUG << "Ageing the database\n";
-//            this->setTimer(ageTimer, 1.0);
-//            this->ageDatabase();
-//        }
-//        break;
+
+        case WAIT_TIMER:
+        {
+            OSPFv3Interface* interface;
+            if(!(interface=reinterpret_cast<OSPFv3Interface*>(msg->getContextPointer())))
+            {
+                //TODO - error
+            }
+            else {
+                EV_DEBUG << "Process received msg, sending event WAIT_TIMER_EVENT\n";
+                interface->processEvent(OSPFv3Interface::WAIT_TIMER_EVENT);
+            }
+        }
+        break;
+
+        case ACKNOWLEDGEMENT_TIMER: {
+            OSPFv3Interface *intf;
+            if (!(intf = reinterpret_cast<OSPFv3Interface *>(msg->getContextPointer()))) {
+                // should not reach this point
+                EV_INFO << "Discarding invalid InterfaceAcknowledgementTimer.\n";
+                delete msg;
+            }
+            else {
+//                printEvent("Acknowledgement Timer expired", intf);
+                intf->processEvent(OSPFv3Interface::ACKNOWLEDGEMENT_TIMER_EVENT);
+            }
+        }
+        break;
+
+        case NEIGHBOR_INACTIVITY_TIMER: {
+            OSPFv3Neighbor *neighbor;
+            if (!(neighbor = reinterpret_cast<OSPFv3Neighbor *>(msg->getContextPointer()))) {
+                // should not reach this point
+                EV_INFO << "Discarding invalid NeighborInactivityTimer.\n";
+                delete msg;
+            }
+            else {
+//                printEvent("Inactivity Timer expired", neighbor->getInterface(), neighbor);
+//                neighbor->processEvent(OSPFv3Neighbor::INACTIVITY_TIMER);
+                OSPFv3Interface* intf = neighbor->getInterface();
+                int neighborCnt = intf->getNeighborCount();
+                for(int i=0; i<neighborCnt; i++){
+                    OSPFv3Neighbor* currNei = intf->getNeighbor(i);
+                    if(currNei->getNeighborID() == neighbor->getNeighborID()){
+                        intf->removeNeighborByID(neighbor->getNeighborID());
+                        break;
+                    }
+                }
+
+                intf->processEvent(OSPFv3Interface::NEIGHBOR_CHANGE_EVENT);
+            }
+        }
+        break;
+
+        case NEIGHBOR_POLL_TIMER: {
+            OSPFv3Neighbor *neighbor;
+            if (!(neighbor = reinterpret_cast<OSPFv3Neighbor *>(msg->getContextPointer()))) {
+                // should not reach this point
+                EV_INFO << "Discarding invalid NeighborInactivityTimer.\n";
+                delete msg;
+            }
+            else {
+//                printEvent("Poll Timer expired", neighbor->getInterface(), neighbor);
+                neighbor->processEvent(OSPFv3Neighbor::POLL_TIMER);
+            }
+        }
+        break;
+
+        case NEIGHBOR_DD_RETRANSMISSION_TIMER: {
+            OSPFv3Neighbor *neighbor;
+            if (!(neighbor = reinterpret_cast<OSPFv3Neighbor *>(msg->getContextPointer()))) {
+                // should not reach this point
+                EV_INFO << "Discarding invalid NeighborDDRetransmissionTimer.\n";
+                delete msg;
+            }
+            else {
+//                printEvent("Database Description Retransmission Timer expired", neighbor->getInterface(), neighbor);
+                neighbor->processEvent(OSPFv3Neighbor::DD_RETRANSMISSION_TIMER);
+            }
+        }
+        break;
+
+        case NEIGHBOR_UPDATE_RETRANSMISSION_TIMER: {
+            OSPFv3Neighbor *neighbor;
+            if (!(neighbor = reinterpret_cast<OSPFv3Neighbor *>(msg->getContextPointer()))) {
+                // should not reach this point
+                EV_INFO << "Discarding invalid NeighborUpdateRetransmissionTimer.\n";
+                delete msg;
+            }
+            else {
+//                printEvent("Update Retransmission Timer expired", neighbor->getInterface(), neighbor);
+                neighbor->processEvent(OSPFv3Neighbor::UPDATE_RETRANSMISSION_TIMER);
+            }
+        }
+        break;
+
+        case NEIGHBOR_REQUEST_RETRANSMISSION_TIMER: {
+            OSPFv3Neighbor *neighbor;
+            if (!(neighbor = reinterpret_cast<OSPFv3Neighbor *>(msg->getContextPointer()))) {
+                // should not reach this point
+                EV_INFO << "Discarding invalid NeighborRequestRetransmissionTimer.\n";
+                delete msg;
+            }
+            else {
+//                printEvent("Request Retransmission Timer expired", neighbor->getInterface(), neighbor);
+                neighbor->processEvent(OSPFv3Neighbor::REQUEST_RETRANSMISSION_TIMER);
+            }
+        }
+        break;
+
+        case DATABASE_AGE_TIMER: {
+            EV_DEBUG << "Ageing the database\n";
+            this->setTimer(ageTimer, 1.0);
+            this->ageDatabase();
+        }
+        break;
 
 
         default:
@@ -692,7 +773,6 @@ void OSPFv3Process::sendPacket(Packet *packet, Ipv6Address destination, const ch
         case HELLO_PACKET:
         {
             packet->setName("OSPFv3_HelloPacket");
-
 //            const auto& helloPacket = packet->peekAtFront<OSPFv3HelloPacket>();
 //            printHelloPacket(helloPacket.get(), destination, outputIfIndex);
         }
@@ -700,7 +780,6 @@ void OSPFv3Process::sendPacket(Packet *packet, Ipv6Address destination, const ch
         case DATABASE_DESCRIPTION:
         {
             packet->setName("OSPFv3_DDPacket");
-
 //            const auto& ddPacket = packet->peekAtFront<OSPFv3DatabaseDescription>();
 //            printDatabaseDescriptionPacket(ddPacket.get(), destination, outputIfIndex);
         }
@@ -709,7 +788,6 @@ void OSPFv3Process::sendPacket(Packet *packet, Ipv6Address destination, const ch
         case LSR:
         {
             packet->setName("OSPFv3_LSRPacket");
-
 //            const auto& requestPacket = packet->peekAtFront<OSPFv3LinkStateRequest>();
 //            printLinkStateRequestPacket(requestPacket.get(), destination, outputIfIndex);
         }
@@ -718,7 +796,6 @@ void OSPFv3Process::sendPacket(Packet *packet, Ipv6Address destination, const ch
         case LSU:
         {
             packet->setName("OSPFv3_LSUPacket");
-
 //            const auto& updatePacket = packet->peekAtFront<OSPFv3LSUpdate>();
 //            printLinkStateUpdatePacket(updatePacket.get(), destination, outputIfIndex);
         }
@@ -727,7 +804,6 @@ void OSPFv3Process::sendPacket(Packet *packet, Ipv6Address destination, const ch
         case LS_ACK:
         {
             packet->setName("OSPFv3_LSAckPacket");
-
 //            const auto& ackPacket = packet->peekAtFront<OSPFv3LSAck>();
 //            printLinkStateAcknowledgementPacket(ackPacket.get(), destination, outputIfIndex);
         }
@@ -745,7 +821,7 @@ void OSPFv3Process::sendPacket(Packet *packet, Ipv6Address destination, const ch
 //    ipv6ControlInfo->setDestinationAddress(destination);
 //    ipv6ControlInfo->setInterfaceId(ie->getInterfaceId());
 
-//    packet->setByteLength(packet->getByteLength()+54);//This is for the IPv6 Header and Ethernet Header   JA NEVIEM , TOTO TU BYT ASI NEMA
+//    packet->setByteLength(packet->getByteLength()+54);//This is for the IPv6 Header and Ethernet Header   JA NEVIEM , TOTO TU BYT ASI NEMA LG
 
 //    packet->setControlInfo(ipv6ControlInfo);
     packet->addTagIfAbsent<DispatchProtocolReq>()->setProtocol(&Protocol::ipv6);
@@ -753,175 +829,113 @@ void OSPFv3Process::sendPacket(Packet *packet, Ipv6Address destination, const ch
 }//sendPacket
 //
 //
-//OSPFv3LSA* OSPFv3Process::findLSA(LSAKeyType lsaKey, Ipv4Address areaID, int instanceID)
-//{
-//    OSPFv3Instance* instance = this->getInstanceById(instanceID);
-//    OSPFv3Area* area = instance->getAreaById(areaID);
-//    return area->getLSAbyKey(lsaKey);
-//    /*
-//    switch(lsaKey.LSType) {
-//        case ROUTER_LSA:
-//        {
-//            OSPFv3Instance* instance = this->getInstanceById(instanceID);
-//            OSPFv3Area* area = instance->getAreaById(areaID);
-//            return area->getLSAbyKey(lsaKey);
-//
-//            break;
-//        }
-//
-//        case NETWORK_LSA:
-//        {
-//            OSPFv3Instance* instance = this->getInstanceById(instanceID);
-//            OSPFv3Area* area = instance->getAreaById(areaID);
-//            return area->getLSAbyKey(lsaKey);
-//
-//            break;
-//        }
-//
-//        case INTER_AREA_PREFIX_LSA:
-//            break;
-//
-//        case INTER_AREA_ROUTER_LSA:
-//            break;
-//
-//        case AS_EXTERNAL_LSA:
-//            break;
-//
-//        case DEPRECATED:
-//            break;
-//
-//        case NSSA_LSA:
-//            break;
-//
-//        case LINK_LSA:
-//        {
-//            OSPFv3Instance* instance = this->getInstanceById(instanceID);
-//            OSPFv3Area* area = instance->getAreaById(areaID);
-//            return area->getLSAbyKey(lsaKey);
-//            break;
-//        }
-//
-//        case INTRA_AREA_PREFIX_LSA:
-//
-//            break;
-//    }*/
-//}
-//
-//bool OSPFv3Process::floodLSA(OSPFv3LSA* lsa, Ipv4Address areaID, OSPFv3Interface* interface, OSPFv3Neighbor* neighbor)
-//{
-//    EV_DEBUG << "Flooding LSA from router " << lsa->getHeader().getAdvertisingRouter() << " with ID " << lsa->getHeader().getLinkStateID() << "\n";
-//    bool floodedBackOut = false;
-//
-//    if (lsa != nullptr) {
-//        OSPFv3Instance* instance = interface->getArea()->getInstance();
-//        if (lsa->getHeader().getLsaType() == AS_EXTERNAL_LSA) {
-//            long areaCount = instance->getAreaCount();
-//            for (long i = 0; i < areaCount; i++) {
-//                OSPFv3Area* area = instance->getArea(i);
-//                if (area->getExternalRoutingCapability()) {
-//                    if (area->floodLSA(lsa, interface, neighbor)) {
-//                        floodedBackOut = true;
-//                    }
-//                }
-//            }
-//        }
-//        else {
-//            OSPFv3Area* area = instance->getAreaById(areaID);
-//            if (area != nullptr) {
-//                floodedBackOut = area->floodLSA(lsa, interface, neighbor);
-//            }
-//        }
-//    }
-//
-//    return floodedBackOut;
-//}
-//
-//bool OSPFv3Process::installLSA(OSPFv3LSA *lsa, int instanceID, Ipv4Address areaID    /*= BACKBONE_AREAID*/, OSPFv3Interface* intf)
-//{
-//    EV_DEBUG << "OSPFv3Process::installLSA\n";
-//    switch (lsa->getHeader().getLsaType()) {
-//        case ROUTER_LSA: {
-//            OSPFv3Instance* instance = this->getInstanceById(instanceID);
-//            OSPFv3Area* area = instance->getAreaById(areaID);
-//            if (area!=nullptr) {
-//                OSPFv3RouterLSA *ospfRouterLSA = check_and_cast<OSPFv3RouterLSA *>(lsa);
-//                return area->installRouterLSA(ospfRouterLSA);
-//            }
-//        }
-//        break;
-//
-//        case NETWORK_LSA: {
-//            OSPFv3Instance* instance = this->getInstanceById(instanceID);
-//            OSPFv3Area* area = instance->getAreaById(areaID);
-//            if (area!=nullptr) {
-//                OSPFv3NetworkLSA *ospfNetworkLSA = check_and_cast<OSPFv3NetworkLSA *>(lsa);
-//                return area->installNetworkLSA(ospfNetworkLSA);
-//            }
-//        }
-//        break;
-//
-//        case INTER_AREA_PREFIX_LSA: {
-//            OSPFv3Instance* instance = this->getInstanceById(instanceID);
-//            OSPFv3Area* area = instance->getAreaById(areaID);
-//            if (area!=nullptr) {
-//                OSPFv3InterAreaPrefixLSA *ospfInterAreaLSA = check_and_cast<OSPFv3InterAreaPrefixLSA *>(lsa);
-//                return area->installInterAreaPrefixLSA(ospfInterAreaLSA);
-//            }
-//        }
-//        break;
-//
-////        case SUMMARYLSA_NETWORKS_TYPE:
-////        case SUMMARYLSA_ASBOUNDARYROUTERS_TYPE: {
-////            auto areaIt = areasByID.find(areaID);
-////            if (areaIt != areasByID.end()) {
-////                OSPFSummaryLSA *ospfSummaryLSA = check_and_cast<OSPFSummaryLSA *>(lsa);
-////                return areaIt->second->installSummaryLSA(ospfSummaryLSA);
-////            }
-////        }
-////        break;
-////
-////        case AS_EXTERNAL_LSA_TYPE: {
-////            OSPFASExternalLSA *ospfASExternalLSA = check_and_cast<OSPFASExternalLSA *>(lsa);
-////            return installASExternalLSA(ospfASExternalLSA);
-////        }
-////        break;
-////
-//        case LINK_LSA: {
-//            OSPFv3Instance* instance = this->getInstanceById(instanceID);
-//            OSPFv3Area* area = instance->getAreaById(areaID);
-//            if (area!=nullptr) {
-//                OSPFv3LinkLSA *ospfLinkLSA = check_and_cast<OSPFv3LinkLSA *>(lsa);
-//                return intf->installLinkLSA(ospfLinkLSA);
-//            }
-//        }
-//        break;
-//
-//        case INTRA_AREA_PREFIX_LSA: {
-//            OSPFv3Instance* instance = this->getInstanceById(instanceID);
-//            OSPFv3Area* area = instance->getAreaById(areaID);
-//            if(area!=nullptr) {
-//                OSPFv3IntraAreaPrefixLSA* intraLSA = check_and_cast<OSPFv3IntraAreaPrefixLSA *>(lsa);
-//                return area->installIntraAreaPrefixLSA(intraLSA);
-//            }
-//        }
-//        break;
-////        default:
-////            ASSERT(false);
-////            break;
-//    }
-//    return false;
-//}
-//
-//void OSPFv3Process::calculateASExternalRoutes(std::vector<OSPFv3RoutingTableEntry* > newTableIPv6, std::vector<OSPFv3IPv4RoutingTableEntry* > newTableIPv4)
-//{
-//    EV_DEBUG << "Calculating AS External Routes\n";
-//}
-//
+OSPFv3LSA* OSPFv3Process::findLSA(LSAKeyType lsaKey, Ipv4Address areaID, int instanceID)
+{
+    OSPFv3Instance* instance = this->getInstanceById(instanceID);
+    OSPFv3Area* area = instance->getAreaById(areaID);
+    return area->getLSAbyKey(lsaKey);
+}
+
+bool OSPFv3Process::floodLSA(const OSPFv3LSA* lsa, Ipv4Address areaID, OSPFv3Interface* interface, OSPFv3Neighbor* neighbor)
+{
+    EV_DEBUG << "Flooding LSA from router " << lsa->getHeader().getAdvertisingRouter() << " with ID " << lsa->getHeader().getLinkStateID() << "\n";
+    bool floodedBackOut = false;
+
+    if (lsa != nullptr) {
+        OSPFv3Instance* instance = interface->getArea()->getInstance();
+        if (lsa->getHeader().getLsaType() == AS_EXTERNAL_LSA) {
+            long areaCount = instance->getAreaCount();
+            for (long i = 0; i < areaCount; i++) {
+                OSPFv3Area* area = instance->getArea(i);
+                if (area->getExternalRoutingCapability()) {
+                    if (area->floodLSA(lsa, interface, neighbor)) {
+                        floodedBackOut = true;
+                    }
+                }
+            }
+        }
+        else {
+            OSPFv3Area* area = instance->getAreaById(areaID);
+            if (area != nullptr) {
+                floodedBackOut = area->floodLSA(lsa, interface, neighbor);
+            }
+        }
+    }
+
+    return floodedBackOut;
+}
+
+bool OSPFv3Process::installLSA(const OSPFv3LSA *lsaC, int instanceID, Ipv4Address areaID    /*= BACKBONE_AREAID*/, OSPFv3Interface* intf)
+{
+    auto lsa = lsaC->dup(); // make editable copy of lsa
+    EV_DEBUG << "OSPFv3Process::installLSA\n";
+    switch (lsa->getHeader().getLsaType()) {
+        case ROUTER_LSA: {
+            OSPFv3Instance* instance = this->getInstanceById(instanceID);
+            OSPFv3Area* area = instance->getAreaById(areaID);
+            if (area!=nullptr) {
+                OSPFv3RouterLSA *ospfRouterLSA = check_and_cast<OSPFv3RouterLSA *>(lsa);
+                return area->installRouterLSA(ospfRouterLSA);
+            }
+        }
+        break;
+
+        case NETWORK_LSA: {
+            OSPFv3Instance* instance = this->getInstanceById(instanceID);
+            OSPFv3Area* area = instance->getAreaById(areaID);
+            if (area!=nullptr) {
+                OSPFv3NetworkLSA *ospfNetworkLSA = check_and_cast<OSPFv3NetworkLSA *>(lsa);
+                return area->installNetworkLSA(ospfNetworkLSA);
+            }
+        }
+        break;
+
+        case INTER_AREA_PREFIX_LSA: {
+            OSPFv3Instance* instance = this->getInstanceById(instanceID);
+            OSPFv3Area* area = instance->getAreaById(areaID);
+            if (area!=nullptr) {
+                OSPFv3InterAreaPrefixLSA *ospfInterAreaLSA = check_and_cast<OSPFv3InterAreaPrefixLSA *>(lsa);
+                return area->installInterAreaPrefixLSA(ospfInterAreaLSA);
+            }
+        }
+        break;
+
+        case LINK_LSA: {
+            OSPFv3Instance* instance = this->getInstanceById(instanceID);
+            OSPFv3Area* area = instance->getAreaById(areaID);
+            if (area!=nullptr) {
+                OSPFv3LinkLSA *ospfLinkLSA = check_and_cast<OSPFv3LinkLSA *>(lsa);
+                return intf->installLinkLSA(ospfLinkLSA);
+            }
+        }
+        break;
+
+        case INTRA_AREA_PREFIX_LSA: {
+            OSPFv3Instance* instance = this->getInstanceById(instanceID);
+            OSPFv3Area* area = instance->getAreaById(areaID);
+            if(area!=nullptr) {
+                OSPFv3IntraAreaPrefixLSA* intraLSA = check_and_cast<OSPFv3IntraAreaPrefixLSA *>(lsa);
+                return area->installIntraAreaPrefixLSA(intraLSA);
+            }
+        }
+        break;
+        default:
+            ASSERT(false);
+            break;
+    }
+    return false;
+}
+
+void OSPFv3Process::calculateASExternalRoutes(std::vector<OSPFv3RoutingTableEntry* > newTableIPv6, std::vector<OSPFv3IPv4RoutingTableEntry* > newTableIPv4)
+{
+    EV_DEBUG << "Calculating AS External Routes\n";
+}
+
 void OSPFv3Process::rebuildRoutingTable()
 {
     EV_DEBUG << "VOLAM PROCESS REBUILD ROUTING TABLE\n";
 }
-//void OSPFv3Process::rebuildRoutingTable()
+//void OSPFv3Process::rebuildRoutingTable()  MIGRACIA LG
 //{
 //    unsigned long instanceCount = this->instances.size();
 //    std::vector<OSPFv3RoutingTableEntry *> newTableIPv6;

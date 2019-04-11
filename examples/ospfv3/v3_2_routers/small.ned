@@ -1,10 +1,7 @@
 package inet.examples.ospfv3.v3_2_routers;
 
-//import ansa.node.ANSA_Host;
 import inet.node.ospfv3.Ospfv3Router;
-//import ansa.node.ANSA_Router;
 import inet.networklayer.configurator.ipv4.Ipv4NetworkConfigurator;
-//import inet.networklayer.configurator.ipv6.FlatNetworkConfigurator6;
 import inet.networklayer.configurator.ipv6.Ipv6FlatNetworkConfigurator;
 import inet.common.misc.ThruputMeteringChannel;
 import inet.node.ethernet.EtherSwitch;

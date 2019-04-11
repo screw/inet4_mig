@@ -121,7 +121,7 @@ class OSPFv3Neighbor{
     void deleteLastSentDDPacket();
     void retransmitUpdatePacket();
 
-    void addToRetransmissionList(OSPFv3LSA *lsa);
+    void addToRetransmissionList(const OSPFv3LSA *lsaC);
     void removeFromRetransmissionList(LSAKeyType lsaKey);
     OSPFv3LSA* findOnRetransmissionList(LSAKeyType lsaKey);
     bool isRetransmissionListEmpty() const { return linkStateRetransmissionList.empty();}

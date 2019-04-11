@@ -18,8 +18,8 @@ void OSPFv3InterfaceStateDown::processEvent(OSPFv3Interface* interface, OSPFv3In
     {
         EV_DEBUG <<"Interface " << interface->getIntName() << " is in up state\n";
         if(!interface->isInterfacePassive()){
-//            LinkLSA *lsa = interface->originateLinkLSA();                                                        MIGRACIA LG
-//            interface->installLinkLSA(lsa);
+            LinkLSA *lsa = interface->originateLinkLSA();
+            interface->installLinkLSA(lsa);
             interface->getArea()->getInstance()->getProcess()->setTimer(interface->getHelloTimer(), 0);
             interface->getArea()->getInstance()->getProcess()->setTimer(interface->getAcknowledgementTimer(), interface->getAckDelay());
 
@@ -62,15 +62,15 @@ void OSPFv3InterfaceStateDown::processEvent(OSPFv3Interface* interface, OSPFv3In
                 break;
             }
         }
-//        else if(interface->isInterfacePassive()) {            MIGRACIA LG
-//            LinkLSA *lsa = interface->originateLinkLSA();
-//            interface->installLinkLSA(lsa);
-//            IntraAreaPrefixLSA *prefLsa = interface->getArea()->originateIntraAreaPrefixLSA();
-//            if (!interface->getArea()->installIntraAreaPrefixLSA(prefLsa))
-//                EV_DEBUG << "Intra Area Prefix LSA for network beyond interface " << interface->getIntName() << " was not created!\n";
-//
-//            changeState(interface, new OSPFv3InterfacePassive, this);
-//        }
+        else if(interface->isInterfacePassive()) {
+            LinkLSA *lsa = interface->originateLinkLSA();
+            interface->installLinkLSA(lsa);
+            IntraAreaPrefixLSA *prefLsa = interface->getArea()->originateIntraAreaPrefixLSA();
+            if (!interface->getArea()->installIntraAreaPrefixLSA(prefLsa))
+                EV_DEBUG << "Intra Area Prefix LSA for network beyond interface " << interface->getIntName() << " was not created!\n";
+
+            changeState(interface, new OSPFv3InterfacePassive, this);
+        }
         if (event == OSPFv3Interface::LOOP_IND_EVENT) {
             interface->reset();
               changeState(interface, new OSPFv3InterfaceStateLoopback, this);

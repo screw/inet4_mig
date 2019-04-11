@@ -139,7 +139,7 @@ class INET_API OSPFv3Interface : public cObject
     int getDesignatedIntID() const {return this->DesignatedIntID;}
     void removeNeighborByID(Ipv4Address neighborID);
 
-    int calculateInterfaceCost();
+    int calculateInterfaceCost(); //only prototype
     cMessage* getWaitTimer(){return this->waitTimer;}
     cMessage* getHelloTimer(){return this->helloTimer;}
     cMessage* getAcknowledgementTimer(){return this->acknowledgementTimer;}
@@ -154,12 +154,12 @@ class INET_API OSPFv3Interface : public cObject
     void processHelloPacket(Packet* packet);
     void processDDPacket(Packet* packet);
     bool preProcessDDPacket(Packet* packet, OSPFv3Neighbor* neighbor, bool inExchangeStart);
-    void processLSR(OSPFv3Packet* packet, OSPFv3Neighbor* neighbor);
+    void processLSR(Packet* packet, OSPFv3Neighbor* neighbor);
     Packet* prepareLSUHeader();
-    Packet* prepareUpdatePacket(OSPFv3LSA *lsa, Packet* updatePacket);
-    void processLSU(OSPFv3Packet* packet, OSPFv3Neighbor* neighbor);
-    void processLSAck(OSPFv3Packet* packet, OSPFv3Neighbor* neighbor);
-    bool floodLSA(OSPFv3LSA* lsa, OSPFv3Interface* interface=nullptr, OSPFv3Neighbor* neighbor=nullptr);
+    Packet* prepareUpdatePacket(std::vector<OSPFv3LSA *>lsas);
+    void processLSU(Packet* packet, OSPFv3Neighbor* neighbor);
+    void processLSAck(Packet* packet, OSPFv3Neighbor* neighbor);
+    bool floodLSA(const OSPFv3LSA* lsa, OSPFv3Interface* interface=nullptr, OSPFv3Neighbor* neighbor=nullptr);
     void removeFromAllRetransmissionLists(LSAKeyType lsaKey);
     bool isOnAnyRetransmissionList(LSAKeyType lsaKey) const;
     bool hasAnyNeighborInStates(int states) const;
@@ -172,22 +172,22 @@ class INET_API OSPFv3Interface : public cObject
 
     std::string info() const override;
     std::string detailedInfo() const override;
-    void acknowledgeLSA(OSPFv3LSAHeader& lsaHeader, AcknowledgementFlags ackFlags, Ipv4Address routerID);
+    void acknowledgeLSA(const OSPFv3LSAHeader& lsaHeader, AcknowledgementFlags ackFlags, Ipv4Address routerID);
 
 
     // LINK LSA
     LinkLSA* originateLinkLSA();
-    bool installLinkLSA(OSPFv3LinkLSA *lsa);
+    bool installLinkLSA(const OSPFv3LinkLSA *lsa);
     void addLinkLSA(LinkLSA* newLSA){this->linkLSAList.push_back(newLSA);}
     int getLinkLSACount(){return this->linkLSAList.size();}
     LinkLSA* getLinkLSA(int i){return this->linkLSAList.at(i);}
     LinkLSA* getLinkLSAbyKey(LSAKeyType lsaKey);
-    void installLinkLSA(LinkLSA *lsa);
+//    void installLinkLSA(LinkLSA *lsa);
     bool updateLinkLSA(LinkLSA* currentLsa, OSPFv3LinkLSA* newLsa);
     bool linkLSADiffersFrom(OSPFv3LinkLSA* currentLsa, OSPFv3LinkLSA* newLsa);
 
-    void sendLSAcknowledgement(OSPFv3LSAHeader *lsaHeader, Ipv6Address destination);
-    void addDelayedAcknowledgement(OSPFv3LSAHeader& lsaHeader);
+    void sendLSAcknowledgement(const OSPFv3LSAHeader *lsaHeader, Ipv6Address destination);
+    void addDelayedAcknowledgement(const OSPFv3LSAHeader& lsaHeader);
 
     void setTransitNetInt(bool isTransit){this->transitNetworkInterface=isTransit;}
     bool getTransitNetInt(){return this->transitNetworkInterface;}

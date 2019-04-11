@@ -6,7 +6,7 @@
 #include "inet/common/INETDefs.h"
 #include "inet/networklayer/contract/ipv4/Ipv4Address.h"
 #include "inet/networklayer/common/L3Address.h"
-//#include "inet/networklayer/contract/INetworkProtocolControlInfo.h" MIGRACIA LG
+//#include "inet/networklayer/contract/INetworkProtocolControlInfo.h"  LG v novom inete nie je
 #include "inet/networklayer/contract/IInterfaceTable.h"
 #include "inet/common/ModuleAccess.h"
 
@@ -51,12 +51,6 @@ class INET_API OSPFv3Instance : public cObject
 
   public:
     IInterfaceTable* ift = nullptr;
-
-  private:
-
-
-
-
   private:
     int addressFamily;
     int instanceID;
@@ -66,9 +60,6 @@ class INET_API OSPFv3Instance : public cObject
     std::map<Ipv4Address , OSPFv3Area*> areasById; //mapping the area id to area
     int OSPFv3IfIndex = 0; //unique number for interfaces
     Ipv4Address interAreaPrefixLsID = Ipv4Address::UNSPECIFIED_ADDRESS;
-
-
-
 };
 
 inline std::ostream& operator<<(std::ostream& ostr, const OSPFv3Instance& instance)

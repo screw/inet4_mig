@@ -894,6 +894,12 @@ void Bgp::routerIntfAndRouteConfig(cXMLElement *rtrConfig)
 
     for (auto & interface : interfaceList) {
         myInterface = (_inft->getInterfaceByName((interface)->getAttribute("id")));
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n";
+            std::cout << "VYPIS IFT NA ZAC PARSECONFIG\n";
+            std::cout <<  myInterface->info();
+            ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         if (myInterface->isLoopback()) {
             const char * ipv41 = "127.0.0.0";
@@ -957,6 +963,13 @@ void Bgp::routerIntfAndRouteConfig(cXMLElement *rtrConfig)
 
             _rt6->addRoutingProtocolRoute(route);
         }
+
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+            std::cout << "************************************************************\n";
+            std::cout << "VYPIS IFT - ZA -  PARSECONFIG\n";
+            std::cout <<  myInterface->info();
+            ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     }
     //add static routes to ipv4 routing table
     cXMLElementList routeNodes = rtrConfig->getElementsByTagName("Route");
