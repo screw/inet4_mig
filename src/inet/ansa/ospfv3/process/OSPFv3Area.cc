@@ -2284,6 +2284,8 @@ void OSPFv3Area::calculateShortestPathTree(std::vector<OSPFv3RoutingTableEntry* 
             delete newLSA;
         }
     }
+    if (spfTreeRoot == nullptr)
+        return;
 
     lsaCount = routerLSAList.size();
     cout << "lsaCount = " << lsaCount << endl;
