@@ -7,11 +7,15 @@
 #include "inet/ansa/ospfv3/OSPFv3Packet_m.h"
 
 namespace inet{
+// intervals values
+#define OSPFV3_START            5
+#define DEFAULT_HELLO_INTERVAL  10
+#define DEFAULT_DEAD_INTERVAL   40
+#define MIN_LS_INTERVAL         5
+
 #define DEFAULT_IPV4_INSTANCE   64
 #define DEFAULT_IPV6_INSTANCE   0
 #define DEFAULT_ROUTER_PRIORITY 1
-#define DEFAULT_HELLO_INTERVAL  10
-#define DEFAULT_DEAD_INTERVAL   40
 #define IPV4INSTANCE            1
 #define IPV6INSTANCE            2
 #define VIRTUAL_LINK_TTL        32
@@ -23,7 +27,6 @@ namespace inet{
 #define MAX_AGE                 3600
 #define MAX_AGE_DIFF            900
 #define MIN_LS_ARRIVAL          1
-#define MIN_LS_INTERVAL         5
 #define INITIAL_SEQUENCE_NUMBER 0              //TODO: -2147483647
 #define MAX_SEQUENCE_NUMBER     2147483647
 #define MAX_SPF_WAIT_TIME       10000

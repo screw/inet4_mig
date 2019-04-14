@@ -1,6 +1,5 @@
 #include "inet/ansa/ospfv3/process/OSPFv3Process.h"
-
-
+#include "inet/common/IProtocolRegistrationListener.h"
 
 namespace inet{
 
@@ -19,49 +18,20 @@ void OSPFv3Process::initialize(int stage){
 
     if(stage == INITSTAGE_ROUTING_PROTOCOLS){
         this->containingModule=findContainingNode(this);
-//        ift = check_and_cast<IInterfaceTable* >(containingModule->getSubmodule("interfaceTable"));
-//        rt = check_and_cast<Ipv6RoutingTable* >(containingModule->getSubmodule("routingTable")->getSubmodule("ipv6"));
-//        rt4 = check_and_cast<Ipv4RoutingTable* >(containingModule->getSubmodule("routingTable")->getSubmodule("ipv4"));
         ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
         rt6 = getModuleFromPar<Ipv6RoutingTable>(par("routingTableModule6"), this);
         rt4 = getModuleFromPar<IIpv4RoutingTable>(par("routingTableModule"), this);
-
-
-       /* InterfaceEntry * myInterface;
-       myInterface = (ift->getInterfaceByName("eth0"));
-       const char *addr6c = "4444:100:0:100::1/64";
-
-       std::string add6 = addr6c;
-      std::string prefix6 = add6.substr(0, add6.find("/"));
-
-       int prefLength;
-       Ipv6Address address6;
-       if (!(address6.tryParseAddrWithPrefix(addr6c, prefLength)))
-            throw cRuntimeError("Cannot parse Ipv6 address: '%s", addr6c);
-
-       address6 = Ipv6Address(prefix6.c_str());
-
-       Ipv6InterfaceData::AdvPrefix p;
-       p.prefix = address6;
-       p.prefixLength = prefLength;
-
-       Ipv6Route *route = new Ipv6Route(p.prefix.getPrefix(prefLength), p.prefixLength, IRoute::IFACENETMASK);
-
-
-      route->setInterface(myInterface);
-      route->setExpiryTime(SIMTIME_ZERO);
-      route->setMetric(0);
-      route->setAdminDist(Ipv6Route::dDirectlyConnected);
-
-      rt6->addRoutingProtocolRoute(route);*/
 
         this->routerID = Ipv4Address(par("routerID").stringValue());
         this->processID = (int)par("processID");
         this->parseConfig(par("interfaceConfig"));
 
+        registerService(Protocol::ospf, nullptr, gate("splitterIn"));
+        registerProtocol(Protocol::ospf, gate("splitterOut"), nullptr);
+
         cMessage* init = new cMessage();
         init->setKind(INIT_PROCESS);
-        scheduleAt(simTime(), init);
+        scheduleAt(simTime()+ OSPFV3_START, init);
         WATCH_PTRVECTOR(this->instances);
         WATCH_PTRVECTOR(this->routingTableIPv6);
         WATCH_PTRVECTOR(this->routingTableIPv4);
@@ -70,7 +40,7 @@ void OSPFv3Process::initialize(int stage){
         ageTimer->setKind(DATABASE_AGE_TIMER);
         ageTimer->setContextPointer(this);
         ageTimer->setName("OSPFv3Process::DatabaseAgeTimer");
-    //    std::cout << "ageTimer->getOwner = " << ageTimer->getOwner()->getName() << endl;
+
         this->setTimer(ageTimer, 1.0);
     }
 }
@@ -105,28 +75,6 @@ void OSPFv3Process::handleMessage(cMessage* msg)
             }
         }
     }
-//    else
-//    {
-//        OSPFv3Packet* packet = check_and_cast<OSPFv3Packet*>(msg);
-//        if(packet->getRouterID()==this->getRouterID()) //is it this router who originated the message?
-//            delete msg;
-//        else {
-//            IPv6ControlInfo *ctlInfo = dynamic_cast<IPv6ControlInfo*>(packet->getControlInfo());
-//            if(ctlInfo!=nullptr) {
-//                OSPFv3Instance* instance = this->getInstanceById(packet->getInstanceID());
-//                if(instance == nullptr){//Is there an instance with this number?
-//                    EV_DEBUG << "Instance with this ID not found, dropping\n";
-//                    //delete msg;//TODO - some warning??
-//                }
-//                else {
-//                    instance->processPacket(packet);
-//                }
-//            }
-//            else {
-//                delete msg;
-//            }
-//        }
-//    }
 }//handleMessage
 
 /*return index of the Ipv4 table if the route is found, -1 else*/
@@ -160,16 +108,7 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
     {
 
         const char* interfaceName = (*interfaceIt)->getAttribute("name");
-        std::cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n";
-        std::cout << "VYPIS IFT NA ZAC PARSECONFIG\n";
-        InterfaceEntry *myInterface = (ift->getInterfaceByName(interfaceName));
-        std::cout <<  myInterface->info();
-        std::cout << "\n&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n";
 
-
-
-        //settin ipv4 and ipv6 addresses
-//        myInterface = (_inft->getInterfaceByName((interface)->getAttribute("id")));
         if (myInterface->isLoopback()) {
             const char * ipv41 = "127.0.0.0";
             Ipv4Address tmpipv4;
@@ -179,8 +118,6 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
                 rt4->deleteRoute(rt4->getRoute(i));
             }
         }
-
-        //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
         //interface ipv6 configuration
         cXMLElementList ipAddrList = (*interfaceIt)->getElementsByTagName("Ipv6Address");
         for (auto & ipv6Rec : ipAddrList)
@@ -201,7 +138,7 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
             p.prefix = address6;
             p.prefixLength = prefLength;
 
-            intfData6->assignAddress(address6, false, SIMTIME_ZERO, SIMTIME_ZERO);
+            intfData6->assignAddress(address6, true, SIMTIME_ZERO, SIMTIME_ZERO);
 
             // add this routes to routing table
             Ipv6Route *route = new Ipv6Route(p.prefix.getPrefix(prefLength), p.prefixLength, IRoute::IFACENETMASK);
@@ -213,8 +150,6 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
             rt6->addRoutingProtocolRoute(route);
         }
 
-
-
          //interface ipv4 configuration
          Ipv4Address addr;// = (Ipv4Address((*interfaceIt)->getElementsByTagName("IPAddress")));
          Ipv4Address mask;// = (Ipv4Address((*interfaceIt)->getElementsByTagName("Mask")));
@@ -224,7 +159,6 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
          cXMLElementList ipv4AddrList = (*interfaceIt)->getElementsByTagName("IPAddress");
          if (ipv4AddrList.size() == 1)
          {
-
              for (auto & ipv4Rec : ipv4AddrList)
              {
                  const char * addr4c = ipv4Rec->getNodeValue(); //from string make ipv4 address and store to interface config
@@ -232,7 +166,6 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
                  intfData->setIPAddress(addr);
 
              }
-
              cXMLElementList ipv4MaskList = (*interfaceIt)->getElementsByTagName("Mask");
              if (ipv4MaskList.size() != 1)
                  throw cRuntimeError("Interface %s has more or less than one mask", interfaceName);
@@ -259,8 +192,6 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
          }
          else if (ipv4AddrList.size() > 1)
              throw cRuntimeError("Interface %s has more than one IPv4 address ", interfaceName);
-        //&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
-
 
         const char* routerPriority = nullptr;
         const char* helloInterval = nullptr;
@@ -813,17 +744,7 @@ void OSPFv3Process::sendPacket(Packet *packet, Ipv6Address destination, const ch
             break;
 
     }
-//    IPv6ControlInfo *ipv6ControlInfo = new IPv6ControlInfo();
-//    ipv6ControlInfo->setProtocol(IP_PROT_OSPF);
-//    ipv6ControlInfo->setHopLimit(hopLimit);
-//    //ipv6ControlInfo->setSourceAddress(ipv6int->getLinkLocalAddress());
-//    ipv6ControlInfo->setSourceAddress(ipv6int->getLinkLocalAddress());
-//    ipv6ControlInfo->setDestinationAddress(destination);
-//    ipv6ControlInfo->setInterfaceId(ie->getInterfaceId());
 
-//    packet->setByteLength(packet->getByteLength()+54);//This is for the IPv6 Header and Ethernet Header   JA NEVIEM , TOTO TU BYT ASI NEMA LG
-
-//    packet->setControlInfo(ipv6ControlInfo);
     packet->addTagIfAbsent<DispatchProtocolReq>()->setProtocol(&Protocol::ipv6);
     this->send(packet, "splitterOut");
 }//sendPacket

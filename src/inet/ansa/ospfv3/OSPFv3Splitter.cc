@@ -165,7 +165,7 @@ void OSPFv3Splitter::parseConfig(cXMLElement* routingConfig, cXMLElement* intCon
 
             //ALL_OSPF_ROUTERS_MCAST renamed into ALL_ROUTERS_5
             ipv6int->joinMulticastGroup(Ipv6Address::ALL_OSPF_ROUTERS_MCAST);//TODO - join only once
-            ipv6int->assignAddress(Ipv6Address::ALL_OSPF_ROUTERS_MCAST, false, 0, 0);
+//            ipv6int->assignAddress(Ipv6Address::ALL_OSPF_ROUTERS_MCAST, false, 0, 0);
         }
     }
 

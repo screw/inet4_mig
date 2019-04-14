@@ -4,9 +4,13 @@
 #include <omnetpp.h>
 #include <string>
 #include "inet/common/INETDefs.h"
-#include "inet/networklayer/contract/ipv4/Ipv4Address.h"
-//#include "inet/networklayer/contract/ipv6/IPv6ControlInfo.h"
 #include "inet/common/ModuleAccess.h"
+#include "inet/common/ProtocolTag_m.h"
+#include "inet/common/Protocol.h"
+#include "inet/common/packet/Packet.h"
+
+
+#include "inet/networklayer/contract/ipv4/Ipv4Address.h"
 #include "inet/networklayer/contract/IInterfaceTable.h"
 #include "inet/networklayer/ipv4/Ipv4InterfaceData.h"
 #include "inet/networklayer/ipv4/IIpv4RoutingTable.h"
@@ -27,12 +31,13 @@
 #include "inet/networklayer/ipv6/Ipv6RoutingTable.h"
 
 
-#include "inet/common/ProtocolTag_m.h"
+
 #include "inet/linklayer/common/InterfaceTag_m.h"
 #include "inet/networklayer/common/HopLimitTag_m.h"
 #include "inet/networklayer/common/L3AddressTag_m.h"
-#include "inet/common/packet/Packet.h"
 #include "inet/networklayer/icmpv6/Icmpv6Header_m.h"
+#include "inet/common/Protocol.h"
+
 
 
 namespace inet{

@@ -20,15 +20,15 @@ enum OSPFv3PacketType
 //Common OSPFv3 packet header - this header is present in every OSPFv3 packet
 class OSPFv3Packet extends FieldsChunk
 {
-	uint8_t version = 3;
-	uint8_t type;
+	char version = 3;
+	char type;
 	uint16_t packetLength;
 	
     Ipv4Address routerID;
     Ipv4Address areaID;
     
     uint16_t checksum;
-    uint8_t instanceID;
+    char instanceID;
 }
 
 //options for OSPFv3 packets - present in Hello, DD and certain LSAs
@@ -50,7 +50,7 @@ struct OSPFv3Options
 class OSPFv3HelloPacket extends OSPFv3Packet 
 {
 	uint32_t interfaceID;
-	uint8_t routerPriority;
+	char routerPriority;
 	
 	OSPFv3Options options;
 	

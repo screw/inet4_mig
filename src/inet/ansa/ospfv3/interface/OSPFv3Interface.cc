@@ -102,57 +102,58 @@ Packet* OSPFv3Interface::prepareHello()
     int length;
 //    OSPFv3HelloPacket* helloPacket = new OSPFv3HelloPacket();
     const auto& helloPacket = makeShared<OSPFv3HelloPacket>();
-    std::vector<Ipv4Address> neighbors;
+//    std::vector<Ipv4Address> neighbors;
+//
+//    //OSPF common packet header first
+//    helloPacket->setVersion(3);
+//    helloPacket->setType(HELLO_PACKET);
+//    //TODO - packet length
+//    helloPacket->setRouterID(this->getArea()->getInstance()->getProcess()->getRouterID());
+//    helloPacket->setAreaID(this->containingArea->getAreaID());
+//    helloPacket->setInstanceID(this->getArea()->getInstance()->getInstanceID());
+//    length = 16;
+//
+//    //Hello content
+//    helloPacket->setInterfaceID(this->interfaceId);//TODO - check LG
+//    helloPacket->setRouterPriority(this->getRouterPriority());
+//    memset(&options, 0, sizeof(OSPFv3Options));
+//
+//    options.rBit = true;
+//    options.v6Bit = true;
+//    if(this->getArea()->getExternalRoutingCapability())
+//        options.eBit = true;
+//
+//    if(this->getArea()->getAreaType() == NSSA)
+//        options.nBit = true;
+//
+//    helloPacket->setOptions(options);
+//    length+=8;
+//    //TODO - set options
+//    helloPacket->setHelloInterval(this->getHelloInterval());
+//    helloPacket->setDeadInterval(this->getDeadInterval());
+//    helloPacket->setDesignatedRouterID(this->getDesignatedID());
+//    helloPacket->setBackupDesignatedRouterID(this->BackupRouterID);
+//
+//    length += 12;
+//
+//    int neighborCount = this->getNeighborCount();
+//    for(int i=0; i<neighborCount; i++){
+//        if(this->getNeighbor(i)->getState() >= OSPFv3Neighbor::INIT_STATE) {
+//            neighbors.push_back(this->getNeighbor(i)->getNeighborID());
+//            length+=4;
+//        }
+//    }
+//
+//    unsigned int initedNeighborCount = neighbors.size();
+//    helloPacket->setNeighborIDArraySize(initedNeighborCount);
+//    for (unsigned int k = 0; k < initedNeighborCount; k++) {
+//        helloPacket->setNeighborID(k, neighbors.at(k));
+//    }
+//
+//    helloPacket->setPacketLength(length);
 
-    //OSPF common packet header first
-    helloPacket->setVersion(3);
-    helloPacket->setType(HELLO_PACKET);
-    //TODO - packet length
-    helloPacket->setRouterID(this->getArea()->getInstance()->getProcess()->getRouterID());
-    helloPacket->setAreaID(this->containingArea->getAreaID());
-    helloPacket->setInstanceID(this->getArea()->getInstance()->getInstanceID());
-    length = 16;
-
-    //Hello content
-    helloPacket->setInterfaceID(this->interfaceId);//TODO - check LG
-    helloPacket->setRouterPriority(this->getRouterPriority());
-    memset(&options, 0, sizeof(OSPFv3Options));
-
-    options.rBit = true;
-    options.v6Bit = true;
-    if(this->getArea()->getExternalRoutingCapability())
-        options.eBit = true;
-
-    if(this->getArea()->getAreaType() == NSSA)
-        options.nBit = true;
-
-    helloPacket->setOptions(options);
-    length+=8;
-    //TODO - set options
-    helloPacket->setHelloInterval(this->getHelloInterval());
-    helloPacket->setDeadInterval(this->getDeadInterval());
-    helloPacket->setDesignatedRouterID(this->getDesignatedID());
-    helloPacket->setBackupDesignatedRouterID(this->BackupRouterID);
-
-    length += 12;
-
-    int neighborCount = this->getNeighborCount();
-    for(int i=0; i<neighborCount; i++){
-        if(this->getNeighbor(i)->getState() >= OSPFv3Neighbor::INIT_STATE) {
-            neighbors.push_back(this->getNeighbor(i)->getNeighborID());
-            length+=4;
-        }
-    }
-
-    unsigned int initedNeighborCount = neighbors.size();
-    helloPacket->setNeighborIDArraySize(initedNeighborCount);
-    for (unsigned int k = 0; k < initedNeighborCount; k++) {
-        helloPacket->setNeighborID(k, neighbors.at(k));
-    }
-
-    helloPacket->setPacketLength(length);
-
-    helloPacket->setChunkLength(B(length));
+//    helloPacket->setChunkLength(B(length));
+    helloPacket->setChunkLength(B(2));
 //    return helloPacket;
 
     Packet *pk = new Packet();
