@@ -60,26 +60,24 @@ void OSPFv3NeighborStateExchange::processEvent(OSPFv3Neighbor *neighbor, OSPFv3N
     if (event == OSPFv3Neighbor::EXCHANGE_DONE) {
         EV_DEBUG << "OSPFv3Neighbor::EXCHANGE_DONE caught in ExchangeState\n";
         if (!neighbor->isLinkStateRequestListEmpty()) {
-            EV_DEBUG << "&&&&&&&&&&&& Link State Request List Empty\n";
             neighbor->getInterface()->getArea()->getInstance()->getProcess()->setTimer(neighbor->getDDRetransmissionTimer(), neighbor->getInterface()->getDeadInterval());
             neighbor->clearRequestRetransmissionTimer();
             changeState(neighbor, new OSPFv3NeighborStateFull, this);
         }
         else {
-            EV_DEBUG << "&&&&&&&&&&&& Link State Request List Empty\n";
             neighbor->getInterface()->getArea()->getInstance()->getProcess()->setTimer(neighbor->getDDRetransmissionTimer(), neighbor->getInterface()->getRetransmissionInterval());
             changeState(neighbor, new OSPFv3NeighborStateLoading, this);
         }
     }
     if (event == OSPFv3Neighbor::UPDATE_RETRANSMISSION_TIMER) {
         EV_DEBUG << "OSPFv3Neighbor::UPDATE_RETRANSMISSION_TIMER caught in ExchangeState\n";
-//        neighbor->retransmitUpdatePacket();                               ZAKOMENTOVANE PRED MIGRACIOU .  PRECO ?
-//        neighbor->startUpdateRetransmissionTimer();
+        neighbor->retransmitUpdatePacket();                             //  ZAKOMENTOVANE PRED MIGRACIOU .  PRECO ?
+        neighbor->startUpdateRetransmissionTimer();
     }
     if (event == OSPFv3Neighbor::REQUEST_RETRANSMISSION_TIMER) {
         EV_DEBUG << "OSPFv3Neighbor::REQUEST_RETRANSMISSION_TIMER caught in ExchangeState\n";
-//        neighbor->sendLinkStateRequestPacket();                               ZAKOMENTOVANE PRED MIGRACIOU .  PRECO ?
-//        neighbor->startRequestRetransmissionTimer();
+        neighbor->sendLinkStateRequestPacket();                             //  ZAKOMENTOVANE PRED MIGRACIOU .  PRECO ?
+        neighbor->startRequestRetransmissionTimer();
     }
 }
 }//namespace inet

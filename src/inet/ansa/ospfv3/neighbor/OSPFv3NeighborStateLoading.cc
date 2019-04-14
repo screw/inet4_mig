@@ -64,13 +64,13 @@ void OSPFv3NeighborStateLoading::processEvent(OSPFv3Neighbor *neighbor, OSPFv3Ne
     }
     if (event == OSPFv3Neighbor::REQUEST_RETRANSMISSION_TIMER) {
         EV_DEBUG << "OSPFv3Neighbor::REQUEST_RETRANSMISSION_TIMER caught StateLoading\n";
-//        neighbor->sendLinkStateRequestPacket();   TODO LG, PRECO JE TOTO ZAKOMENTOVANE ?
-//        neighbor->startRequestRetransmissionTimer();
+        neighbor->sendLinkStateRequestPacket();   //TODO LG, PRECO JE TOTO ZAKOMENTOVANE ?
+        neighbor->startRequestRetransmissionTimer();
     }
     if (event == OSPFv3Neighbor::UPDATE_RETRANSMISSION_TIMER) {
         EV_DEBUG << "OSPFv3Neighbor::UPDATE_RETRANSMISSION_TIMER caught StateLoading\n";
-//        neighbor->retransmitUpdatePacket();
-//        neighbor->startUpdateRetransmissionTimer();
+        neighbor->retransmitUpdatePacket();
+        neighbor->startUpdateRetransmissionTimer();
     }
     if (event == OSPFv3Neighbor::DD_RETRANSMISSION_TIMER) {
         EV_DEBUG << "OSPFv3Neighbor::DD_RETRANSMISSION_TIMER caught StateLoading\n";
