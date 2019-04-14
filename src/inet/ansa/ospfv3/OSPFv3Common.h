@@ -27,7 +27,7 @@ namespace inet{
 #define MAX_AGE                 3600
 #define MAX_AGE_DIFF            900
 #define MIN_LS_ARRIVAL          1
-#define INITIAL_SEQUENCE_NUMBER 0              //TODO: -2147483647
+#define INITIAL_SEQUENCE_NUMBER 0 //-2147483647             //TODO: was 0
 #define MAX_SEQUENCE_NUMBER     2147483647
 #define MAX_SPF_WAIT_TIME       10000
 #define MIN_SPF_WAIT_TIME       10000
@@ -363,7 +363,6 @@ inline bool operator==(OSPFv3LSAHeader& leftLSA, OSPFv3LSAHeader& rightLSA)
         return false;
     }
 }
-
 
 inline bool operator==(const OSPFv3LSAHeader& leftLSA, const OSPFv3LSAHeader& rightLSA)
 {

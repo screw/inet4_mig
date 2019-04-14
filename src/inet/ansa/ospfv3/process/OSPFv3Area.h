@@ -51,7 +51,6 @@ class INET_API OSPFv3Area : public cObject
     int getStubDefaultCost(){return this->stubDefaultCost;}
     bool getTransitCapability(){return this->transitCapability;}
     OSPFv3Interface* findVirtualLink(Ipv4Address routerID);
-//
     OSPFv3Interface* getInterface(int i) const {return this->interfaceList.at(i);}
     OSPFv3Interface* getInterfaceByIndex (Ipv4Address address);
     int getInterfaceCount() const {return this->interfaceList.size();}
@@ -104,7 +103,7 @@ class INET_API OSPFv3Area : public cObject
     void originateInterAreaPrefixLSA(OSPFv3IntraAreaPrefixLSA* lsa, OSPFv3Area* fromArea);
     void originateInterAreaPrefixLSA(OSPFv3LSA* prefLsa, OSPFv3Area* fromArea);
     bool installInterAreaPrefixLSA(const OSPFv3InterAreaPrefixLSA* lsaC);
-    bool updateInterAreaPrefixLSA(InterAreaPrefixLSA* currentLsa, OSPFv3InterAreaPrefixLSA* newLsa);      // TODO: resetInstallTime
+    bool updateInterAreaPrefixLSA(InterAreaPrefixLSA* currentLsa, OSPFv3InterAreaPrefixLSA* newLsa);
     bool interAreaPrefixLSADiffersFrom(OSPFv3InterAreaPrefixLSA* currentLsa, OSPFv3InterAreaPrefixLSA* newLsa);
     Ipv4Address getNewInterAreaPrefixLinkStateID();
     uint32_t getCurrentInterAreaPrefixSequence(){return this->interAreaPrefixLSASequenceNumber;}
@@ -126,7 +125,6 @@ class INET_API OSPFv3Area : public cObject
     Ipv4Address getIntraAreaPrefixLinkStateID(){return this->intraAreaPrefixLsID;}
     uint32_t getCurrentIntraAreaPrefixSequence(){return this->intraAreaPrefixLSASequenceNumber;}
     void incrementIntraAreaPrefixSequence(){this->intraAreaPrefixLSASequenceNumber++;}
-
     IntraAreaPrefixLSA* originateNetIntraAreaPrefixLSA(NetworkLSA* networkLSA, OSPFv3Interface* interface);//this originates one router LSA for one area
     Ipv4Address getNewNetIntraAreaPrefixLinkStateID();
     Ipv4Address getNetIntraAreaPrefixLinkStateID(){return this->netIntraAreaPrefixLsID;}
@@ -152,7 +150,7 @@ class INET_API OSPFv3Area : public cObject
     std::vector<NextHop> *calculateNextHops(OSPFv3LSA *destination, OSPFv3LSA *parent) const;
 
     void addRouterEntry(RouterLSA* routerLSA, LSAKeyType lsaKey, std::vector<OSPFv3RoutingTableEntry *>& newTableIPv6, std::vector<OSPFv3IPv4RoutingTableEntry *>& newTableIPv4 );
-    bool findSameOrWorseCostRoute(const std::vector<OSPFv3RoutingTableEntry *>& newTable, // TODO >  PRE IPV4 SPRAVIT SAMOSTATNU METODU
+    bool findSameOrWorseCostRoute(const std::vector<OSPFv3RoutingTableEntry *>& newTable,
             const InterAreaPrefixLSA& interAreaPrefixLSA,
             unsigned short currentCost,
             bool& destinationInRoutingTable,

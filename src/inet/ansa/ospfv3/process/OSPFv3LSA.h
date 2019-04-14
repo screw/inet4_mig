@@ -182,19 +182,14 @@ class INET_API OSPFv3SPFVertex
   public:
     OSPFv3SPFVertex(OSPFv3LSA* asocLSA, int distance);
 
-
-
 };
 
 unsigned int calculateLSASize(const OSPFv3LSA *lsaC);
 std::ostream& operator<<(std::ostream& ostr, const OSPFv3LSAHeader& lsa);
 inline std::ostream& operator<<(std::ostream& ostr, const OSPFv3LSA& lsa) { ostr << lsa.getHeader(); return ostr; }
 std::ostream& operator<<(std::ostream& ostr, const OSPFv3NetworkLSA& lsa);
-//std::ostream& operator<<(std::ostream& ostr, const TOSData& tos);
-//std::ostream& operator<<(std::ostream& ostr, const Link& link);
 std::ostream& operator<<(std::ostream& ostr, const OSPFv3RouterLSA& lsa);
 std::ostream& operator<<(std::ostream& ostr, const OSPFv3InterAreaPrefixLSA& lsa);
-//std::ostream& operator<<(std::ostream& ostr, const ExternalTOSInfo& tos);
 std::ostream& operator<<(std::ostream& ostr, const OSPFv3ASExternalLSA& lsa);
 
 }//namespace inet

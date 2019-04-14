@@ -18,6 +18,8 @@
 #include "inet/networklayer/ipv6/Ipv6InterfaceData.h"
 #include "inet/networklayer/ipv6/Ipv6RoutingTable.h"
 #include "inet/networklayer/ipv6/Ipv6Route.h"
+#include "inet/networklayer/contract/ipv6/Ipv6Address.h"
+#include "inet/networklayer/ipv6/Ipv6RoutingTable.h"
 
 #include "inet/ansa/ospfv3/process/OSPFv3Instance.h"
 #include "inet/ansa/ospfv3/process/OSPFv3Area.h"
@@ -26,19 +28,11 @@
 #include "inet/ansa/ospfv3/OSPFv3Common.h"
 #include "inet/ansa/ospfv3/OSPFv3Packet_m.h"
 
-
-#include "inet/networklayer/contract/ipv6/Ipv6Address.h"
-#include "inet/networklayer/ipv6/Ipv6RoutingTable.h"
-
-
-
 #include "inet/linklayer/common/InterfaceTag_m.h"
 #include "inet/networklayer/common/HopLimitTag_m.h"
 #include "inet/networklayer/common/L3AddressTag_m.h"
 #include "inet/networklayer/icmpv6/Icmpv6Header_m.h"
 #include "inet/common/Protocol.h"
-
-
 
 namespace inet{
 
@@ -104,12 +98,10 @@ class INET_API OSPFv3Process : protected cListener, public cSimpleModule
     virtual int numInitStages() const override { return NUM_INIT_STAGES; }
     void parseConfig(cXMLElement* areaConfig);
 
-
     //backbone area structure
     //virtual links
     //list of external routes
     //list of as-external routes
-    //routing table
 };
 }//namespace inet
 

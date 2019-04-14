@@ -6,7 +6,6 @@
 #include "inet/common/INETDefs.h"
 #include "inet/networklayer/contract/ipv4/Ipv4Address.h"
 #include "inet/networklayer/common/L3Address.h"
-//#include "inet/networklayer/contract/INetworkProtocolControlInfo.h"  LG v novom inete nie je
 #include "inet/networklayer/contract/IInterfaceTable.h"
 #include "inet/common/ModuleAccess.h"
 
@@ -18,7 +17,6 @@
 #include "inet/ansa/ospfv3/interface/OSPFv3Interface.h"
 
 #include "inet/common/packet/Packet.h"
-
 
 namespace inet{
 
@@ -46,7 +44,6 @@ class INET_API OSPFv3Instance : public cObject
     int getUniqueId(){return OSPFv3IfIndex++;}
     int getAreaCount(){return this->areas.size();}
     void removeFromAllRetransmissionLists(LSAKeyType lsaKey);
-
     std::string detailedInfo() const override;
 
   public:

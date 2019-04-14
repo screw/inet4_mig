@@ -11,7 +11,6 @@ OSPFv3Instance::OSPFv3Instance(int instanceId, OSPFv3Process* parentProcess, int
     this->addressFamily = addressFamily;
     this->containingModule=findContainingNode(this->containingProcess);
     this->ift = check_and_cast<IInterfaceTable *>(containingModule->getSubmodule("interfaceTable"));
-
 }
 
 OSPFv3Instance::~OSPFv3Instance()
@@ -47,7 +46,6 @@ void OSPFv3Instance::processPacket(Packet* pk)
 {
     const auto& packet = pk->peekAtFront<OSPFv3Packet>();
     EV_INFO << "Process " << this->containingProcess->getProcessID() << " received packet: (" << packet->getClassName() << ")" << packet->getName() << "\n";
-//
     if(packet->getVersion()!=3) {
         delete pk;
         return;
@@ -70,7 +68,7 @@ void OSPFv3Instance::processPacket(Packet* pk)
                     if (intf != nullptr) {
                         OSPFv3Area *virtualLinkTransitArea = this->getAreaById(intf->getTransitAreaID());
                         if (virtualLinkTransitArea != nullptr) {
-//                            // the receiving interface must attach to the virtual link's configured transit area
+//                           // the receiving interface must attach to the virtual link's configured transit area
                             OSPFv3Interface *virtualLinkInterface = virtualLinkTransitArea->getInterfaceById(intfId);
 //
                             if (virtualLinkInterface == nullptr) {
@@ -88,9 +86,6 @@ void OSPFv3Instance::processPacket(Packet* pk)
 
             Ipv6Address destinationAddress =  pk->getTag<L3AddressInd>()->getDestAddress().toIpv6();
             Ipv6Address allDRouters = Ipv6Address::ALL_OSPF_DESIGNATED_ROUTERS_MCAST;
-//            Ipv6Address destinationAddress = ctlInfo->getDestAddr();
-//            Ipv6Address allDRouters = Ipv6Address::ALL_OSPF_DESIGNATED_ROUTERS_MCAST;
-
             OSPFv3Interface::OSPFv3InterfaceFAState interfaceState = intf->getState();
 
             // if destination address is ALL_D_ROUTERS the receiving interface must be in DesignatedRouter or Backup state

@@ -15,7 +15,6 @@ OSPFv3SPFVertex::OSPFv3SPFVertex(OSPFv3LSA* asocLSA, int distance)
     }
 }
 
-
 unsigned int calculateLSASize(const OSPFv3LSA *lsaC)
 {
     auto lsa = lsaC->dup(); // make editable copy of lsa
@@ -128,36 +127,6 @@ std::ostream& operator<<(std::ostream& ostr, const OSPFv3NetworkLSA& lsa)
     return ostr;
 }
 
-//std::ostream& operator<<(std::ostream& ostr, const TOSData& tos)
-//{
-//    ostr << "tos: " << (int)tos.tos
-//         << "metric:";
-//    for (int i = 0; i < 3; i++)
-//        ostr << " " << (int)tos.tosMetric[i];
-//    return ostr;
-//}
-
-//std::ostream& operator<<(std::ostream& ostr, const Link& link)
-//{
-//    ostr << "ID: " << link.getLinkID().str(false)
-//         << ", data: ";
-//    unsigned long data = link.getLinkData();
-//    if ((data & 0xFF000000) != 0)
-//        ostr << IPv4Address(data).str(false);
-//    else
-//        ostr << data;
-//    ostr << ", cost: " << link.getLinkCost();
-//    unsigned int cnt = link.getTosDataArraySize();
-//    if (cnt) {
-//        ostr << ", tos: {";
-//        for (unsigned int i = 0; i < cnt; i++) {
-//            ostr << " " << link.getTosData(i);
-//        }
-//        ostr << "}";
-//    }
-//    return ostr;
-//}
-
 std::ostream& operator<<(std::ostream& ostr, const OSPFv3RouterLSA& lsa)
 {
     if (lsa.getVBit())
@@ -183,26 +152,9 @@ std::ostream& operator<<(std::ostream& ostr, const OSPFv3InterAreaPrefixLSA& lsa
 {
     ostr << "Mask: " << lsa.getPrefixLen()
          << ", Cost: " << lsa.getMetric() << ", ";
-//    unsigned int cnt = lsa.getTosDataArraySize();
-//    if (cnt) {
-//        ostr << ", tosData: {";
-//        for (unsigned int i = 0; i < cnt; i++) {
-//            ostr << " " << lsa.getTosData(i);
-//        }
-//        ostr << "}, ";
-//    }
     ostr << lsa.getHeader();
     return ostr;
 }
-
-//std::ostream& operator<<(std::ostream& ostr, const ExternalTOSInfo& tos)
-//{
-//    ostr << "TOSData: {" << tos.tosData
-//         << "}, MetricType: " << tos.E_ExternalMetricType
-//         << ", fwAddr: " << tos.forwardingAddress
-//         << ", extRouteTag: " << tos.externalRouteTag;
-//    return ostr;
-//}
 
 std::ostream& operator<<(std::ostream& ostr, const OSPFv3ASExternalLSA& lsa)
 {
@@ -219,14 +171,7 @@ std::ostream& operator<<(std::ostream& ostr, const OSPFv3ASExternalLSA& lsa)
          << ", ExtRouteTag: " << lsa.getExternalRouteTag()
          << ", Referenced LSID: " << lsa.getReferencedLSID()
          << ", ";
-//    unsigned int cnt = contents.getExternalTOSInfoArraySize();
-//    if (cnt) {
-//        ostr << ", tosData: {";
-//        for (unsigned int i = 0; i < cnt; i++) {
-//            ostr << " " << contents.getExternalTOSInfo(i);
-//        }
-//        ostr << "}, ";
-//    }
+
     ostr << lsa.getHeader();
     return ostr;
 }

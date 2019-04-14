@@ -25,11 +25,9 @@ void OSPFv3Splitter::initialize(int stage)
         containingModule=findContainingNode(this);
         routingModule=this->getParentModule();
 
-//        ift = check_and_cast<IInterfaceTable *>(containingModule->getSubmodule("interfaceTable"));
         ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
         registerService(Protocol::ospf, nullptr, gate("ipIn"));
         registerProtocol(Protocol::ospf, gate("ipOut"), nullptr);
-
 //        IPSocket ipSocket(gate("ipOut"));
 //        ipSocket.registerProtocol(IP_PROT_OSPF);
 
@@ -41,7 +39,6 @@ void OSPFv3Splitter::initialize(int stage)
 
 void OSPFv3Splitter::handleMessage(cMessage* msg)
 {
-    EV_DEBUG << "SOM V SPLITTERI NA ZACIATKU HANDLE MESSAGE\n";
     if(msg->isSelfMessage()) {
         EV_DEBUG <<"Self message received by Splitter\n";
         delete msg;
@@ -59,10 +56,7 @@ void OSPFv3Splitter::handleMessage(cMessage* msg)
 //                return;
 //            }
 
-//           OSPFv3Packet* packet = dynamic_cast<OSPFv3Packet*>(msg);
            auto protocol = packet->getTag<PacketProtocolTag>()->getProtocol();
-           EV_DEBUG << "SOM V SPLITTERI\n";
-
             if(protocol!=&Protocol::ospf){
                 delete msg;
                 return;
@@ -139,8 +133,6 @@ void OSPFv3Splitter::parseConfig(cXMLElement* routingConfig, cXMLElement* intCon
             }
 
             this->interfaceToProcess[intName]=procInts;
-
-//            EV_DEBUG << processPosition << endl;
             this->processesModules.at(processPosition)->activateProcess();
 
 
@@ -150,22 +142,12 @@ void OSPFv3Splitter::parseConfig(cXMLElement* routingConfig, cXMLElement* intCon
         }
         //register all interfaces to MCAST
         for (auto it=processToInterface.begin(); it!=processToInterface.end(); it++) {
-//            EV_DEBUG << "FOR \n";
             InterfaceEntry* ie = ift->getInterfaceByName(intName);
             Ipv6InterfaceData *ipv6int = ie->ipv6Data();
-//            std::cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl; LG
-//            std::cout << "ie = " << endl;
-//            std::cout << "getNumAddresses() = " << ie->ipv6Data()->getNumAddresses() << endl;
-//            for (int i = 0; i < ie->ipv6Data()->getNumAddresses(); i++)
-//            {
-//                std::cout << "getAddress(i) = " << ie->ipv6Data()->getAddress(i) << endl;
-////                std::cout << "getAdvPrefix(i)" << ie->ipv6Data()->getAdvPrefix(i).prefixLength<< endl;
-////                std::cout << "getAdvPrefix(i)" << ie->ipv6Data()->getAdvPrefix(i).prefix << endl;
-//            }
 
             //ALL_OSPF_ROUTERS_MCAST renamed into ALL_ROUTERS_5
             ipv6int->joinMulticastGroup(Ipv6Address::ALL_OSPF_ROUTERS_MCAST);//TODO - join only once
-//            ipv6int->assignAddress(Ipv6Address::ALL_OSPF_ROUTERS_MCAST, false, 0, 0);
+//            ipv6int->assignAddress(Ipv6Address::ALL_OSPF_ROUTERS_MCAST, false, 0, 0); // FIXME: packetTraffic throws error. Does this have any connection with it?
         }
     }
 
@@ -208,7 +190,6 @@ void OSPFv3Splitter::addNewProcess(cXMLElement* process, cXMLElement* interfaces
     std::string processFullName = "process" + processID;
 
     OSPFv3Process* newProcessModule = (OSPFv3Process*)newProcessType->create(processFullName.c_str(), this->routingModule);
-
 
     newProcessModule->par("processID")=processIdNum;
     newProcessModule->par("routerID")=routerID;

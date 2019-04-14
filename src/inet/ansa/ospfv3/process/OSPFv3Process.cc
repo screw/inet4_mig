@@ -108,6 +108,7 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
     {
 
         const char* interfaceName = (*interfaceIt)->getAttribute("name");
+        InterfaceEntry *myInterface = (ift->getInterfaceByName(interfaceName));
 
         if (myInterface->isLoopback()) {
             const char * ipv41 = "127.0.0.0";
@@ -151,8 +152,8 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
         }
 
          //interface ipv4 configuration
-         Ipv4Address addr;// = (Ipv4Address((*interfaceIt)->getElementsByTagName("IPAddress")));
-         Ipv4Address mask;// = (Ipv4Address((*interfaceIt)->getElementsByTagName("Mask")));
+         Ipv4Address addr;
+         Ipv4Address mask;
          Ipv4InterfaceData * intfData = myInterface->ipv4Data(); //new Ipv4InterfaceData();
 
 
@@ -288,6 +289,7 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
                 }
 
 
+
                 int instIdNum;
 
                 if(instId==nullptr) {
@@ -307,7 +309,6 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
                     instIdNum = atoi(instId);
 
                 //TODO - check range of instance ID
-
                 //check for multiple definition of one instance
                 OSPFv3Instance* instance = this->getInstanceById(instIdNum);
                 //if(instance != nullptr)
@@ -423,16 +424,7 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
                         }
 
 
-
-                        std::cout << "som za FOROM"  << endl;
-                        std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%\n";
-
-                        std::cout << "VYPIS IFT ZA FOROM\n";
-                        std::cout <<  myInterface->info();
-                        std::cout << "\n&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n"; // LG
-
-
-                        std::cout << "I am " << this->getOwner()->getOwner()->getName() << " on int " << newInterface->getInterfaceLLIP() << " with area " << area->getAreaID() << endl;
+                       EV_DEBUG << "I am " << this->getOwner()->getOwner()->getName() << " on int " << newInterface->getInterfaceLLIP() << " with area " << area->getAreaID() <<"\n";
                         area->addInterface(newInterface);
                     }
                 }
@@ -452,13 +444,10 @@ void OSPFv3Process::ageDatabase()
         long areaCount = instances[i]->getAreaCount();
 
         for (long j = 0; j < areaCount; j++)
-        {
             instances[i]->getArea(j)->ageDatabase();
-        }
 
-        if (shouldRebuildRoutingTable) {
+        if (shouldRebuildRoutingTable)
             rebuildRoutingTable();
-        }
     }
 } // ageDatabase
 
@@ -473,9 +462,7 @@ bool OSPFv3Process::hasAddressRange(const Ipv6AddressRange& addressRange) const
         for (long j = 0; j < areaCount; j++)
         {
            if(instances[i]->getArea(j)->hasAddressRange(addressRange))
-           {
                return true;
-           }
         }
     }
     return false;
@@ -687,8 +674,6 @@ void OSPFv3Process::addInstance(OSPFv3Instance* newInstance)
 
 void OSPFv3Process::sendPacket(Packet *packet, Ipv6Address destination, const char* ifName, short hopLimit)
 {
-
-
     InterfaceEntry *ie = this->ift->getInterfaceByName(ifName);
     Ipv6InterfaceData *ipv6int = ie->ipv6Data();
 
@@ -742,14 +727,11 @@ void OSPFv3Process::sendPacket(Packet *packet, Ipv6Address destination, const ch
 
         default:
             break;
-
     }
-
     packet->addTagIfAbsent<DispatchProtocolReq>()->setProtocol(&Protocol::ipv6);
     this->send(packet, "splitterOut");
 }//sendPacket
-//
-//
+
 OSPFv3LSA* OSPFv3Process::findLSA(LSAKeyType lsaKey, Ipv4Address areaID, int instanceID)
 {
     OSPFv3Instance* instance = this->getInstanceById(instanceID);
@@ -849,7 +831,7 @@ bool OSPFv3Process::installLSA(const OSPFv3LSA *lsaC, int instanceID, Ipv4Addres
 
 void OSPFv3Process::calculateASExternalRoutes(std::vector<OSPFv3RoutingTableEntry* > newTableIPv6, std::vector<OSPFv3IPv4RoutingTableEntry* > newTableIPv4)
 {
-    EV_DEBUG << "Calculating AS External Routes\n";
+    EV_DEBUG << "Calculating AS External Routes (Not ymplemented yet)\n";
 }
 
 void OSPFv3Process::rebuildRoutingTable()
@@ -887,7 +869,7 @@ void OSPFv3Process::rebuildRoutingTable()
             }
         }
 
-        //4)On BDR - Transit area LSAs(summary) are examined - find better paths then in 2) and 3)
+        //4)On BDR - Transit area LSAs(summary) are examined - find better paths then in 2) and 3)  TODO
        /* if (hasTransitAreas) {
             for (i = 0; i < areaCount; i++) {
                 if (currInst->getArea(i)->getTransitCapability()) {
@@ -899,25 +881,13 @@ void OSPFv3Process::rebuildRoutingTable()
             }
         }*/
 
-        //5) Routes to external destinations are calculated
+        //5) Routes to external destinations are calculated TODO
        // calculateASExternalRoutes(newTableIPv6, newTableIPv4);
 
         // backup the routing table
         unsigned long routeCount = routingTableIPv6.size();
         std::vector<OSPFv3RoutingTableEntry *> oldTableIPv6;
         std::vector<OSPFv3IPv4RoutingTableEntry *> oldTableIPv4;
-
-      /*  oldTableIPv6.assign(routingTableIPv6.begin(), routingTableIPv6.end());
-        routingTableIPv6.clear();
-        routingTableIPv6.assign(newTableIPv6.begin(), newTableIPv6.end());
-
-
-        oldTableIPv4.assign(routingTableIPv4.begin(), routingTableIPv4.end());
-        routingTableIPv4.clear();
-        routingTableIPv4.assign(newTableIPv4.begin(), newTableIPv4.end());*/
-
-
-
 
         if (currInst->getAddressFamily() == IPV6INSTANCE) // IPv6 AF should not clear IPv4 Routing table and vice versa
         {
@@ -931,12 +901,8 @@ void OSPFv3Process::rebuildRoutingTable()
             // remove entries from the IPv6 routing table inserted by the OSPF module
             for (i = 0; i < routingEntryNumber; i++) {
                 Ipv6Route *entry = rt6->getRoute(i);
-    //            OSPFv3RoutingTableEntry *ospfEntry = dynamic_cast<OSPFv3RoutingTableEntry *>(entry);
                 if (entry->getSourceType() == IRoute::OSPF)
                     eraseEntriesIPv6.push_back(entry);
-    //            if (ospfEntry != nullptr) {
-    //                eraseEntries.push_back(entry);
-    //            }
             }
             unsigned int eraseCount = eraseEntriesIPv6.size();
             for (i = 0; i < eraseCount; i++) {
@@ -954,20 +920,14 @@ void OSPFv3Process::rebuildRoutingTable()
             // remove entries from the IPv64routing table inserted by the OSPF module
             for (i = 0; i < routingEntryNumber; i++) {
                 Ipv4Route *entry = rt4->getRoute(i);
-    //            OSPFv3RoutingTableEntry *ospfEntry = dynamic_cast<OSPFv3RoutingTableEntry *>(entry);
                 if (entry->getSourceType() == IRoute::OSPF)
                     eraseEntriesIPv4.push_back(entry);
-    //            if (ospfEntry != nullptr) {
-    //                eraseEntries.push_back(entry);
-    //            }
             }
             unsigned int eraseCount = eraseEntriesIPv4.size();
             for (i = 0; i < eraseCount; i++) {
                 rt4->deleteRoute(eraseEntriesIPv4[i]);
             }
         }
-
-        // TODO : LG dorobit aj pre IPv4 !!!!
 
         // add the new routing entries
         if (currInst->getAddressFamily() == IPV6INSTANCE)
@@ -993,50 +953,16 @@ void OSPFv3Process::rebuildRoutingTable()
                         }
                     }
 
-                   // rt->addRoute(routingTable[i]);
-                   //rt->addRoute(new OSPFv3RoutingTableEntry(*(routingTable[i]), routingTable[i]->getDestPrefix(), routingTable[i]->getPrefixLength(), routingTable[i]->getSourceType()));
-    //                rt->addRoute(new OSPFv3RoutingTableEntry(*(routingTable[i]), *(routingTable[i])->getDestPrefix(), *(routingTableIPv6[i])->getPrefixLength(),  *(routingTableIPv6[i])->getSourceType()));
-
                 }
             }
-            for (int g = 0; g < rt6->getNumRoutes(); g++)
-            {
-                Ipv6Route* route = rt6->getRoute(g);
-                std::cout << route->getSourceType();
-                    std::cout << " ";
-                    if (route->getDestPrefix().isUnspecified())
-                        std::cout << "::";
-                    else
-                        std::cout << route->getDestPrefix();
-                    std::cout << "/" << route->getPrefixLength();
-                    std::cout << " .. nexthop = " <<  route->getNextHop().str();
-                    if (route->getNextHop().isUnspecified())
-                    {
-                        std::cout << ", is directly connected";
-                    }
-                    else
-                    {
-                        std::cout << ", [" << route->getAdminDist() << "/" << route->getMetric() << "]";
-                        std::cout << " via ";
-                        std::cout << route->getNextHop();
-                    }
-                    std::cout << ", " << route->getInterface()->getInterfaceName();
-                    std::cout << "\n";
-            }
-
-            //notifyAboutRoutingTableChanges(oldTableIPv6);
 
             routeCount = oldTableIPv6.size();
             for (i = 0; i < routeCount; i++)
-            {
                 delete (oldTableIPv6[i]);
-            }
         }
         else
         {
             routeCount = routingTableIPv4.size();
-            EV_DEBUG  << "rebuild , routeCount - " << routeCount << "\n";
-
             for (i = 0; i < routeCount; i++) {
                 if (routingTableIPv4[i]->getDestinationType() == OSPFv3IPv4RoutingTableEntry::NETWORK_DESTINATION)
                 {
@@ -1045,14 +971,13 @@ void OSPFv3Process::rebuildRoutingTable()
                         if (routingTableIPv4[i]->getNextHop(0).hopAddress != Ipv4Address::UNSPECIFIED_ADDRESS)
                         {
                             Ipv4Route *route = new Ipv4Route();
-                            route->setDestination(  routingTableIPv4[i]->getDestinationAsGeneric().toIpv4());
-                            route->setNetmask   (   route->getDestination().makeNetmask(routingTableIPv4[i]->getPrefixLength()));
-                            route->setSourceType(   routingTableIPv4[i]->getSourceType());
-                            route->setNextHop   (   routingTableIPv4[i]->getNextHop(0).hopAddress);
-                            route->setMetric    (       routingTableIPv4[i]->getMetric());
-                            route->setInterface (    routingTableIPv4[i]->getInterface());
-                            route->setAdminDist (    routingTableIPv4[i]->getAdminDist());
-
+                            route->setDestination   (routingTableIPv4[i]->getDestinationAsGeneric().toIpv4());
+                            route->setNetmask       (route->getDestination().makeNetmask(routingTableIPv4[i]->getPrefixLength()));
+                            route->setSourceType    (routingTableIPv4[i]->getSourceType());
+                            route->setNextHop       (routingTableIPv4[i]->getNextHop(0).hopAddress);
+                            route->setMetric        (routingTableIPv4[i]->getMetric());
+                            route->setInterface     (routingTableIPv4[i]->getInterface());
+                            route->setAdminDist     (routingTableIPv4[i]->getAdminDist());
                             rt4->addRoute(route);
                         }
                     }
@@ -1062,20 +987,32 @@ void OSPFv3Process::rebuildRoutingTable()
 
             routeCount = oldTableIPv4.size();
             for (i = 0; i < routeCount; i++)
-            {
                delete (oldTableIPv4[i]);
-            }
         }
 
-        EV_INFO << "Routing table was rebuilt.\n"
-                << "Results (IPv6):\n";
+        if (currInst->getAddressFamily() == IPV6INSTANCE)
+        {
+            EV_INFO << "Routing table was rebuilt.\n"
+                    << "Results (IPv6):\n";
 
-        routeCount = routingTableIPv6.size();
-        for (i = 0; i < routeCount; i++) {
-            EV_INFO << *routingTableIPv6[i] << "\n";
+            routeCount = routingTableIPv6.size();
+            for (i = 0; i < routeCount; i++)
+                EV_INFO << *routingTableIPv6[i] << "\n";
+
+        }
+        else //IPV4INSTANCE
+        {
+            EV_INFO << "Routing table was rebuilt.\n"
+                    << "Results (IPv4):\n";
+
+            routeCount = routingTableIPv6.size();
+            for (i = 0; i < routeCount; i++)
+                EV_INFO << *routingTableIPv4[i] << "\n";
+
         }
     }
-}
+} // end of rebuildRoutingTable
+
 }//namespace inet
 
 
