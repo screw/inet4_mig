@@ -87,6 +87,48 @@ void OSPFv3NeighborState::changeState(OSPFv3Neighbor *neighbor, OSPFv3NeighborSt
         }
     }
 
+    if (nextState == OSPFv3Neighbor::DOWN_STATE) //this neigbor was shuted down
+    {
+        // invalidate all LSA type 3, which I know from this neighbor
+        // nájdi mi všetky intra-arey, ktoré majú adv Router ID tento neighbor ID
+        // v druhých areách, nájdi všetky inter-area , ktoré majú prefix týchto najdených intra area
+        // set MAX_AGE a pošli ïalej
+        if (neighbor->getInterface()->getArea()->getInstance()->getAreaCount() > 1) // this is ABR
+        {
+            for(int ar = 0; ar < neighbor->getInterface()->getArea()->getInstance()->getAreaCount(); ar++)
+            {
+                OSPFv3Area* area = neighbor->getInterface()->getArea()->getInstance()->getArea(ar);
+                if(area->getAreaID() == neighbor->getInterface()->getArea()->getAreaID()) //skip my Area
+                    continue;
+
+                // in all other Areas invalidate all Inter-Area-Prefix LSA with same prefix IP as all
+                // Intra-Area-Prefix LSA which are known from this neighbor
+                for (int i = 0; i < neighbor->getInterface()->getArea()->getIntraAreaPrefixLSACount(); i++)
+                {
+                    IntraAreaPrefixLSA *iapLSA = neighbor->getInterface()->getArea()->getIntraAreaPrefixLSA(i);
+                    if (neighbor->getNeighborID() == iapLSA->getHeader().getAdvertisingRouter())
+                    {
+                        for(int k = 0; k <  iapLSA->getPrefixesArraySize(); k++)
+                        {
+                            // go through all Inter-Area-Prefix LSA of other Area
+                            for (int j = 0; j <  area->getInterAreaPrefixLSACount(); j++)
+                            {
+                                InterAreaPrefixLSA *interLSA = area->getInterAreaPrefixLSA(j);
+                                if ((interLSA->getHeader().getAdvertisingRouter() == neighbor->getInterface()->getArea()->getInstance()->getProcess()->getRouterID()) &&
+                                        (interLSA->getPrefix() == iapLSA->getPrefixes(k).addressPrefix) &&
+                                        (interLSA->getPrefixLen() == iapLSA->getPrefixes(k).prefixLen))
+                                {
+                                    interLSA->getHeaderForUpdate().setLsaAge(MAX_AGE);
+                                    area->floodLSA(interLSA);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     if (shouldRebuildRoutingTable) {
         neighbor->getInterface()->getArea()->getInstance()->getProcess()->rebuildRoutingTable();
     }

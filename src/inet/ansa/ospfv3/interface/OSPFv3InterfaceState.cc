@@ -171,6 +171,10 @@ void OSPFv3InterfaceState::changeState(OSPFv3Interface *interface, OSPFv3Interfa
             OSPFv3IntraAreaPrefixLSA* prefLSA = interface->getArea()->originateIntraAreaPrefixLSA();
             shouldRebuildRoutingTable |= interface->getArea()->installIntraAreaPrefixLSA(prefLSA);
             interface->getArea()->floodLSA(prefLSA);
+            if (interface->getArea()->getInstance()->getAreaCount() > 1) //this is ABR
+            {
+                interface->getArea()->originateInterAreaPrefixLSA(prefLSA, interface->getArea(), false);
+            }
         }
     }
 

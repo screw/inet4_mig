@@ -185,6 +185,7 @@ class INET_API OSPFv3Interface : public cObject
 //    void installLinkLSA(LinkLSA *lsa);
     bool updateLinkLSA(LinkLSA* currentLsa, OSPFv3LinkLSA* newLsa);
     bool linkLSADiffersFrom(OSPFv3LinkLSA* currentLsa, OSPFv3LinkLSA* newLsa);
+    LinkLSA* findLinkLSAbyAdvRouter (Ipv4Address advRouter);
 
     void sendLSAcknowledgement(const OSPFv3LSAHeader *lsaHeader, Ipv6Address destination);
     void addDelayedAcknowledgement(const OSPFv3LSAHeader& lsaHeader);

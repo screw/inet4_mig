@@ -7,6 +7,7 @@ import inet.common.misc.ThruputMeteringChannel;
 import inet.node.ethernet.EtherSwitch;
 import inet.node.inet.StandardHost;
 
+import inet.common.scenario.ScenarioManager;
 
 network multiple_areas2
 {
@@ -33,11 +34,11 @@ network multiple_areas2
 							"<interface among='Router3 Router8' address='192.168.30.x' netmask='255.255.255.0' />"+
 							"<interface among='Router4 Router9' address='192.168.40.x' netmask='255.255.255.0' />"+
 							"<interface among='Router5 Router10' address='192.168.50.x' netmask='255.255.255.0' />"+
-//							"<interface among='Router6 Host1' address='192.168.11.x' netmask='255.255.255.0' />"+
-//							"<interface among='Router7 Host2' address='192.168.12.x' netmask='255.255.255.0' />"+
-//							"<interface among='Router8 Host3' address='192.168.13.x' netmask='255.255.255.0' />"+
-//							"<interface among='Router9 Host4' address='192.168.14.x' netmask='255.255.255.0' />"+
-//							"<interface among='Router10 Host5' address='192.168.15.x' netmask='255.255.255.0' />"+
+							"<interface among='Router6 Host1' address='192.168.11.x' netmask='255.255.255.0' />"+
+							"<interface among='Router7 Host2' address='192.168.12.x' netmask='255.255.255.0' />"+
+							"<interface among='Router8 Host3' address='192.168.13.x' netmask='255.255.255.0' />"+
+							"<interface among='Router9 Host4' address='192.168.14.x' netmask='255.255.255.0' />"+
+							"<interface among='Router10 Host5' address='192.168.15.x' netmask='255.255.255.0' />"+
                             "</config>");
                 @display("p=23,24");
         }
@@ -71,31 +72,59 @@ network multiple_areas2
         Router6: Ospfv3Router {
             @display("p=165,316");
             gates:
-                ethg[1];
+                ethg[2];
         }
         Router7: Ospfv3Router {
             @display("p=410,419");
             gates:
-                ethg[1];
+                ethg[2];
         }
         Router8: Ospfv3Router {
             @display("p=654,316");
             gates:
-                ethg[1];
+                ethg[2];
         }
         Router9: Ospfv3Router {
             @display("p=579,101");
             gates:
-                ethg[1];
+                ethg[2];
         }
         Router10: Ospfv3Router {
             @display("p=234,101");
             gates:
-                ethg[1];
+                ethg[2];
         }
 
         etherSwitch: EtherSwitch {
             @display("p=410,239");
+        }
+        Host1: StandardHost {
+            @display("p=40,316");
+            gates:
+                ethg[1];
+        }
+        Host2: StandardHost {
+            @display("p=305,419");
+            gates:
+                ethg[1];
+        }
+        Host4: StandardHost {
+            @display("p=743,101");
+            gates:
+                ethg[1];
+        }
+        Host3: StandardHost {
+            @display("p=800,316");
+            gates:
+                ethg[1];
+        }
+        Host5: StandardHost {
+            @display("p=103,101");
+            gates:
+                ethg[1];
+        }
+        scenarioManager: ScenarioManager {
+            @display("p=22.6325,96.7025");
         }
 
     connections:
@@ -110,5 +139,11 @@ network multiple_areas2
         Router3.ethg[1] <--> Channel <--> Router8.ethg[0];
         Router4.ethg[1] <--> Channel <--> Router9.ethg[0];
         Router5.ethg[1] <--> Channel <--> Router10.ethg[0];
+
+        Router6.ethg[1] <--> Channel <--> Host1.ethg[0];
+        Router7.ethg[1] <--> Channel <--> Host2.ethg[0];
+        Router8.ethg[1] <--> Channel <--> Host3.ethg[0];
+        Router9.ethg[1] <--> Channel <--> Host4.ethg[0];
+        Router10.ethg[1] <--> Channel <--> Host5.ethg[0];
 
 }

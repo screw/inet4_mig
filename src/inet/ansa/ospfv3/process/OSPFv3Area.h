@@ -100,7 +100,7 @@ class INET_API OSPFv3Area : public cObject
     int getInterAreaPrefixLSACount(){return this->interAreaPrefixLSAList.size();}
     InterAreaPrefixLSA* getInterAreaPrefixLSA(int i){return this->interAreaPrefixLSAList.at(i);}
     void originateDefaultInterAreaPrefixLSA(OSPFv3Area* toArea);
-    void originateInterAreaPrefixLSA(OSPFv3IntraAreaPrefixLSA* lsa, OSPFv3Area* fromArea);
+    void originateInterAreaPrefixLSA(OSPFv3IntraAreaPrefixLSA* lsa, OSPFv3Area* fromArea, bool checkDuplicate);
     void originateInterAreaPrefixLSA(const OSPFv3LSA* prefLsa, OSPFv3Area* fromArea);
     bool installInterAreaPrefixLSA(const OSPFv3InterAreaPrefixLSA* lsaC);
     bool updateInterAreaPrefixLSA(InterAreaPrefixLSA* currentLsa, OSPFv3InterAreaPrefixLSA* newLsa);
@@ -112,8 +112,9 @@ class INET_API OSPFv3Area : public cObject
 
 
     //* INTRA AREA PREFIX LSA */
-    void addIntraAreaPrefixLSA(IntraAreaPrefixLSA* newLSA){this->intraAreaPrefixLSAList.push_back(newLSA);}
     IntraAreaPrefixLSA* originateIntraAreaPrefixLSA();//this is for non-BROADCAST links
+    IntraAreaPrefixLSA* originateNetIntraAreaPrefixLSA(NetworkLSA* networkLSA, OSPFv3Interface* interface);//this originates one router LSA for one area
+    void addIntraAreaPrefixLSA(IntraAreaPrefixLSA* newLSA){this->intraAreaPrefixLSAList.push_back(newLSA);}
     int getIntraAreaPrefixLSACount(){return this->intraAreaPrefixLSAList.size();}
     IntraAreaPrefixLSA* getIntraAreaPrefixLSA(int i){return this->intraAreaPrefixLSAList.at(i);}
     IntraAreaPrefixLSA* getNetIntraAreaPrefixLSA(L3Address prefix, int prefLen);
@@ -125,7 +126,6 @@ class INET_API OSPFv3Area : public cObject
     Ipv4Address getIntraAreaPrefixLinkStateID(){return this->intraAreaPrefixLsID;}
     uint32_t getCurrentIntraAreaPrefixSequence(){return this->intraAreaPrefixLSASequenceNumber;}
     void incrementIntraAreaPrefixSequence(){this->intraAreaPrefixLSASequenceNumber++;}
-    IntraAreaPrefixLSA* originateNetIntraAreaPrefixLSA(NetworkLSA* networkLSA, OSPFv3Interface* interface);//this originates one router LSA for one area
     Ipv4Address getNewNetIntraAreaPrefixLinkStateID();
     Ipv4Address getNetIntraAreaPrefixLinkStateID(){return this->netIntraAreaPrefixLsID;}
     uint32_t getCurrentNetIntraAreaPrefixSequence(){return this->netIntraAreaPrefixLSASequenceNumber;}

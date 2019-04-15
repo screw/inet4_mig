@@ -1186,6 +1186,8 @@ void OSPFv3Interface::processLSU(Packet* packet, OSPFv3Neighbor* neighbor){
                             (this->getArea()->getInstance()->getAreaCount() > 1) &&
                             (this->getArea()->getAreaID() ==  BACKBONE_AREAID))
                     {
+//                        if (ackFlags.lsaIsDuplicate) // I've already made this LSA
+
                         this->getArea()->originateInterAreaPrefixLSA(currentLSA, this->getArea());
 //                        for(int i = 0; i < this->getInstance()->getAreaCount(); i++)
 //                        {
@@ -1807,7 +1809,7 @@ LinkLSA* OSPFv3Interface::originateLinkLSA()
                 prefix.xBit = false;
 
                 prefix.prefixLen=64;
-                prefix.addressPrefix=ipv6;
+                prefix.addressPrefix=ipv6.getPrefix(prefix.prefixLen);
 
                 linkLSA->setPrefixesArraySize(linkLSA->getPrefixesArraySize()+1);
                 linkLSA->setPrefixes(linkLSA->getPrefixesArraySize()-1, prefix);
@@ -1865,7 +1867,7 @@ bool OSPFv3Interface::updateLinkLSA(LinkLSA* currentLsa, OSPFv3LinkLSA* newLsa)
 {
     bool different = linkLSADiffersFrom(currentLsa, newLsa);
     (*currentLsa) = (*newLsa);
-    currentLsa->getHeaderForUpdate().setLsaAge(0);//reset the age
+//    currentLsa->getHeaderForUpdate().setLsaAge(0);//reset the age
     if (different) {
         return true;
     }
@@ -1911,6 +1913,17 @@ bool OSPFv3Interface::linkLSADiffersFrom(OSPFv3LinkLSA* currentLsa, OSPFv3LinkLS
     }
 
     return differentHeader || differentBody;
+}
+
+LinkLSA* OSPFv3Interface::findLinkLSAbyAdvRouter (Ipv4Address advRouter)
+{
+    for (auto it=this->linkLSAList.begin(); it!=this->linkLSAList.end(); it++)
+    {
+        if((*it)->getHeader().getAdvertisingRouter() == advRouter)
+            return (*it);
+    }
+
+    return nullptr;
 }
 
 std::string OSPFv3Interface::info() const
