@@ -1143,7 +1143,7 @@ void OSPFv3Area::originateInterAreaPrefixLSA(OSPFv3IntraAreaPrefixLSA* lsa, OSPF
     //TODO - length!!!
 }
 
-void OSPFv3Area::originateInterAreaPrefixLSA(OSPFv3LSA* prefLsa, OSPFv3Area* fromArea)
+void OSPFv3Area::originateInterAreaPrefixLSA(const OSPFv3LSA* prefLsa, OSPFv3Area* fromArea)
 {
     for(int i = 0; i < this->getInstance()->getAreaCount(); i++)
     {
@@ -1151,7 +1151,7 @@ void OSPFv3Area::originateInterAreaPrefixLSA(OSPFv3LSA* prefLsa, OSPFv3Area* fro
         if(area->getAreaID() == fromArea->getAreaID())
             continue;
 
-        OSPFv3InterAreaPrefixLSA *lsa = check_and_cast<OSPFv3InterAreaPrefixLSA *>(prefLsa);
+        const OSPFv3InterAreaPrefixLSA *lsa = check_and_cast<const OSPFv3InterAreaPrefixLSA *>(prefLsa);
         int packetLength = OSPFV3_LSA_HEADER_LENGTH+OSPFV3_INTER_AREA_PREFIX_LSA_HEADER_LENGTH;
         int prefixCount = 0;
 
@@ -1174,7 +1174,9 @@ void OSPFv3Area::originateInterAreaPrefixLSA(OSPFv3LSA* prefLsa, OSPFv3Area* fro
         newLsa->setPrefixLen(lsa->getPrefixLen());
         newLsa->setPrefix(lsa->getPrefix());
 
-        area->installInterAreaPrefixLSA(newLsa);
+//        area->installInterAreaPrefixLSA(newLsa);
+        if (area->installInterAreaPrefixLSA(newLsa))
+            area->floodLSA(newLsa);
     }
     //TODO - length!!!
 }
@@ -2704,7 +2706,7 @@ void OSPFv3Area::calculateInterAreaRoutes(std::vector<OSPFv3RoutingTableEntry* >
         char lsType = currentHeader.getLsaType();
 
         // for IPv6 AF
-        if (this->getInstance()->getAddressFamily() == IPV6INSTANCE)
+        if (v6)
         {
             unsigned long routeCount = newTableIPv6.size();
             Ipv6AddressRange destination;
@@ -2715,7 +2717,7 @@ void OSPFv3Area::calculateInterAreaRoutes(std::vector<OSPFv3RoutingTableEntry* >
 
             if ((lsType == INTER_AREA_PREFIX_LSA) && (this->getInstance()->getProcess()->hasAddressRange(destination))) {    // (3)
                 bool foundIntraAreaRoute = false;
-                // look for an "Active" INTRAAREA route
+                // look for an "Active" INTRA_AREA route
                 for (j = 0; j < routeCount; j++) {
                     OSPFv3RoutingTableEntry *routingEntry = newTableIPv6[j];
 
@@ -3594,7 +3596,7 @@ std::string OSPFv3Area::detailedInfo() const
         }
     }
 
-    /*// LG out stream for DEV
+    // LG out stream for DEV
     out << "ROUTER LSA LIST .size = " <<  routerLSAList.size() << "\n";
     for(auto it=this->routerLSAList.begin(); it!=this->routerLSAList.end(); it++) {
         OSPFv3LSAHeader& header = (*it)->getHeaderForUpdate();
@@ -3689,7 +3691,7 @@ std::string OSPFv3Area::detailedInfo() const
 //        out << "intfID = " << intf->getInterfaceId() <<  "\tTYPE " << intf->getType() << "\n";
 //    }
 
-*/
+
 
     return out.str();
 

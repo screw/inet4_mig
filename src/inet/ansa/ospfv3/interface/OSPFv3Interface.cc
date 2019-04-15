@@ -96,69 +96,6 @@ void OSPFv3Interface::reset()
 
 
 
-Packet* OSPFv3Interface::prepareHello()
-{
-    OSPFv3Options options;
-    int length;
-//    OSPFv3HelloPacket* helloPacket = new OSPFv3HelloPacket();
-    const auto& helloPacket = makeShared<OSPFv3HelloPacket>();
-    std::vector<Ipv4Address> neighbors;
-
-    //OSPF common packet header first
-    helloPacket->setVersion(3);
-    helloPacket->setType(HELLO_PACKET);
-    //TODO - packet length
-    helloPacket->setRouterID(this->getArea()->getInstance()->getProcess()->getRouterID());
-    helloPacket->setAreaID(this->containingArea->getAreaID());
-    helloPacket->setInstanceID(this->getArea()->getInstance()->getInstanceID());
-    length = 16;
-
-    //Hello content
-    helloPacket->setInterfaceID(this->interfaceId);//TODO - check LG
-    helloPacket->setRouterPriority(this->getRouterPriority());
-    memset(&options, 0, sizeof(OSPFv3Options));
-
-    options.rBit = true;
-    options.v6Bit = true;
-    if(this->getArea()->getExternalRoutingCapability())
-        options.eBit = true;
-
-    if(this->getArea()->getAreaType() == NSSA)
-        options.nBit = true;
-
-    helloPacket->setOptions(options);
-    length+=8;
-    //TODO - set options
-    helloPacket->setHelloInterval(this->getHelloInterval());
-    helloPacket->setDeadInterval(this->getDeadInterval());
-    helloPacket->setDesignatedRouterID(this->getDesignatedID());
-    helloPacket->setBackupDesignatedRouterID(this->BackupRouterID);
-
-    length += 12;
-
-    int neighborCount = this->getNeighborCount();
-    for(int i=0; i<neighborCount; i++){
-        if(this->getNeighbor(i)->getState() >= OSPFv3Neighbor::INIT_STATE) {
-            neighbors.push_back(this->getNeighbor(i)->getNeighborID());
-            length+=4;
-        }
-    }
-
-    unsigned int initedNeighborCount = neighbors.size();
-    helloPacket->setNeighborIDArraySize(initedNeighborCount);
-    for (unsigned int k = 0; k < initedNeighborCount; k++) {
-        helloPacket->setNeighborID(k, neighbors.at(k));
-    }
-
-    helloPacket->setPacketLength(length);
-
-    helloPacket->setChunkLength(B(length));
-
-    Packet *pk = new Packet();
-    pk->insertAtBack(helloPacket);
-
-    return pk;
-}
 
 bool OSPFv3Interface::hasAnyNeighborInStates(int states) const
 {
@@ -277,6 +214,69 @@ bool OSPFv3Interface::ageDatabase()
 }
 
 ////----------------------------------------------- Hello Packet ------------------------------------------------//
+Packet* OSPFv3Interface::prepareHello()
+{
+    OSPFv3Options options;
+    int length;
+//    OSPFv3HelloPacket* helloPacket = new OSPFv3HelloPacket();
+    const auto& helloPacket = makeShared<OSPFv3HelloPacket>();
+    std::vector<Ipv4Address> neighbors;
+
+    //OSPF common packet header first
+    helloPacket->setVersion(3);
+    helloPacket->setType(HELLO_PACKET);
+    //TODO - packet length
+    helloPacket->setRouterID(this->getArea()->getInstance()->getProcess()->getRouterID());
+    helloPacket->setAreaID(this->containingArea->getAreaID());
+    helloPacket->setInstanceID(this->getArea()->getInstance()->getInstanceID());
+    length = 16;
+
+    //Hello content
+    helloPacket->setInterfaceID(this->interfaceId);//TODO - check LG
+    helloPacket->setRouterPriority(this->getRouterPriority());
+    memset(&options, 0, sizeof(OSPFv3Options));
+
+    options.rBit = true;
+    options.v6Bit = true;
+    if(this->getArea()->getExternalRoutingCapability())
+        options.eBit = true;
+
+    if(this->getArea()->getAreaType() == NSSA)
+        options.nBit = true;
+
+    helloPacket->setOptions(options);
+    length+=8;
+    //TODO - set options
+    helloPacket->setHelloInterval(this->getHelloInterval());
+    helloPacket->setDeadInterval(this->getDeadInterval());
+    helloPacket->setDesignatedRouterID(this->getDesignatedID());
+    helloPacket->setBackupDesignatedRouterID(this->BackupRouterID);
+
+    length += 12;
+
+    int neighborCount = this->getNeighborCount();
+    for(int i=0; i<neighborCount; i++){
+        if(this->getNeighbor(i)->getState() >= OSPFv3Neighbor::INIT_STATE) {
+            neighbors.push_back(this->getNeighbor(i)->getNeighborID());
+            length+=4;
+        }
+    }
+
+    unsigned int initedNeighborCount = neighbors.size();
+    helloPacket->setNeighborIDArraySize(initedNeighborCount);
+    for (unsigned int k = 0; k < initedNeighborCount; k++) {
+        helloPacket->setNeighborID(k, neighbors.at(k));
+    }
+
+    helloPacket->setPacketLength(length);
+
+    helloPacket->setChunkLength(B(length));
+
+    Packet *pk = new Packet();
+    pk->insertAtBack(helloPacket);
+
+    return pk;
+}
 
 void OSPFv3Interface::processHelloPacket(Packet* packet)
 {
@@ -288,9 +288,6 @@ void OSPFv3Interface::processHelloPacket(Packet* packet)
     bool neighborsDRStateChanged = false;
     bool drChanged = false;
     bool shouldRebuildRoutingTable=false;
-
-//    Ipv6ControlInfo* ctlInfo = dynamic_cast<Ipv6ControlInfo*>(packet->getControlInfo());
-
     //comparing hello and dead values
     if((hello->getHelloInterval()==this->getHelloInterval()) && (hello->getDeadInterval()==this->getDeadInterval())) {
         if(true) {//TODO - this will check the E-bit
@@ -396,7 +393,6 @@ void OSPFv3Interface::processHelloPacket(Packet* packet)
 
                 neighbor->setNeighborID(hello->getRouterID());
                 neighbor->setNeighborPriority(newPriority);
-//                neighbor->setNeighborAddress(ctlInfo->getSourceAddress().toIPv6());         CTRLINFO UZ NEPOUZIVAM
                 neighbor->setNeighborAddress( packet->getTag<L3AddressInd>()->getSrcAddress().toIpv6());
                 neighbor->setNeighborInterfaceID(hello->getInterfaceID());
                 dRouterID = newDesignatedRouterID;
@@ -428,7 +424,6 @@ void OSPFv3Interface::processHelloPacket(Packet* packet)
                     if (designated != nullptr) {
                         dRouterID = designated->getNeighborID();
                         neighbor->setDesignatedRouterID(dRouterID);
-                        EV_DEBUG << "Setting new DR in hello processing for neighbor " << dRouterID << " is " << neighbor->getNeighborsDR() << "\n";
                     }
                     if (backup != nullptr) {
                         dRouterID = backup->getNeighborID();
@@ -449,7 +444,6 @@ void OSPFv3Interface::processHelloPacket(Packet* packet)
                 neighbor = new OSPFv3Neighbor(sourceId, this);
                 neighbor->setNeighborPriority(hello->getRouterPriority());
                 neighbor->setNeighborAddress(packet->getTag<L3AddressInd>()->getSrcAddress().toIpv6());
-//                neighbor->setNeighborAddress(ctlInfo->getSourceAddress().toIPv6());
                 neighbor->setNeighborDeadInterval(hello->getDeadInterval());
                 neighbor->setNeighborInterfaceID(hello->getInterfaceID());
 
@@ -491,7 +485,6 @@ void OSPFv3Interface::processHelloPacket(Packet* packet)
                 this->getArea()->getInstance()->getProcess()->sendPacket(hello, neighbor->getNeighborIP(), this->interfaceName.c_str());
             }
 
-//            Ipv4Address interfaceAddress = intf->getAddressRange().address;
             unsigned int neighborsNeighborCount = hello->getNeighborIDArraySize();
             unsigned int i;
 
@@ -511,7 +504,7 @@ void OSPFv3Interface::processHelloPacket(Packet* packet)
             }
 
             if (neighborChanged) {
-                EV_DEBUG << "Neighbor change noted in Hello packet processing in router " << this->getArea()->getInstance()->getProcess()->getRouterID() << "\n";
+                EV_DEBUG << "Neighbor change noted in Hello packet\n";
                 this->processEvent(OSPFv3InterfaceEvent::NEIGHBOR_CHANGE_EVENT);
                 /* In some cases neighbors get stuck in TwoWay state after a DR
                    or Backup change. (calculateDesignatedRouter runs before the
@@ -534,26 +527,6 @@ void OSPFv3Interface::processHelloPacket(Packet* packet)
                 if (neighborsDRStateChanged) {
                     EV_DEBUG <<"Router DR has changed - need to add LSAs\n";
                     shouldRebuildRoutingTable = true;
-//                    RouterLSA* routerLSA = this->getArea()->originateRouterLSA();
-//                    RouterLSA *routerLSA = intf->getArea()->findRouterLSA(router->getRouterID());
-//
-//                    if (routerLSA != nullptr) {
-//                        long sequenceNumber = routerLSA->getHeader().getLsSequenceNumber();
-//                        if (sequenceNumber == MAX_SEQUENCE_NUMBER) {
-//                            routerLSA->getHeader().setLsAge(MAX_AGE);
-//                            intf->getArea()->floodLSA(routerLSA);
-//                            routerLSA->incrementInstallTime();
-//                        }
-//                        else {
-//                            RouterLSA *newLSA = intf->getArea()->originateRouterLSA();
-//
-//                            newLSA->getHeader().setLsSequenceNumber(sequenceNumber + 1);
-//                            shouldRebuildRoutingTable |= routerLSA->update(newLSA);
-//                            delete newLSA;
-//
-//                            intf->getArea()->floodLSA(routerLSA);
-//                        }
-//                    }
                 }
             }
         }
@@ -657,12 +630,10 @@ void OSPFv3Interface::processDDPacket(Packet* packet){
                 neighbor->setLastReceivedDDPacket(packetID);
 
                 if (!preProcessDDPacket(packet, neighbor, true)) {
-                    EV_DEBUG << "???????????????????????????";
                     break;
                 }
 
                 neighbor->processEvent(OSPFv3Neighbor::NEGOTIATION_DONE);
-                EV_DEBUG << "LinkStateRequestEmpty = " << neighbor->isLinkStateRequestListEmpty() << ", retransmission timer active = " << neighbor->isRequestRetransmissionTimerActive() << "\n";
                 if (!neighbor->isLinkStateRequestListEmpty() &&
                         !neighbor->isRequestRetransmissionTimerActive())
                 {
@@ -671,7 +642,6 @@ void OSPFv3Interface::processDDPacket(Packet* packet){
                     neighbor->startRequestRetransmissionTimer();
                 }
             }
-
             delete(packet);
         }
         break;
@@ -721,7 +691,7 @@ void OSPFv3Interface::processDDPacket(Packet* packet){
                 }
             }
             else {
-                EV_DEBUG << "REceived DD was the same as the last one\n";
+                EV_DEBUG << "Received DD was the same as the last one\n";
                 if (neighbor->getDatabaseExchangeRelationship() == OSPFv3Neighbor::SLAVE) {
                     EV_DEBUG << "But I am a slave so I retransmit it\n";
                     neighbor->retransmitDatabaseDescriptionPacket();
@@ -784,10 +754,6 @@ bool OSPFv3Interface::preProcessDDPacket(Packet* packet, OSPFv3Neighbor* neighbo
     for (unsigned int i = 0; i < headerCount; i++) {
         const OSPFv3LSAHeader& currentHeader = ddPacket->getLsaHeaders(i);
         uint16_t lsaType = currentHeader.getLsaType();
-//        OSPFv3LSAType lsaType = static_cast<OSPFv3LSAType>(currentHeader.getLsaType());
-
-//        EV_DETAIL << "    " << currentHeader;
-
         if (((lsaType != ROUTER_LSA) && (lsaType != AS_EXTERNAL_LSA) && (lsaType != LINK_LSA) &&
             (lsaType != NETWORK_LSA) && (lsaType != INTER_AREA_PREFIX_LSA) && (lsaType != INTER_AREA_ROUTER_LSA) &&
             (lsaType != NSSA_LSA) && (lsaType != INTRA_AREA_PREFIX_LSA)) ||
@@ -851,11 +817,8 @@ bool OSPFv3Interface::preProcessDDPacket(Packet* packet, OSPFv3Neighbor* neighbo
 ////--------------------------------------------- Link State Requests --------------------------------------------//
 
 void OSPFv3Interface::processLSR(Packet* packet, OSPFv3Neighbor* neighbor){
-//    OSPFv3LinkStateRequest* lsr = check_and_cast<OSPFv3LinkStateRequest* >(packet);
     const auto& lsr = packet->peekAtFront<OSPFv3LinkStateRequest>();
     EV_DEBUG << "Processing LSR Packet from " << lsr->getRouterID() <<"\n";
-    std::cout <<  this->getArea()->getInstance()->getProcess()->getRouterID() << " - processLSR()\n";
-
     bool error = false;
     std::vector<OSPFv3LSA *> lsas;
 
@@ -884,23 +847,12 @@ void OSPFv3Interface::processLSR(Packet* packet, OSPFv3Neighbor* neighbor){
             }
         }
 
-
         if(!error) {
             int updateCount = lsas.size();
             int hopLimit = (this->getType() == OSPFv3Interface::VIRTUAL_TYPE) ? VIRTUAL_LINK_TTL : 1;
 
-            //create a common LSU Header
-//            Packet *updatePacket = this->prepareLSUHeader();
-
-            //add LSAs to the packet
-//            for (int j = 0; j < updateCount; j++) {
-//            }
-
             Packet* updatePacket = this->prepareUpdatePacket(lsas);
-
             if (updatePacket != nullptr) {
-//                    Packet *updatePk = new Packet();
-//                    updatePk->insertAtBack(updatePacket);
                 if (this->getType() == OSPFv3Interface::BROADCAST_TYPE) {
                     if ((this->getState() == OSPFv3Interface::INTERFACE_STATE_DESIGNATED) ||
                             //I don't think that this is ok(this->getState() == OSPFv3Interface::INTERFACE_STATE_BACKUP) ||
@@ -932,7 +884,6 @@ void OSPFv3Interface::processLSR(Packet* packet, OSPFv3Neighbor* neighbor){
 Packet* OSPFv3Interface::prepareLSUHeader()
 {
     EV_DEBUG << "Preparing LSU HEADER\n";
-//    OSPFv3LSUpdate* updatePacket = new OSPFv3LSUpdate();
     const auto& updatePacket = makeShared<OSPFv3LSUpdate>();
 
     updatePacket->setType(LSU);
@@ -944,7 +895,6 @@ Packet* OSPFv3Interface::prepareLSUHeader()
     updatePacket->setChunkLength(B(OSPFV3_HEADER_LENGTH+4));
     updatePacket->setLsaCount(0);
 
-//    return updatePacket;
     Packet *pk = new Packet();
     pk->insertAtBack(updatePacket);
     return pk;
@@ -953,8 +903,6 @@ Packet* OSPFv3Interface::prepareLSUHeader()
 Packet* OSPFv3Interface::prepareUpdatePacket(std::vector<OSPFv3LSA*> lsas)
 {
     EV_DEBUG << "Preparing LSU\n";
-//    auto lsa = lsaC->dup(); // make editable copy of lsa
-
     const auto& updatePacket = makeShared<OSPFv3LSUpdate>();
 
     updatePacket->setType(LSU);
@@ -970,10 +918,6 @@ Packet* OSPFv3Interface::prepareUpdatePacket(std::vector<OSPFv3LSA*> lsas)
     for (int j = 0; j < lsas.size(); j++) {
         OSPFv3LSA* lsa = lsas[j];
 
-
-//    const auto& updatePacket = updatePk->peekAll<OSPFv3LSUpdate>();
-//    const auto& updatePacket = makeShared<OSPFv3LSUpdate>();
-//    auto& updatePacket = updatePk->peekAtFront<OSPFv3LSUpdate>();
         int count = updatePacket->getLsaCount();
         uint16_t packetLength = updatePacket->getPacketLength();
 
@@ -1062,12 +1006,10 @@ Packet* OSPFv3Interface::prepareUpdatePacket(std::vector<OSPFv3LSA*> lsas)
     Packet *pk = new Packet();
     pk->insertAtBack(updatePacket);
     return pk;
-//    return updatePacket;
 
 }//prepareUpdatePacekt
 
 void OSPFv3Interface::processLSU(Packet* packet, OSPFv3Neighbor* neighbor){
-//    OSPFv3LSUpdate* lsUpdatePacket = dynamic_cast<OSPFv3LSUpdate*>(packet);
     const auto& lsUpdatePacket = packet->peekAtFront<OSPFv3LSUpdate>();
     bool rebuildRoutingTable = false;
 
@@ -1094,16 +1036,14 @@ void OSPFv3Interface::processLSU(Packet* packet, OSPFv3Neighbor* neighbor){
                 lsaCount = lsUpdatePacket->getInterAreaPrefixLSAsArraySize();
                 EV_DEBUG << "Parsing InterAreaPrefixLSAs, lsaCount = " << lsaCount << endl;
                 break;
-            case INTER_AREA_ROUTER_LSA:
+            case INTER_AREA_ROUTER_LSA: // support of LSA type 4 and 5 is not implemented yet
                 currentType++;
                 continue;
-//                lsaCount = lsUpdatePacket->getSummaryLSAsArraySize();
                 break;
 
             case AS_EXTERNAL_LSA:
                 currentType+=2;
                 continue;
-//                lsaCount = lsUpdatePacket->getAsExternalLSAsArraySize();
                 break;
 
             case NSSA_LSA:
@@ -1141,10 +1081,9 @@ void OSPFv3Interface::processLSU(Packet* packet, OSPFv3Neighbor* neighbor){
                 case INTER_AREA_PREFIX_LSA:
                     EV_DEBUG << "Caught INTER_AREA_PREFIX_LSA in Update\n";
                     currentLSA = (&(lsUpdatePacket->getInterAreaPrefixLSAs(i)));
-                    break;//TODO - check this whether they are the same and what to do with them
+                    break;
 
                 case INTER_AREA_ROUTER_LSA:
-
                     //                    currentLSA = (&(lsUpdatePacket->getSummaryLSAs(i)));
                     break;
 
@@ -1168,40 +1107,15 @@ void OSPFv3Interface::processLSU(Packet* packet, OSPFv3Neighbor* neighbor){
                     throw cRuntimeError("Invalid currentType:%d", currentType);
                 }
 
-
                 LSAKeyType lsaKey;
-
                 lsaKey.linkStateID = currentLSA->getHeader().getLinkStateID();
                 lsaKey.advertisingRouter = currentLSA->getHeader().getAdvertisingRouter();
                 lsaKey.LSType = currentLSA->getHeader().getLsaType();
 
-                if (lsaKey.LSType == INTRA_AREA_PREFIX_LSA) //print LG
-                {
-                    EV_DEBUG  << "lsaKey.linkStateID = " << lsaKey.linkStateID << "\n";
-                    EV_DEBUG  << "lsaKey.advertisingRouter = " << lsaKey.advertisingRouter << "\n";
-
-                    EV_DEBUG << "V DB mam:\n";
-                    for (int u = 0; u <  this->getArea()->getIntraAreaPrefixLSACount(); u++)
-                    {
-                        const OSPFv3LSAHeader& header = this->getArea()->getIntraAreaPrefixLSA(u)->getHeader();
-                        EV_DEBUG << "AdvertisingRouter =\t" << header.getAdvertisingRouter()<< "\n";
-                        EV_DEBUG << "LinkStateID =\t\t" << header.getLinkStateID() << "\n";
-                    }
-                }
                 OSPFv3LSA *lsaInDatabase = this->getArea()->getInstance()->getProcess()->findLSA(lsaKey, areaID, lsUpdatePacket->getInstanceID());
 
                 unsigned short lsAge = currentLSA->getHeader().getLsaAge();
                 AcknowledgementFlags ackFlags;
-
-                if(lsaInDatabase!=nullptr){
-                    EV_DEBUG << "LSA is already in database\n";
-                    cout << "LSA is already in database\n" << endl;
-
-                }
-                else {
-                    EV_DEBUG << "LSA is new - adding to database\n";
-                    cout << "LSA is new - adding to database\n" << endl;
-                }
 
                 uint16_t lsaType = currentLSA->getHeader().getLsaType();
                 ackFlags.floodedBackOut = false;
@@ -1259,8 +1173,6 @@ void OSPFv3Interface::processLSU(Packet* packet, OSPFv3Neighbor* neighbor){
                             info != nullptr &&
                             info->getInstallTime() < MIN_LS_ARRIVAL)
                     {//it should be discarded and no ack should be sent
-                        EV_DEBUG << "Discarding\n";
-                        cout << "DISCARDING" << endl;
                         continue;
                     }
 
@@ -1268,16 +1180,24 @@ void OSPFv3Interface::processLSU(Packet* packet, OSPFv3Neighbor* neighbor){
                     EV_DEBUG << "Flooding the LSA out\n";
                     if(currentLSA->getHeader().getLsaType()!=LINK_LSA)
                         ackFlags.floodedBackOut = this->getArea()->getInstance()->getProcess()->floodLSA(currentLSA, areaID, this, neighbor); // TODO: always true
-                    if(ackFlags.floodedBackOut)
-                    {
-                        cout << "ackFlags.floodedBackOut  = true" << endl;
-                    }
-                    else
-                    {
-                        cout << "ackFlags.floodedBackOut  = false" << endl;
-                    }
 
-
+                    // if this is BACKBONE area, flood Inter-Area-Prefix LSAs to other areas
+                    if ((currentLSA->getHeader().getLsaType() == INTER_AREA_PREFIX_LSA) &&
+                            (this->getArea()->getInstance()->getAreaCount() > 1) &&
+                            (this->getArea()->getAreaID() ==  BACKBONE_AREAID))
+                    {
+                        this->getArea()->originateInterAreaPrefixLSA(currentLSA, this->getArea());
+//                        for(int i = 0; i < this->getInstance()->getAreaCount(); i++)
+//                        {
+//                            OSPFv3Area* area = this->getInstance()->getArea(i);
+//                            if(area->getAreaID() == BACKBONE_AREAID)
+//                                continue;
+//
+//                            // here gets only nonBacbone area
+//                            ackFlags.floodedBackOut |= area->floodLSA(currentLSA);
+//
+//                        }
+                    }
                     if (!ackFlags.noLSAInstanceInDatabase) {
                         LSAKeyType lsaKey;
 
@@ -1295,27 +1215,7 @@ void OSPFv3Interface::processLSU(Packet* packet, OSPFv3Neighbor* neighbor){
                     else if(currentType == ROUTER_LSA || currentType == NETWORK_LSA || currentType == INTER_AREA_PREFIX_LSA || currentType == INTRA_AREA_PREFIX_LSA)
                         rebuildRoutingTable |= this->getArea()->getInstance()->getProcess()->installLSA(currentLSA, this->getArea()->getInstance()->getInstanceID(), this->getArea()->getAreaID());
 
-//                    if(currentType == INTER_AREA_PREFIX_LSA) {
-//                        this->getArea()->originateInterAreaPrefixLSA(currentLSA, this->getArea());
-                        /*int areaCnt = this->getArea()->getInstance()->getAreaCount();
-                        for(int i=0; i<areaCnt; i++){
-                            OSPFv3Area* area = this->getArea()->getInstance()->getArea(i);
-                            if(area->getAreaID() == this->getArea()->getAreaID())
-                                continue;
-
-                            OSPFv3LSUpdate* updatePacket = this->prepareLSUHeader();
-                            updatePacket->setAreaID(area->getAreaID());
-                            updatePacket = this->prepareUpdatePacket(currentLSA, updatePacket);
-
-                            int intfCnt = area->getInterfaceCount();
-                            for(int j=0; j<intfCnt; j++) {
-                                OSPFv3Interface* intf = area->getInterface(j);
-                                area->getInstance()->getProcess()->sendPacket(updatePacket, Ipv6Address::ALL_OSPF_ROUTERS_MCAST, intf->getIntName().c_str(), 1);
-                            }
-                        }*/
-//                    }
-
-                    EV_INFO << "    (update installed)\n";
+                    EV_INFO << "(update installed)\n";
 
                     this->addDelayedAcknowledgement(currentLSA->getHeader());
 //                    this->acknowledgeLSA(&(currentLSA->getHeader()), ackFlags, lsUpdatePacket->getRouterID());
@@ -1371,25 +1271,21 @@ void OSPFv3Interface::processLSU(Packet* packet, OSPFv3Neighbor* neighbor){
                     continue;
                 }
                 //TODO - LSA is on request list
-                //TODO - lsa is a duplicate CHECK
                 //TODO - database copy is more recent
                 //TODO - Otherwise as long as the database copy has not been sent in link state update send it to the neighbor directly
-                // ak dostanes nejake LSAcko a nemas ho tak posielas na multicast
+
 
 
             }//for (unsigned int i = 0; i < lsaCount; i++)
 
             currentType++;
         } //while (currentType >= ROUTER_LSA && currentType <= LINK_LSA){
-
-
-
-    } //if(neighbor->getState()>=OSPFv3Neighbor::EXCHANGE_STATE)
+    } //if(neighbor->getState()>=OSPFv3Neighbor::EXCHANGE_STATE)STATE)
     else {
         EV_DEBUG << "Neighbor in lesser than EXCHANGE_STATE -> Drop the packet\n";
     }
 
-    if(rebuildRoutingTable)     //TODO: PRIDE MI NOVE LSA ALE REBUILD ZOSTANE FALSE
+    if(rebuildRoutingTable)
         this->getArea()->getInstance()->getProcess()->rebuildRoutingTable();
 }//processLSU
 
@@ -1397,7 +1293,6 @@ void OSPFv3Interface::processLSAck(Packet* packet, OSPFv3Neighbor* neighbor)
 {
 
     if (neighbor->getState() >= OSPFv3Neighbor::EXCHANGE_STATE) {
-//        OSPFv3LSAck *lsAckPacket = check_and_cast<OSPFv3LSAck *>(packet); // LG
         const auto& lsAckPacket = packet->peekAtFront<OSPFv3LSAck>();
 
         int lsaCount = lsAckPacket->getLsaHeadersArraySize();
@@ -1408,9 +1303,6 @@ void OSPFv3Interface::processLSAck(Packet* packet, OSPFv3Neighbor* neighbor)
             const OSPFv3LSAHeader& lsaHeader = lsAckPacket->getLsaHeaders(i);
             OSPFv3LSA *lsaOnRetransmissionList;
             LSAKeyType lsaKey;
-
-            EV_DETAIL << "    " << lsaHeader << "\n";
-
             lsaKey.linkStateID = lsaHeader.getLinkStateID();
             lsaKey.advertisingRouter = lsaHeader.getAdvertisingRouter();
 
@@ -1477,7 +1369,6 @@ void OSPFv3Interface::acknowledgeLSA(const OSPFv3LSAHeader& lsaHeader,
     }
 
     if (sendDirectAcknowledgment) {
-//        OSPFv3LSAck *ackPacket = new OSPFv3LSAck();   LG
         const auto& ackPacket = makeShared<OSPFv3LSAck>();
 
         ackPacket->setType(LS_ACK);
@@ -1522,7 +1413,6 @@ void OSPFv3Interface::acknowledgeLSA(const OSPFv3LSAHeader& lsaHeader,
 void OSPFv3Interface::sendLSAcknowledgement(const OSPFv3LSAHeader *lsaHeader, Ipv6Address destination)
 {
     OSPFv3Options options;
-//    OSPFv3LSAck *lsAckPacket = new OSPFv3LSAck();
     const auto& lsAckPacket = makeShared<OSPFv3LSAck>();
 
     lsAckPacket->setType(LS_ACK);
@@ -1577,7 +1467,6 @@ void OSPFv3Interface::sendDelayedAcknowledgements()
         int ackCount = elem.second.size();
         if (ackCount > 0) {
             while (!(elem.second.empty())) {
-//                OSPFv3LSAck *ackPacket = new OSPFv3LSAck(); DELETE LG
                 const auto& ackPacket = makeShared<OSPFv3LSAck>();
                 long packetSize = OSPFV3_HEADER_LENGTH;
 
@@ -1661,7 +1550,7 @@ bool OSPFv3Interface::floodLSA(const OSPFv3LSA* lsa, OSPFv3Interface* interface,
             )
     )
     {
-//        EV_DEBUG << "Checking if this is backbone\n";
+        //Checking if this is backbone
         long neighborCount = this->getNeighborCount();
         bool lsaAddedToRetransmissionList = false;
         Ipv4Address linkStateID = lsa->getHeader().getLinkStateID();
@@ -1696,11 +1585,9 @@ bool OSPFv3Interface::floodLSA(const OSPFv3LSA* lsa, OSPFv3Interface* interface,
                 }
             }
             if (neighbor == this->neighbors.at(i)) {    // (1) (c)
-                EV_DEBUG << "1c - next neighbor\n";
+//                EV_DEBUG << "1c - next neighbor\n";
                 continue;
             }
-            EV_DEBUG << "calling ADD TO RETRANSMITION LIST\nHEADER of lsa:\n" <<  lsa->getHeader() << "\n";
-            EV_DEBUG << "type is - " <<   lsa->getHeader().getLsaType() << "\n";
 
             this->neighbors.at(i)->addToRetransmissionList(lsa);    // (1) (d)
             lsaAddedToRetransmissionList = true;
@@ -1781,7 +1668,6 @@ bool OSPFv3Interface::floodLSA(const OSPFv3LSA* lsa, OSPFv3Interface* interface,
                                 }
                             }
                         }
-
                         if (interface == this) {
                             floodedBackOut = true;
                         }
@@ -1859,8 +1745,7 @@ LinkLSA* OSPFv3Interface::originateLinkLSA()
     //First the LSA Header
     lsaHeader.setLsaAge(0);
     lsaHeader.setLsaType(LINK_LSA);
-    // ***ZMENA***  LUKAS GALBICKA
-//    lsaHeader.setLinkStateID(IPv4Add ress(this->getInterfaceIndex()));
+
     lsaHeader.setLinkStateID(Ipv4Address(this->getInterfaceId()));
     lsaHeader.setAdvertisingRouter(this->getArea()->getInstance()->getProcess()->getRouterID());
     lsaHeader.setLsaSequenceNumber(this->linkLSASequenceNumber++);
@@ -1878,20 +1763,6 @@ LinkLSA* OSPFv3Interface::originateLinkLSA()
     InterfaceEntry* ie = this->ift->getInterfaceByName(this->interfaceName.c_str());
     Ipv6InterfaceData* ipv6Data = ie->ipv6Data();
 
-
-    cout << "----------------------------------------------------------------------" << endl;
-    cout << "V ORINGIN LINK LOCAL LSA" << endl;
-    cout << "LinkLocalAddress = " << ipv6Data->getLinkLocalAddress() << endl;
-    cout << "pocet adries = " << ipv6Data->getNumAddresses() << endl;
-    for (int p = 0; p < ipv6Data->getNumAddresses(); p++ ) {
-        cout << "ipv6Data->(" << p << ") = " << ipv6Data->getAddress(p) << endl;
-//        cout << "ipv6Data->getNumAdvPrefixes() = " << ipv6Data->getNumAdvPrefixes() << endl;
-//        cout << "ipv6Data->getNumAddresses() = " << ipv6Data->getNumAddresses() << endl;
-//        cout << "prefix = " << ipv6Data->getAdvPrefix(p+1).prefix << endl;
-//        cout << "prefixLength = " << ipv6Data->getAdvPrefix(p+1).prefixLength << endl;
-    }
-    cout << endl << endl;
-
    int numPrefixes;
     if(this->getArea()->getInstance()->getAddressFamily() == IPV4INSTANCE)
     {
@@ -1902,10 +1773,6 @@ LinkLSA* OSPFv3Interface::originateLinkLSA()
         linkLSA->setLinkLocalInterfaceAdd(ipv6Data->getLinkLocalAddress());
         numPrefixes = ipv6Data->getNumAddresses();
     }
-//        numPrefixes = ipv6Data->getNumAdvPrefixes();
-
-//    cout << "getNumAddresses() = " << ipv6Data->getNumAddresses() << "\n";
-//    cout << "getNumAdvPrefixes() = " << ipv6Data->getNumAdvPrefixes() << "\n";
     for(int i=0; i<numPrefixes; i++) {
         if(this->getArea()->getInstance()->getAddressFamily() == IPV4INSTANCE) {
             Ipv4InterfaceData* ipv4Data = ie->ipv4Data();
@@ -1929,11 +1796,7 @@ LinkLSA* OSPFv3Interface::originateLinkLSA()
         }
         else {
             EV_DEBUG << "Creating Link LSA for address: " << ipv6Data->getLinkLocalAddress() << "\n";
-
-//            Ipv6Address ipv6 = ipv6Data->getAdvPrefix(i).prefix;
             Ipv6Address ipv6 = ipv6Data->getAddress(i);
-//            short ipv6len = ipv6Data->getAdvPrefix(i).prefixLength;
-
             // this also includes linkLocal and Multicast adresses. So there need to  be chceck, if writing ipv6 is global
             if(ipv6.isGlobal()) {//Only all the global prefixes belong to the Intra-Area-Prefix LSA
                 OSPFv3LinkLSAPrefix prefix;
@@ -1945,8 +1808,6 @@ LinkLSA* OSPFv3Interface::originateLinkLSA()
 
                 prefix.prefixLen=64;
                 prefix.addressPrefix=ipv6;
-
-                cout << "linkLSA->getPrefixesArraySize()+1" << i << " - " << linkLSA->getPrefixesArraySize() << endl;
 
                 linkLSA->setPrefixesArraySize(linkLSA->getPrefixesArraySize()+1);
                 linkLSA->setPrefixes(linkLSA->getPrefixesArraySize()-1, prefix);
@@ -1981,7 +1842,7 @@ LinkLSA* OSPFv3Interface::getLinkLSAbyKey(LSAKeyType lsaKey)
 bool OSPFv3Interface::installLinkLSA(const OSPFv3LinkLSA *lsaC)
 {
     auto lsa = lsaC->dup(); // make editable copy of lsa
-    EV_DEBUG << "Link LSA is being installed in database \n";
+//    EV_DEBUG << "Link LSA is being installed in database \n";
     LSAKeyType lsaKey;
     lsaKey.linkStateID = lsa->getHeader().getLinkStateID();
     lsaKey.advertisingRouter = lsa->getHeader().getAdvertisingRouter();
@@ -1989,7 +1850,7 @@ bool OSPFv3Interface::installLinkLSA(const OSPFv3LinkLSA *lsaC)
 
     LinkLSA* lsaInDatabase = this->getLinkLSAbyKey(lsaKey);
     if (lsaInDatabase != nullptr) {
-        EV_DEBUG << "Link LSA is being removed from retransmission lists\n";
+//        EV_DEBUG << "Link LSA is being removed from retransmission lists\n";
         this->getArea()->removeFromAllRetransmissionLists(lsaKey);
         return this->updateLinkLSA(lsaInDatabase, lsa);
     }

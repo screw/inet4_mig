@@ -139,7 +139,7 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
             p.prefix = address6;
             p.prefixLength = prefLength;
 
-            intfData6->assignAddress(address6, true, SIMTIME_ZERO, SIMTIME_ZERO);
+            intfData6->assignAddress(address6, false, SIMTIME_ZERO, SIMTIME_ZERO);
 
             // add this routes to routing table
             Ipv6Route *route = new Ipv6Route(p.prefix.getPrefix(prefLength), p.prefixLength, IRoute::IFACENETMASK);

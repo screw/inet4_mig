@@ -79,7 +79,6 @@ void OSPFv3Neighbor::changeState(OSPFv3NeighborState *newState, OSPFv3NeighborSt
 void OSPFv3Neighbor::reset()
 {
     EV_DEBUG << "Reseting the neighbor " << this->getNeighborID() << "\n";
-    //TODO
     for (auto retIt = linkStateRetransmissionList.begin();
          retIt != linkStateRetransmissionList.end();
          retIt++)
@@ -105,16 +104,6 @@ void OSPFv3Neighbor::reset()
         delete lastTransmittedDDPacket;
         lastTransmittedDDPacket = nullptr;
     }
-
-    EV_DEBUG << this->getNeighborID() << " -  Database Summary List \n";
-    EV_DEBUG << "advR\t\tLSID\t\tLSA Type\n";
-    for (auto it = databaseSummaryList.begin(); it != databaseSummaryList.end(); it++)
-    {
-
-        OSPFv3LSAHeader* hd =  (*it);
-        EV_DEBUG << hd->getAdvertisingRouter() << "\t" << hd->getLinkStateID() << "\t" << hd->getLsaType() << "\n";
-    }
-    EV_DEBUG << "------------------ LG\n";
 }
 
 bool OSPFv3Neighbor::needAdjacency()
@@ -123,10 +112,6 @@ bool OSPFv3Neighbor::needAdjacency()
     Ipv4Address routerID = this->getInterface()->getArea()->getInstance()->getProcess()->getRouterID();
     Ipv4Address dRouter = this->getInterface()->getDesignatedID();
     Ipv4Address backupDRouter = this->getInterface()->getBackupID();
-
-    EV_DEBUG <<"My ID: " << routerID <<"\n";
-    EV_DEBUG << "Inteface DR: " << dRouter << ", interface Backup: " << backupDRouter << ", neighborsDR: " << neighborsDesignatedRouter << ", neighborsBackup: "<<neighborsBackupDesignatedRouter << "\n";
-    EV_DEBUG << "designatedSet " << designatedRoutersSetUp << "\n";
 
     if ((interfaceType == OSPFv3Interface::POINTTOPOINT_TYPE) ||
         (interfaceType == OSPFv3Interface::POINTTOMULTIPOINT_TYPE) ||
@@ -183,23 +168,10 @@ void OSPFv3Neighbor::clearRequestRetransmissionTimer()
     this->requestRetransmissionTimerActive = false;
 }
 
-//void OSPFv3Neighbor::setLastReceivedDDPacket(OSPFv3DatabaseDescription* ddPacket){    LG TOTO MI NAHRADIL OBYCAJNY SETTER V h SUBORE
-//    OSPFv3DDOptions& ddOptions = ddPacket->getDdOptions();
-//    OSPFv3DDPacketID packetID;
-//    packetID.ddOptions = ddOptions;
-//    packetID.options = ddPacket->getOptions();
-//    packetID.sequenceNumber = ddPacket->getSequenceNumber();
-//
-//    setOptions(packetID.options);
-//    setDDSequenceNumber(packetID.sequenceNumber);
-//    this->lastReceivedDDPacket = packetID;
-//}//setLastReceivedDDPacket
-
 void OSPFv3Neighbor::sendDDPacket(bool init)
 {
     EV_DEBUG << "Start of function send DD Packet\n";
     const auto& ddPacket = makeShared<OSPFv3DatabaseDescription>();
-//    OSPFv3DatabaseDescription* ddPacket = new OSPFv3DatabaseDescription();
 
     //common header first
     ddPacket->setType(DATABASE_DESCRIPTION);
@@ -247,14 +219,11 @@ void OSPFv3Neighbor::sendDDPacket(bool init)
 
     ddPacket->setDdOptions(ddOptions);
 
-//    ddPacket->setPacketLength(packetSize);        TOTO ASI NEPOTREBUJEM LG
+    ddPacket->setPacketLength(packetSize);
     ddPacket->setChunkLength(B(packetSize));
     Packet *pk = new Packet();
     pk->insertAtBack(ddPacket);
-    //if(this->lastTransmittedDDPacket != nullptr)
-        //delete this->lastTransmittedDDPacket;
 
-    //this->lastTransmittedDDPacket = ddPacket;
     //TODO - virtual link hopLimit
     //TODO - checksum
 
@@ -356,17 +325,6 @@ void OSPFv3Neighbor::createDatabaseSummary()
         OSPFv3LSAHeader* lsaHeader = new OSPFv3LSAHeader(area->getIntraAreaPrefixLSA(i)->getHeader());
         this->databaseSummaryList.push_back(lsaHeader);
     }
-
-
-    EV_DEBUG << this->getNeighborID() << " -  Database Summary List \n";
-    EV_DEBUG << "advR\t\tLSID\t\tLSA Type\n";
-    for (auto it = databaseSummaryList.begin(); it != databaseSummaryList.end(); it++)
-    {
-
-        OSPFv3LSAHeader* hd =  (*it);
-        EV_DEBUG << hd->getAdvertisingRouter() << "\t" << hd->getLinkStateID() << "\t" << hd->getLsaType() << "\n";
-    }
-    EV_DEBUG << "------------------ LG\n";
 }
 
 void OSPFv3Neighbor::retransmitUpdatePacket() //vyprsi timer Acku a zasle znovu
@@ -385,12 +343,13 @@ void OSPFv3Neighbor::retransmitUpdatePacket() //vyprsi timer Acku a zasle znovu
     unsigned long packetLength = OSPFV3_HEADER_LENGTH + OSPFV3_LSA_HEADER_LENGTH;
     auto it = linkStateRetransmissionList.begin();
 
-    EV_DEBUG << "Retransmit packet - before while\n";
     while (!packetFull && (it != linkStateRetransmissionList.end())) {
         uint16_t lsaType = (*it)->getHeader().getLsaType();
         OSPFv3RouterLSA *routerLSA = (lsaType == ROUTER_LSA) ? dynamic_cast<OSPFv3RouterLSA *>(*it) : nullptr;
         OSPFv3NetworkLSA *networkLSA = (lsaType == NETWORK_LSA) ? dynamic_cast<OSPFv3NetworkLSA *>(*it) : nullptr;
         OSPFv3LinkLSA *linkLSA = (lsaType == LINK_LSA) ? dynamic_cast<OSPFv3LinkLSA *>(*it) : nullptr;
+        OSPFv3InterAreaPrefixLSA *interAreaPrefixLSA = (lsaType == INTER_AREA_PREFIX_LSA) ? dynamic_cast<OSPFv3InterAreaPrefixLSA *>(*it) : nullptr;
+        OSPFv3IntraAreaPrefixLSA *intraAreaPrefixLSA = (lsaType == INTRA_AREA_PREFIX_LSA) ? dynamic_cast<OSPFv3IntraAreaPrefixLSA *>(*it) : nullptr;
 //        OSPFSummaryLSA *summaryLSA = ((lsaType == SUMMARYLSA_NETWORKS_TYPE) ||
 //                                      (lsaType == SUMMARYLSA_ASBOUNDARYROUTERS_TYPE)) ? dynamic_cast<OSPFSummaryLSA *>(*it) : nullptr;
 //        OSPFASExternalLSA *asExternalLSA = (lsaType == AS_EXTERNAL_LSA_TYPE) ? dynamic_cast<OSPFASExternalLSA *>(*it) : nullptr;
@@ -409,14 +368,11 @@ void OSPFv3Neighbor::retransmitUpdatePacket() //vyprsi timer Acku a zasle znovu
                     lsaSize = calculateLSASize(networkLSA);
                 }
                 break;
-//
-//            case SUMMARYLSA_NETWORKS_TYPE:
-//            case SUMMARYLSA_ASBOUNDARYROUTERS_TYPE:
-//                if (summaryLSA != nullptr) {
-//                    lsaSize = calculateLSASize(summaryLSA);
-//                }
-//                break;
-//
+            case INTER_AREA_PREFIX_LSA:
+                if (interAreaPrefixLSA != nullptr) {
+                    lsaSize = calculateLSASize(interAreaPrefixLSA);
+                }
+                break;
 //            case AS_EXTERNAL_LSA_TYPE:
 //                if (asExternalLSA != nullptr) {
 //                    lsaSize = calculateLSASize(asExternalLSA);
@@ -428,6 +384,11 @@ void OSPFv3Neighbor::retransmitUpdatePacket() //vyprsi timer Acku a zasle znovu
             case LINK_LSA:
                 if(linkLSA != nullptr)
                     lsaSize = calculateLSASize(linkLSA);
+                break;
+            case INTRA_AREA_PREFIX_LSA:
+                if (intraAreaPrefixLSA != nullptr) {
+                    lsaSize = calculateLSASize(intraAreaPrefixLSA);
+                }
                 break;
         }
 
@@ -479,25 +440,22 @@ void OSPFv3Neighbor::retransmitUpdatePacket() //vyprsi timer Acku a zasle znovu
                         }
                     }
                     break;
-//
-//                case SUMMARYLSA_NETWORKS_TYPE:
-//                case SUMMARYLSA_ASBOUNDARYROUTERS_TYPE:
-//                    if (summaryLSA != nullptr) {
-//                        unsigned int summaryLSACount = updatePacket->getSummaryLSAsArraySize();
-//
-//                        updatePacket->setSummaryLSAsArraySize(summaryLSACount + 1);
-//                        updatePacket->setSummaryLSAs(summaryLSACount, *summaryLSA);
-//
-//                        unsigned short lsAge = updatePacket->getSummaryLSAs(summaryLSACount).getHeader().getLsAge();
-//                        if (lsAge < MAX_AGE - parentInterface->getTransmissionDelay()) {
-//                            updatePacket->getSummaryLSAs(summaryLSACount).getHeader().setLsAge(lsAge + parentInterface->getTransmissionDelay());
-//                        }
-//                        else {
-//                            updatePacket->getSummaryLSAs(summaryLSACount).getHeader().setLsAge(MAX_AGE);
-//                        }
-//                    }
-//                    break;
-//
+                case INTER_AREA_PREFIX_LSA:
+                    if (interAreaPrefixLSA != nullptr) {
+                        unsigned int interAreaPrefixLSACount = updatePacket->getInterAreaPrefixLSAsArraySize();
+
+                        updatePacket->setInterAreaPrefixLSAsArraySize(interAreaPrefixLSACount + 1);
+                        updatePacket->setInterAreaPrefixLSAs(interAreaPrefixLSACount, *interAreaPrefixLSA);
+
+                        unsigned short lsAge = updatePacket->getInterAreaPrefixLSAs(interAreaPrefixLSACount).getHeader().getLsaAge();
+                        if (lsAge < MAX_AGE - this->getInterface()->getTransDelayInterval()) {
+                            updatePacket->getInterAreaPrefixLSAsForUpdate(interAreaPrefixLSACount).getHeaderForUpdate().setLsaAge(lsAge + this->getInterface()->getTransDelayInterval());
+                        }
+                        else {
+                            updatePacket->getInterAreaPrefixLSAsForUpdate(interAreaPrefixLSACount).getHeaderForUpdate().setLsaAge(MAX_AGE);
+                        }
+                    }
+                    break;
 //                case AS_EXTERNAL_LSA_TYPE:
 //                    if (asExternalLSA != nullptr) {
 //                        unsigned int asExternalLSACount = updatePacket->getAsExternalLSAsArraySize();
@@ -530,7 +488,22 @@ void OSPFv3Neighbor::retransmitUpdatePacket() //vyprsi timer Acku a zasle znovu
                         }
                     }
                     break;
-//
+                case INTRA_AREA_PREFIX_LSA:
+                    if (intraAreaPrefixLSA != nullptr) {
+                        unsigned int intraAreaPrefixLSACount = updatePacket->getIntraAreaPrefixLSAsArraySize();
+
+                        updatePacket->setIntraAreaPrefixLSAsArraySize(intraAreaPrefixLSACount + 1);
+                        updatePacket->setIntraAreaPrefixLSAs(intraAreaPrefixLSACount, *intraAreaPrefixLSA);
+
+                        unsigned short lsAge = updatePacket->getIntraAreaPrefixLSAs(intraAreaPrefixLSACount).getHeader().getLsaAge();
+                        if (lsAge < MAX_AGE - this->getInterface()->getTransDelayInterval()) {
+                            updatePacket->getIntraAreaPrefixLSAsForUpdate(intraAreaPrefixLSACount).getHeaderForUpdate().setLsaAge(lsAge + this->getInterface()->getTransDelayInterval());
+                        }
+                        else {
+                            updatePacket->getIntraAreaPrefixLSAsForUpdate(intraAreaPrefixLSACount).getHeaderForUpdate().setLsaAge(MAX_AGE);
+                        }
+                    }
+                    break;
                 default:
                     break;
             }
@@ -575,12 +548,6 @@ void OSPFv3Neighbor::addToRetransmissionList(const OSPFv3LSA *lsaC)
         case INTER_AREA_PREFIX_LSA:
             lsaCopy = new OSPFv3InterAreaPrefixLSA(*(check_and_cast<OSPFv3InterAreaPrefixLSA* >(lsa)));
             break;
-
-//        case SUMMARYLSA_NETWORKS_TYPE:
-//        case SUMMARYLSA_ASBOUNDARYROUTERS_TYPE:
-//            lsaCopy = new OSPFSummaryLSA(*(check_and_cast<OSPFSummaryLSA *>(lsa)));
-//            break;
-//
 //        case AS_EXTERNAL_LSA_TYPE:
 //            lsaCopy = new OSPFASExternalLSA(*(check_and_cast<OSPFASExternalLSA *>(lsa)));
 //            break;
@@ -658,16 +625,7 @@ bool OSPFv3Neighbor::retransmitDatabaseDescriptionPacket()
     EV_DEBUG << "Retransmitting DD Packet\n";
     if (lastTransmittedDDPacket != nullptr) {
         Packet *ddPacket = new Packet(*lastTransmittedDDPacket);
-//        OSPFv3DatabaseDescription *ddPacket = new OSPFv3DatabaseDescription(*lastTransmittedDDPacket);
-//        int ttl = (parentInterface->getType() == Interface::VIRTUAL) ? VIRTUAL_LINK_TTL : 1;
-
-//        if (parentInterface->getType() == Interface::POINTTOPOINT) {
-//            messageHandler->sendPacket(ddPacket, Ipv4Address::ALL_OSPF_ROUTERS_MCAST, parentInterface->getIfIndex(), ttl);
-//        }
-//        else {
         this->getInterface()->getArea()->getInstance()->getProcess()->sendPacket(ddPacket, this->getNeighborIP(), this->getInterface()->getIntName().c_str());
-//        }
-
         return true;
     }
     else {
@@ -700,10 +658,6 @@ OSPFv3LSAHeader* OSPFv3Neighbor::findOnRequestList(LSAKeyType lsaKey)
         if (((*it)->getLinkStateID() == lsaKey.linkStateID) &&
                 ((*it)->getAdvertisingRouter() == lsaKey.advertisingRouter))
         {
-            EV_DEBUG << "Found on request list. Currently on request list:\n";
-                for(auto it = linkStateRequestList.begin(); it != linkStateRequestList.end(); it++) {
-                    EV_DEBUG << "\tType: "<<(*it)->getLsaType() << ", ID: " << (*it)->getLinkStateID() << ", Adv: " << (*it)->getAdvertisingRouter() << "\n";
-                }
             return *it;
         }
     }
