@@ -146,15 +146,18 @@ void OSPFv3InterfaceState::changeState(OSPFv3Interface *interface, OSPFv3Interfa
             shouldRebuildRoutingTable |= interface->getArea()->installNetworkLSA(newLSA);
             if (shouldRebuildRoutingTable)
             {
-                OSPFv3IntraAreaPrefixLSA* prefLSA = interface->getArea()->originateNetIntraAreaPrefixLSA(newLSA, interface);
-                interface->getArea()->installIntraAreaPrefixLSA(prefLSA);
-                InterfaceEntry* ie = interface->containingProcess->ift->getInterfaceById(interface->getInterfaceId());
-                Ipv6InterfaceData *ipv6int = ie->ipv6Data();
-                ipv6int->joinMulticastGroup(Ipv6Address::ALL_OSPF_DESIGNATED_ROUTERS_MCAST);
-                ipv6int->assignAddress(Ipv6Address::ALL_OSPF_DESIGNATED_ROUTERS_MCAST, false, 0, 0);
+                OSPFv3IntraAreaPrefixLSA* prefLSA = interface->getArea()->originateNetIntraAreaPrefixLSA(newLSA, interface);\
+                if (prefLSA != nullptr)
+                {
+                    interface->getArea()->installIntraAreaPrefixLSA(prefLSA);
+                    InterfaceEntry* ie = interface->containingProcess->ift->getInterfaceById(interface->getInterfaceId());
+                    Ipv6InterfaceData *ipv6int = ie->ipv6Data();
+                    ipv6int->joinMulticastGroup(Ipv6Address::ALL_OSPF_DESIGNATED_ROUTERS_MCAST);
+                    ipv6int->assignAddress(Ipv6Address::ALL_OSPF_DESIGNATED_ROUTERS_MCAST, false, 0, 0);
 
-                interface->getArea()->floodLSA(newLSA);
-                interface->getArea()->floodLSA(prefLSA);
+                    interface->getArea()->floodLSA(newLSA);
+                    interface->getArea()->floodLSA(prefLSA);
+                }
             }
         }
         else
@@ -168,13 +171,16 @@ void OSPFv3InterfaceState::changeState(OSPFv3Interface *interface, OSPFv3Interfa
             }
             // here I am in state when interface comes to DR state but there is no neighbor on this iface.
             // so new LSA type 9 need to be created
-            OSPFv3IntraAreaPrefixLSA* prefLSA = interface->getArea()->originateIntraAreaPrefixLSA();
+//            if (interface->getArea()->getInstance()->getAreaCount() > 1) //this is ABR
+//            {
+//                interface->getArea()->originateInterAreaPrefixLSA(prefLSA, interface->getArea(), false);
+//            }
+        }
+        OSPFv3IntraAreaPrefixLSA* prefLSA = interface->getArea()->originateIntraAreaPrefixLSA();
+        if (prefLSA != nullptr)
+        {
             shouldRebuildRoutingTable |= interface->getArea()->installIntraAreaPrefixLSA(prefLSA);
             interface->getArea()->floodLSA(prefLSA);
-            if (interface->getArea()->getInstance()->getAreaCount() > 1) //this is ABR
-            {
-                interface->getArea()->originateInterAreaPrefixLSA(prefLSA, interface->getArea(), false);
-            }
         }
     }
 

@@ -87,26 +87,26 @@ void OSPFv3NeighborState::changeState(OSPFv3Neighbor *neighbor, OSPFv3NeighborSt
         }
     }
 
+    OSPFv3Area * thisArea = neighbor->getInterface()->getArea();
     if (nextState == OSPFv3Neighbor::DOWN_STATE) //this neigbor was shuted down
     {
         // invalidate all LSA type 3, which I know from this neighbor
         // nájdi mi všetky intra-arey, ktoré majú adv Router ID tento neighbor ID
         // v druhých areách, nájdi všetky inter-area , ktoré majú prefix týchto najdených intra area
-        // set MAX_AGE a pošli ïalej
-        if (neighbor->getInterface()->getArea()->getInstance()->getAreaCount() > 1) // this is ABR
+        // set MAX_AGE
+        if (thisArea->getInstance()->getAreaCount() > 1) // this is ABR
         {
-            for(int ar = 0; ar < neighbor->getInterface()->getArea()->getInstance()->getAreaCount(); ar++)
+            for(int ar = 0; ar < thisArea->getInstance()->getAreaCount(); ar++)
             {
-                OSPFv3Area* area = neighbor->getInterface()->getArea()->getInstance()->getArea(ar);
-                if(area->getAreaID() == neighbor->getInterface()->getArea()->getAreaID()) //skip my Area
+                OSPFv3Area* area = thisArea->getInstance()->getArea(ar);
+                if(area->getAreaID() == thisArea->getAreaID()) //skip my Area
                     continue;
 
                 // in all other Areas invalidate all Inter-Area-Prefix LSAs with same prefix IP as all
                 // known Intra-Area-Prefix LSAs from this neighbor
-
-                for (int i = 0; i < neighbor->getInterface()->getArea()->getIntraAreaPrefixLSACount(); i++)
+                for (int i = 0; i < thisArea->getIntraAreaPrefixLSACount(); i++)
                 {
-                    IntraAreaPrefixLSA *iapLSA = neighbor->getInterface()->getArea()->getIntraAreaPrefixLSA(i);
+                    IntraAreaPrefixLSA *iapLSA = thisArea->getIntraAreaPrefixLSA(i);
                     if (neighbor->getNeighborID() == iapLSA->getHeader().getAdvertisingRouter())
                     {
                         for(int k = 0; k <  iapLSA->getPrefixesArraySize(); k++)
@@ -115,7 +115,7 @@ void OSPFv3NeighborState::changeState(OSPFv3Neighbor *neighbor, OSPFv3NeighborSt
                             for (int j = 0; j <  area->getInterAreaPrefixLSACount(); j++)
                             {
                                 InterAreaPrefixLSA *interLSA = area->getInterAreaPrefixLSA(j);
-                                if ((interLSA->getHeader().getAdvertisingRouter() == neighbor->getInterface()->getArea()->getInstance()->getProcess()->getRouterID()) &&
+                                if ((interLSA->getHeader().getAdvertisingRouter() == thisArea->getInstance()->getProcess()->getRouterID()) &&
                                         (interLSA->getPrefix() == iapLSA->getPrefixes(k).addressPrefix) &&
                                         (interLSA->getPrefixLen() == iapLSA->getPrefixes(k).prefixLen))
                                 {
@@ -124,6 +124,9 @@ void OSPFv3NeighborState::changeState(OSPFv3Neighbor *neighbor, OSPFv3NeighborSt
                                 }
                             }
                         }
+                        // invalidate INTRA LSA too
+                        iapLSA->getHeaderForUpdate().setLsaAge(MAX_AGE);
+//                      neighbor->getInterface()->getArea()->floodLSA(iapLSA);
                     }
                 }
             }

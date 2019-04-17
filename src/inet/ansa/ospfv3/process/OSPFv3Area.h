@@ -109,6 +109,7 @@ class INET_API OSPFv3Area : public cObject
     uint32_t getCurrentInterAreaPrefixSequence(){return this->interAreaPrefixLSASequenceNumber;}
     void incrementInterAreaPrefixSequence(){this->interAreaPrefixLSASequenceNumber++;}
     InterAreaPrefixLSA* InterAreaPrefixLSAAlreadyExists(OSPFv3InterAreaPrefixLSA *newLsa);
+    InterAreaPrefixLSA* findInterAreaPrefixLSAbyAddress(const L3Address address, int prefixLen);
 
 
     //* INTRA AREA PREFIX LSA */
@@ -130,7 +131,7 @@ class INET_API OSPFv3Area : public cObject
     Ipv4Address getNetIntraAreaPrefixLinkStateID(){return this->netIntraAreaPrefixLsID;}
     uint32_t getCurrentNetIntraAreaPrefixSequence(){return this->netIntraAreaPrefixLSASequenceNumber;}
     void incrementNetIntraAreaPrefixSequence(){this->netIntraAreaPrefixLSASequenceNumber++;}
-    IntraAreaPrefixLSA*  findIntraAreaPrefixByAdvRouter(Ipv4Address advRouter);
+    IntraAreaPrefixLSA* findIntraAreaPrefixByAddress(L3Address address, int prefix);
     IntraAreaPrefixLSA* findIntraAreaPrefixLSAByReference(LSAKeyType lsaKey);
     IntraAreaPrefixLSA* IntraAreaPrefixLSAAlreadyExists(OSPFv3IntraAreaPrefixLSA *newLsa);
 

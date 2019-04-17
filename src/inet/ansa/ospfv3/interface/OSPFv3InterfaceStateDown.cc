@@ -66,8 +66,9 @@ void OSPFv3InterfaceStateDown::processEvent(OSPFv3Interface* interface, OSPFv3In
             LinkLSA *lsa = interface->originateLinkLSA();
             interface->installLinkLSA(lsa);
             IntraAreaPrefixLSA *prefLsa = interface->getArea()->originateIntraAreaPrefixLSA();
-            if (!interface->getArea()->installIntraAreaPrefixLSA(prefLsa))
-                EV_DEBUG << "Intra Area Prefix LSA for network beyond interface " << interface->getIntName() << " was not created!\n";
+            if (prefLsa != nullptr)
+                if (!interface->getArea()->installIntraAreaPrefixLSA(prefLsa))
+                    EV_DEBUG << "Intra Area Prefix LSA for network beyond interface " << interface->getIntName() << " was not created!\n";
 
             changeState(interface, new OSPFv3InterfacePassive, this);
         }
