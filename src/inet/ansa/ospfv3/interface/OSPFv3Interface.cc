@@ -97,13 +97,13 @@ void OSPFv3Interface::reset()
 
 
 
-bool OSPFv3Interface::hasAnyNeighborInStates(int states) const
+bool OSPFv3Interface::hasAnyNeighborInState(int state) const
 {
     long neighborCount = neighbors.size();
     for (long i = 0; i < neighborCount; i++)
     {
         OSPFv3Neighbor::OSPFv3NeighborStateType neighborState = neighbors[i]->getState();
-        if (neighborState >= states)
+        if (neighborState == state)
             return true;
     }
     return false;
@@ -175,7 +175,9 @@ bool OSPFv3Interface::ageDatabase()
             lsaKey.advertisingRouter = lsa->getHeader().getAdvertisingRouter();
 
             if (!isOnAnyRetransmissionList(lsaKey) &&
-                !hasAnyNeighborInStates(OSPFv3Neighbor::EXCHANGE_STATE | OSPFv3Neighbor::LOADING_STATE))
+                    (
+                !hasAnyNeighborInState(OSPFv3Neighbor::EXCHANGE_STATE) &&
+                !hasAnyNeighborInState(OSPFv3Neighbor::LOADING_STATE)))
             {
                 if (!selfOriginated /*|| unreachable*/) {
                     linkLSAsByID.erase(lsa->getHeader().getLinkStateID());
@@ -294,7 +296,8 @@ void OSPFv3Interface::processHelloPacket(Packet* packet)
             Ipv4Address sourceId = hello->getRouterID();
             OSPFv3Neighbor* neighbor = this->getNeighborById(sourceId);
 
-            if(neighbor != nullptr) {
+            if(neighbor != nullptr)
+            {
                 EV_DEBUG << "This is not a new neighbor!!! I know him for a long time...\n";
                 Ipv4Address designatedRouterID = neighbor->getNeighborsDR();
                 Ipv4Address backupRouterID = neighbor->getNeighborsBackup();
@@ -473,6 +476,15 @@ void OSPFv3Interface::processHelloPacket(Packet* packet)
                 if (designatedSetUp && backupSetUp) {
                     neighbor->setupDesignatedRouters(true);
                 }
+
+                //if iface is DR and this is first neighbor, then it must be revived adjacency
+                if ((this->getState() == OSPFv3InterfaceFAState::INTERFACE_STATE_DESIGNATED ||
+                        this->getState() == OSPFv3InterfaceFAState::INTERFACE_STATE_BACKUP)
+                        && (this->getNeighborCount() == 0))
+                {
+                    this->processEvent(OSPFv3Interface::NEIGHBOR_REVIVED_EVENT);
+                }
+
                 this->addNeighbor(neighbor);
             }
 

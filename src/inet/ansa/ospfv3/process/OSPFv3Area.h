@@ -139,7 +139,7 @@ class INET_API OSPFv3Area : public cObject
 
     void removeFromAllRetransmissionLists(LSAKeyType lsaKey);
     bool isOnAnyRetransmissionList(LSAKeyType lsaKey) const;
-    bool hasAnyNeighborInStates(int states) const;
+    bool hasAnyNeighborInStates(int state) const;
     bool hasAnyPassiveInterface() const;
 
 

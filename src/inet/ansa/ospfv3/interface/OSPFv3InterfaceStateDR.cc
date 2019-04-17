@@ -51,5 +51,9 @@ void OSPFv3InterfaceStateDR::processEvent(OSPFv3Interface* interface, OSPFv3Inte
         EV_DEBUG << "Sending delayed ACK in " << this->getInterfaceStateString() << "\n";
         interface->sendDelayedAcknowledgements();
     }
+    if (event == OSPFv3Interface::NEIGHBOR_REVIVED_EVENT) {
+        changeState(interface, new OSPFv3InterfaceStateWaiting, this);
+        interface->getArea()->getInstance()->getProcess()->setTimer(interface->getWaitTimer(), interface->getDeadInterval());
+    }
 }//processEvent
 }//namespace inet

@@ -3,4 +3,5 @@
         <disconnect src-module="R1" src-gate="ethg$o[0]" />
         <disconnect src-module="R2" src-gate="ethg$o[0]" />
     </at>
+    
 </scenario>

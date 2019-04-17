@@ -49,6 +49,10 @@ void OSPFv3InterfaceStateBackup::processEvent(OSPFv3Interface* interface, OSPFv3
     if (event == OSPFv3Interface::ACKNOWLEDGEMENT_TIMER_EVENT) {
         interface->sendDelayedAcknowledgements();
     }
+    if (event == OSPFv3Interface::NEIGHBOR_REVIVED_EVENT) {
+        changeState(interface, new OSPFv3InterfaceStateWaiting, this);
+        interface->getArea()->getInstance()->getProcess()->setTimer(interface->getWaitTimer(), interface->getDeadInterval());
+    }
 }//processEvent
 
 

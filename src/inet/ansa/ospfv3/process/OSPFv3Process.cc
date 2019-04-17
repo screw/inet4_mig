@@ -650,7 +650,7 @@ void OSPFv3Process::activateProcess()
 
 void OSPFv3Process::debugDump()
 {
-    EV_DEBUG << "$$$$$$$$ Process " << this->getProcessID() << "\n";
+    EV_DEBUG << "Process " << this->getProcessID() << "\n";
     for(auto it=this->instances.begin(); it!=this->instances.end(); it++)
         (*it)->debugDump();
 }//debugDump

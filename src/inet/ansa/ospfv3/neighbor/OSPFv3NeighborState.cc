@@ -101,8 +101,9 @@ void OSPFv3NeighborState::changeState(OSPFv3Neighbor *neighbor, OSPFv3NeighborSt
                 if(area->getAreaID() == neighbor->getInterface()->getArea()->getAreaID()) //skip my Area
                     continue;
 
-                // in all other Areas invalidate all Inter-Area-Prefix LSA with same prefix IP as all
-                // Intra-Area-Prefix LSA which are known from this neighbor
+                // in all other Areas invalidate all Inter-Area-Prefix LSAs with same prefix IP as all
+                // known Intra-Area-Prefix LSAs from this neighbor
+
                 for (int i = 0; i < neighbor->getInterface()->getArea()->getIntraAreaPrefixLSACount(); i++)
                 {
                     IntraAreaPrefixLSA *iapLSA = neighbor->getInterface()->getArea()->getIntraAreaPrefixLSA(i);

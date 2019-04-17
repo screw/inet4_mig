@@ -57,5 +57,9 @@ void OSPFv3InterfaceStateDROther::processEvent(OSPFv3Interface* interface, OSPFv
     if (event == OSPFv3Interface::ACKNOWLEDGEMENT_TIMER_EVENT) {
         interface->sendDelayedAcknowledgements();
     }
+//    if (event == OSPFv3Interface::NEIGHBOR_REVIVED_EVENT) {
+//        changeState(interface, new OSPFv3InterfaceStateWaiting, this);
+//        this->getArea()->getInstance()->getProcess()->setTimer(interface->getWaitTimer(), interface->getDeadInterval());
+//    }
 }//processEvent
 }//namespace inet

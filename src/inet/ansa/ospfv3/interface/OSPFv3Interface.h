@@ -47,7 +47,8 @@ class INET_API OSPFv3Interface : public cObject
         INTERFACE_DOWN_EVENT = 5,
         LOOP_IND_EVENT = 6,
         HELLO_TIMER_EVENT = 7,
-        ACKNOWLEDGEMENT_TIMER_EVENT = 8
+        ACKNOWLEDGEMENT_TIMER_EVENT = 8,
+        NEIGHBOR_REVIVED_EVENT = 9
     };
 
     enum OSPFv3InterfaceType {
@@ -162,7 +163,7 @@ class INET_API OSPFv3Interface : public cObject
     bool floodLSA(const OSPFv3LSA* lsa, OSPFv3Interface* interface=nullptr, OSPFv3Neighbor* neighbor=nullptr);
     void removeFromAllRetransmissionLists(LSAKeyType lsaKey);
     bool isOnAnyRetransmissionList(LSAKeyType lsaKey) const;
-    bool hasAnyNeighborInStates(int states) const;
+    bool hasAnyNeighborInState(int state) const;
     void ageTransmittedLSALists();
 
     Packet* prepareHello();

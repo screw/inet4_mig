@@ -6,6 +6,8 @@ import inet.networklayer.configurator.ipv6.Ipv6FlatNetworkConfigurator;
 import inet.common.misc.ThruputMeteringChannel;
 import inet.node.ethernet.EtherSwitch;
 
+import inet.common.scenario.ScenarioManager;
+
 
 network v3_2_routers
 {
@@ -42,6 +44,9 @@ network v3_2_routers
             addStaticRoutes = false;
             addDefaultRoutes = false;
             addSubnetRoutes = false;
+        }
+        scenarioManager: ScenarioManager {
+            @display("p=22.6325,96.7025");
         }
 
     connections:

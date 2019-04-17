@@ -267,7 +267,7 @@ void OSPFv3Area::ageDatabase()
         if ((localIntf != nullptr) &&
             (localIntf->getState() == OSPFv3Interface::INTERFACE_STATE_DESIGNATED) &&
             (localIntf->getNeighborCount() > 0) &&
-            (localIntf->hasAnyNeighborInStates(OSPFv3Neighbor::FULL_STATE)))
+            (localIntf->hasAnyNeighborInState(OSPFv3Neighbor::FULL_STATE)))
         {
             selfOriginated = true;
         }
@@ -423,7 +423,8 @@ void OSPFv3Area::ageDatabase()
 //           // }
 //        }
 
-        if (lsaAge == MAX_AGE) {
+        if (lsaAge == MAX_AGE)
+        {
             LSAKeyType lsaKey;
 
             lsaKey.linkStateID = lsa->getHeader().getLinkStateID();
@@ -472,7 +473,7 @@ void OSPFv3Area::ageDatabase()
         if ((localIntf != nullptr) &&
            (localIntf->getState() == OSPFv3Interface::INTERFACE_STATE_DESIGNATED) &&
            (localIntf->getNeighborCount() > 0) &&
-           (localIntf->hasAnyNeighborInStates(OSPFv3Neighbor::FULL_STATE)))
+           (localIntf->hasAnyNeighborInState(OSPFv3Neighbor::FULL_STATE)))
         {
            selfOriginated = true;
         }
@@ -651,7 +652,10 @@ RouterLSA* OSPFv3Area::originateRouterLSA()
         OSPFv3Interface* intf = this->interfaceList.at(i);
 
         if (intf->getState() == OSPFv3Interface::INTERFACE_STATE_DOWN ||
-                !intf->hasAnyNeighborInStates(OSPFv3Neighbor::INIT_STATE)) {
+//                !intf->hasAnyNeighborInState(OSPFv3Neighbor::INIT_STATE
+                intf->hasAnyNeighborInState(OSPFv3Neighbor::ATTEMPT_STATE) ||
+                intf->hasAnyNeighborInState(OSPFv3Neighbor::DOWN_STATE)
+                        ) {
             continue;
         }
 
@@ -692,7 +696,8 @@ RouterLSA* OSPFv3Area::originateRouterLSA()
                 OSPFv3Neighbor *DRouter =intf->getNeighborById(intf->getDesignatedID());
 
                 if ( ((DRouter != nullptr) && (DRouter->getState() == OSPFv3Neighbor::FULL_STATE)) ||
-                        (intf->getDesignatedID() == this->getInstance()->getProcess()->getRouterID())
+                        ((intf->getDesignatedID() == this->getInstance()->getProcess()->getRouterID()) &&
+                                intf->getNeighborCount() > 0)
                          )
                 {
                     routerLSABody.interfaceID = intf->getInterfaceId();      // id of interface
@@ -854,7 +859,7 @@ bool OSPFv3Area::hasAnyNeighborInStates(int states) const
     long interfaceCount = this->interfaceList.size();
     for (long i = 0; i < interfaceCount; i++)
     {
-        if (interfaceList.at(i)->hasAnyNeighborInStates(states))
+        if (interfaceList.at(i)->hasAnyNeighborInState(states))
             return true;
     }
     return false;
@@ -917,7 +922,7 @@ RouterLSA *OSPFv3Area::findRouterLSAByID(Ipv4Address linkStateID)
 ////------------------------------------- Network LSA --------------------------------------//
 NetworkLSA* OSPFv3Area::originateNetworkLSA(OSPFv3Interface* interface)
 {
-    if (interface->hasAnyNeighborInStates(OSPFv3Neighbor::FULL_STATE))
+    if (interface->hasAnyNeighborInState(OSPFv3Neighbor::FULL_STATE))
     {
         NetworkLSA* networkLsa = new NetworkLSA();
         OSPFv3LSAHeader& lsaHeader = networkLsa->getHeaderForUpdate();
@@ -1134,9 +1139,8 @@ void OSPFv3Area::originateInterAreaPrefixLSA(const OSPFv3LSA* prefLsa, OSPFv3Are
     lsaKey.advertisingRouter = prefLsa->getHeader().getAdvertisingRouter();
     lsaKey.LSType = prefLsa->getHeader().getLsaType();
 
+    //this check is mainly for dealing with shut downs
     OSPFv3LSA *lsaInDatabase = this->getInstance()->getProcess()->findLSA(lsaKey, fromArea->getAreaID(), fromArea->getInstance()->getInstanceID());
-
-
 
     for(int i = 0; i < this->getInstance()->getAreaCount(); i++)
     {
@@ -1347,7 +1351,7 @@ IntraAreaPrefixLSA* OSPFv3Area::originateIntraAreaPrefixLSA() //this is for non-
     int currentPrefix = 1;
     for(auto it=this->interfaceList.begin(); it!=this->interfaceList.end(); it++) {
         // if interface is not transit (not in state DR, BDR or DRother) or has no neighbour in FULL STATE than continue
-        if((*it)->getTransitNetInt() == false || !(*it)->hasAnyNeighborInStates(OSPFv3Neighbor::FULL_STATE)) {
+        if((*it)->getTransitNetInt() == false || !(*it)->hasAnyNeighborInState(OSPFv3Neighbor::FULL_STATE)) {
             InterfaceEntry *ie = this->getInstance()->getProcess()->ift->getInterfaceByName((*it)->getIntName().c_str());
             Ipv6InterfaceData* ipv6int = ie->ipv6Data();
 
