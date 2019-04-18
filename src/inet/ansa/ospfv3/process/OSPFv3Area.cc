@@ -2847,54 +2847,83 @@ void OSPFv3Area::calculateInterAreaRoutes(std::vector<OSPFv3RoutingTableEntry* >
                 if (linkLSA != nullptr)
                     break;
             }
+            if (linkLSA != nullptr)
+            {
+                // The routingEntry describes a route to an other area -> look for the border router originating it
+                for (j = 0; j < routeCount; j++)
+                {    // (4) N == destination, BR == borderRouterEntry
+                    OSPFv3RoutingTableEntry *routingEntry = newTableIPv6[j];
 
-            if (linkLSA == nullptr)
-                continue;
-
-
-
-//            //find Router LSA for originate router of Inter Area Prefix LSA
-//            RouterLSA *routerLSA =  findRouterLSA(originatingRouter);
-//
-//            //if founded RouterLSA has no valuable information.
-//            if (routerLSA == nullptr) {
-//                continue;
-//            }
-//            if (routerLSA->getRoutersArraySize() < 1) {
-//                continue;
-//            }
-
-
-//            OSPFv3IntraAreaPrefixLSA *iapLSA = findIntraAreaPrefixLSAByReference(lsaKey);
-//            if (iapLSA == nullptr)
-//                continue;
-
-            EV_DEBUG << "routeCount = " << routeCount << "\n";
-            // The routingEntry describes a route to an other area -> look for the border router originating it
-            for (j = 0; j < routeCount; j++)
-            {    // (4) N == destination, BR == borderRouterEntry
-                OSPFv3RoutingTableEntry *routingEntry = newTableIPv6[j];
-
-                EV_DEBUG << "\n";
-                for (int pfxs = 0; pfxs < linkLSA->getPrefixesArraySize(); pfxs++)
-                {
-                    const OSPFv3LSAHeader header = routingEntry->getLinkStateOrigin()->getHeader();
-
-                // ak mamu seba LSA 9 v ramci rovnakej area s IPckou aku obsahuje novy routingEntry zaznam, tak...
-                    if ((routingEntry->getArea() == areaID) &&
-                        (((routingEntry->getDestinationType() & OSPFv3RoutingTableEntry::AREA_BORDER_ROUTER_DESTINATION) != 0) ||
-                         ((routingEntry->getDestinationType() & OSPFv3RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION) != 0)) &&
-                         (header.getAdvertisingRouter() == linkLSA->getHeader().getAdvertisingRouter()) &&
-                        (routingEntry->getDestPrefix() == linkLSA->getPrefixes(pfxs).addressPrefix.toIpv6()))
+                    EV_DEBUG << "\n";
+                    for (int pfxs = 0; pfxs < linkLSA->getPrefixesArraySize(); pfxs++)
                     {
-                        borderRouterEntry = routingEntry;
-                        break;
-                    }
-                }
-                if (borderRouterEntry != nullptr)
-                    break;
-            }
+                        const OSPFv3LSAHeader header = routingEntry->getLinkStateOrigin()->getHeader();
 
+                    // ak mamu seba LSA 9 v ramci rovnakej area s IPckou aku obsahuje novy routingEntry zaznam, tak...
+                        if ((routingEntry->getArea() == areaID) &&
+                            (((routingEntry->getDestinationType() & OSPFv3RoutingTableEntry::AREA_BORDER_ROUTER_DESTINATION) != 0) ||
+                             ((routingEntry->getDestinationType() & OSPFv3RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION) != 0)) &&
+                             (header.getAdvertisingRouter() == linkLSA->getHeader().getAdvertisingRouter()) &&
+                            (routingEntry->getDestPrefix() == linkLSA->getPrefixes(pfxs).addressPrefix.toIpv6()))
+                        {
+                            borderRouterEntry = routingEntry;
+                            break;
+                        }
+                    }
+                    if (borderRouterEntry != nullptr)
+                        break;
+                }
+            }
+            else //in LinkLSA found nothing, check Intra-Area-Prefix-LSA
+            {
+                //find Router LSA for originate router of Inter Area Prefix LSA
+                RouterLSA *routerLSA =  findRouterLSA(originatingRouter);
+
+                if (routerLSA == nullptr) {
+                    continue;
+                }
+                //if founded RouterLSA has no valuable information.
+                if (routerLSA->getRoutersArraySize() < 1) {
+                    continue;
+                }
+                for (int ro = 0; ro <  routerLSA->getRoutersArraySize(); ro++)
+                {
+                    LSAKeyType lsaKey;
+                    lsaKey.advertisingRouter = routerLSA->getRouters(ro).neighborRouterID;
+                    lsaKey.linkStateID = Ipv4Address(routerLSA->getRouters(ro).neighborInterfaceID);
+                    lsaKey.LSType = routerLSA->getRouters(ro).type;
+
+                    OSPFv3IntraAreaPrefixLSA *iapLSA = findIntraAreaPrefixLSAByReference(lsaKey);
+                    if (iapLSA == nullptr)
+                        continue;
+                    // The routingEntry describes a route to an other area -> look for the border router originating it
+                    for (j = 0; j < routeCount; j++)
+                    {    // (4) N == destination, BR == borderRouterEntry
+                        OSPFv3RoutingTableEntry *routingEntry = newTableIPv6[j];
+
+                        EV_DEBUG << "\n";
+                        for (int pfxs = 0; pfxs < iapLSA->getPrefixesArraySize(); pfxs++)
+                        {
+                            const OSPFv3LSAHeader header = routingEntry->getLinkStateOrigin()->getHeader();
+
+                        // ak mamu seba LSA 9 v ramci rovnakej area s IPckou aku obsahuje novy routingEntry zaznam, tak...
+                            if ((routingEntry->getArea() == areaID) &&
+                                (((routingEntry->getDestinationType() & OSPFv3RoutingTableEntry::AREA_BORDER_ROUTER_DESTINATION) != 0) ||
+                                 ((routingEntry->getDestinationType() & OSPFv3RoutingTableEntry::AS_BOUNDARY_ROUTER_DESTINATION) != 0)) &&
+                                 (header.getAdvertisingRouter() == iapLSA->getHeader().getAdvertisingRouter()) &&
+                                (routingEntry->getDestPrefix() == iapLSA->getPrefixes(pfxs).addressPrefix.toIpv6()))
+                            {
+                                borderRouterEntry = routingEntry;
+                                break;
+                            }
+                        }
+                        if (borderRouterEntry != nullptr)
+                            break;
+                    }
+                    if (borderRouterEntry != nullptr)
+                        break;
+                }
+            }
 
             if (borderRouterEntry == nullptr) {
                 continue;
