@@ -235,7 +235,7 @@ class INET_API OSPFv3Interface : public cObject
     //for Intra-Area-Prefix LSA
     bool transitNetworkInterface;
 
-    uint32_t linkLSASequenceNumber = 1;
+    uint32_t linkLSASequenceNumber = INITIAL_SEQUENCE_NUMBER;
 
     Ipv6Address DesignatedRouterIP;
     Ipv6Address BackupRouterIP;

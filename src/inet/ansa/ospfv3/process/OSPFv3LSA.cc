@@ -115,7 +115,6 @@ std::ostream& operator<<(std::ostream& ostr, const OSPFv3LSAHeader& lsaHeader)
 
 std::ostream& operator<<(std::ostream& ostr, const OSPFv3NetworkLSA& lsa)
 {
-    ostr << "Mask: 64" ;//<< lsa.getNetMask();
     unsigned int cnt = lsa.getAttachedRouterArraySize();
     if (cnt) {
         ostr << ", Attached routers:";

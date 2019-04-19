@@ -124,13 +124,8 @@ class INET_API OSPFv3Area : public cObject
     bool intraAreaPrefixLSADiffersFrom(OSPFv3IntraAreaPrefixLSA* currentLsa, OSPFv3IntraAreaPrefixLSA* newLsa);
     Ipv4Address getNewIntraAreaPrefixLinkStateID();
     void subtractIntraAreaPrefixLinkStateID();
-    Ipv4Address getIntraAreaPrefixLinkStateID(){return this->intraAreaPrefixLsID;}
     uint32_t getCurrentIntraAreaPrefixSequence(){return this->intraAreaPrefixLSASequenceNumber;}
     void incrementIntraAreaPrefixSequence(){this->intraAreaPrefixLSASequenceNumber++;}
-    Ipv4Address getNewNetIntraAreaPrefixLinkStateID();
-    Ipv4Address getNetIntraAreaPrefixLinkStateID(){return this->netIntraAreaPrefixLsID;}
-    uint32_t getCurrentNetIntraAreaPrefixSequence(){return this->netIntraAreaPrefixLSASequenceNumber;}
-    void incrementNetIntraAreaPrefixSequence(){this->netIntraAreaPrefixLSASequenceNumber++;}
     IntraAreaPrefixLSA* findIntraAreaPrefixByAddress(L3Address address, int prefix);
     IntraAreaPrefixLSA* findIntraAreaPrefixLSAByReference(LSAKeyType lsaKey);
     IntraAreaPrefixLSA* IntraAreaPrefixLSAAlreadyExists(OSPFv3IntraAreaPrefixLSA *newLsa);
@@ -204,31 +199,25 @@ class INET_API OSPFv3Area : public cObject
 
     std::vector<RouterLSA* > routerLSAList;
     Ipv4Address routerLsID = Ipv4Address::UNSPECIFIED_ADDRESS;
-    uint32_t routerLSASequenceNumber = 1;
+    uint32_t routerLSASequenceNumber = INITIAL_SEQUENCE_NUMBER;
 
     std::vector<NetworkLSA* > networkLSAList;
     Ipv4Address networkLsID = Ipv4Address::UNSPECIFIED_ADDRESS;
-    uint32_t networkLSASequenceNumber = 1;
+    uint32_t networkLSASequenceNumber = INITIAL_SEQUENCE_NUMBER;
 
     std::vector<InterAreaPrefixLSA* > interAreaPrefixLSAList;
-    uint32_t interAreaPrefixLSASequenceNumber = 1;
+    uint32_t interAreaPrefixLSASequenceNumber = INITIAL_SEQUENCE_NUMBER;
 
     std::vector<IntraAreaPrefixLSA*> intraAreaPrefixLSAList;
     Ipv4Address intraAreaPrefixLsID = (Ipv4Address) 1; //in simulaiton, zero print as <unspec>
-    uint32_t intraAreaPrefixLSASequenceNumber = 1;
-
-    Ipv4Address netIntraAreaPrefixLsID = Ipv4Address::UNSPECIFIED_ADDRESS;
-    uint32_t netIntraAreaPrefixLSASequenceNumber = 1;
+    uint32_t intraAreaPrefixLSASequenceNumber = INITIAL_SEQUENCE_NUMBER;
 
     RouterLSA* spfTreeRoot=nullptr;
-    //list of summary lsas
-    //shortest path tree
 
 };
 
 inline std::ostream& operator<<(std::ostream& ostr, const OSPFv3Area& area)
 {
-    ostr << "MIGRATION IN THE PROCESS";
     ostr << area.detailedInfo();
     return ostr;
 }

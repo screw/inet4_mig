@@ -68,6 +68,8 @@ class INET_API OSPFv3Process : protected cListener, public cSimpleModule
      */
     int isInRoutingTable(IIpv4RoutingTable *rtTable, Ipv4Address addr);
     int isInRoutingTable6(Ipv6RoutingTable *rtTable, Ipv6Address addr);
+    int isInInterfaceTable(IInterfaceTable *ifTable, Ipv4Address addr);
+    int isInInterfaceTable6(IInterfaceTable *ifTable, Ipv6Address addr);
 
     bool hasAddressRange(const Ipv6AddressRange& addressRange) const;
     bool hasAddressRange(const Ipv4AddressRange& addressRange) const;

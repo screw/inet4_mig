@@ -62,17 +62,20 @@ void OSPFv3Splitter::handleMessage(cMessage* msg)
                 return;
             }
             InterfaceEntry *ie = ift->getInterfaceById(packet->getTag<InterfaceInd>()->getInterfaceId());
-//            InterfaceEntry* ie = this->ift->getInterfaceById(ctlInfo->getInterfaceId());
-            char* ieName = (char*)ie->getInterfaceName();
-            std::map<std::string, std::pair<int,int>>::iterator it = this->interfaceToProcess.find(ieName);
-            //Is there a process with this interface??
-            if(it!=this->interfaceToProcess.end()){
-                this->send(msg, "processOut", it->second.first);//first is always there
+            if (ie != nullptr)
+            {
+                char* ieName = (char*)ie->getInterfaceName();
+                std::map<std::string, std::pair<int,int>>::iterator it = this->interfaceToProcess.find(ieName);
+                //Is there a process with this interface??
+                if(it!=this->interfaceToProcess.end())
+                {
+                    this->send(msg, "processOut", it->second.first);//first is always there
 
-                if(it->second.second!=-1) {
-                    cMessage* copy = msg->dup();
-                    copy->setControlInfo(msg->getControlInfo()->dup());
-                    this->send(copy, "processOut", it->second.second);
+                    if(it->second.second!=-1) {
+                        cMessage* copy = msg->dup();
+//                        copy->setControlInfo(msg->getControlInfo()->dup());
+                        this->send(copy, "processOut", it->second.second);
+                    }
                 }
             }
             else {
@@ -147,7 +150,6 @@ void OSPFv3Splitter::parseConfig(cXMLElement* routingConfig, cXMLElement* intCon
 
             //ALL_OSPF_ROUTERS_MCAST renamed into ALL_ROUTERS_5
             ipv6int->joinMulticastGroup(Ipv6Address::ALL_OSPF_ROUTERS_MCAST);//TODO - join only once
-//            ipv6int->assignAddress(Ipv6Address::ALL_OSPF_ROUTERS_MCAST, false, 0, 0); // FIXME: packetTraffic throws error. Does this have any connection with it?
         }
     }
 

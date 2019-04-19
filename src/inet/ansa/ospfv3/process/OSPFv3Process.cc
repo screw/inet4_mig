@@ -92,8 +92,31 @@ int OSPFv3Process::isInRoutingTable6(Ipv6RoutingTable *rtTable, Ipv6Address addr
 {
     for (int i = 0; i < rtTable->getNumRoutes(); i++) {
         const Ipv6Route *entry = rtTable->getRoute(i);
-        if (addr ==  entry->getDestPrefix()) {
+        if (addr.getPrefix(entry->getPrefixLength()) ==  entry->getDestPrefix().getPrefix(entry->getPrefixLength()))
+        {
             return i;
+        }
+    }
+    return -1;
+}
+
+int OSPFv3Process::isInInterfaceTable(IInterfaceTable *ifTable, Ipv4Address addr)
+{
+    for (int i = 0; i < ifTable->getNumInterfaces(); i++) {
+        if (ifTable->getInterface(i)->ipv4Data()->getIPAddress() == addr) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int OSPFv3Process::isInInterfaceTable6(IInterfaceTable *ifTable, Ipv6Address addr)
+{
+    for (int i = 0; i < ifTable->getNumInterfaces(); i++) {
+        for (int j = 0; j < ifTable->getInterface(i)->ipv6Data()->getNumAddresses(); j++) {
+            if (ifTable->getInterface(i)->ipv6Data()->getAddress(j) == addr) {
+                return i;
+            }
         }
     }
     return -1;
@@ -139,22 +162,26 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
             p.prefix = address6;
             p.prefixLength = prefLength;
 
-            intfData6->assignAddress(address6, false, SIMTIME_ZERO, SIMTIME_ZERO);
+            if(isInInterfaceTable6(ift, address6) < 0)
+            {
+                intfData6->assignAddress(address6, false, SIMTIME_ZERO, SIMTIME_ZERO);
 
-            // add this routes to routing table
-            Ipv6Route *route = new Ipv6Route(p.prefix.getPrefix(prefLength), p.prefixLength, IRoute::IFACENETMASK);
-            route->setInterface(myInterface);
-            route->setExpiryTime(SIMTIME_ZERO);
-            route->setMetric(0);
-            route->setAdminDist(Ipv6Route::dDirectlyConnected);
+                // add this routes to routing table
+                Ipv6Route *route = new Ipv6Route(p.prefix.getPrefix(prefLength), p.prefixLength, IRoute::IFACENETMASK);
+                route->setInterface(myInterface);
+                route->setExpiryTime(SIMTIME_ZERO);
+                route->setMetric(0);
+                route->setAdminDist(Ipv6Route::dDirectlyConnected);
 
-            rt6->addRoutingProtocolRoute(route);
+                rt6->addRoutingProtocolRoute(route);
+            }
         }
 
          //interface ipv4 configuration
          Ipv4Address addr;
          Ipv4Address mask;
          Ipv4InterfaceData * intfData = myInterface->ipv4Data(); //new Ipv4InterfaceData();
+         bool alreadySet = false;
 
 
          cXMLElementList ipv4AddrList = (*interfaceIt)->getElementsByTagName("IPAddress");
@@ -164,30 +191,38 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
              {
                  const char * addr4c = ipv4Rec->getNodeValue(); //from string make ipv4 address and store to interface config
                  addr = (Ipv4Address(addr4c));
+                 if (isInInterfaceTable(ift, addr) >= 0) // prevention from seting same interface by second process
+                 {
+                     alreadySet = true;
+                     continue;
+                 }
                  intfData->setIPAddress(addr);
 
              }
-             cXMLElementList ipv4MaskList = (*interfaceIt)->getElementsByTagName("Mask");
-             if (ipv4MaskList.size() != 1)
-                 throw cRuntimeError("Interface %s has more or less than one mask", interfaceName);
-
-             for (auto & ipv4Rec : ipv4MaskList)
+             if (!alreadySet)
              {
-                const char * mask4c = ipv4Rec->getNodeValue();
-                mask =  (Ipv4Address(mask4c));
-                intfData->setNetmask(mask);
+                 cXMLElementList ipv4MaskList = (*interfaceIt)->getElementsByTagName("Mask");
+                 if (ipv4MaskList.size() != 1)
+                     throw cRuntimeError("Interface %s has more or less than one mask", interfaceName);
 
-                //add directly connected ip address to routing table
-               Ipv4Address networkAdd = (Ipv4Address((intfData->getIPAddress()).getInt() & (intfData->getNetmask()).getInt()));
-               Ipv4Route *entry = new Ipv4Route;
+                 for (auto & ipv4Rec : ipv4MaskList)
+                 {
+                    const char * mask4c = ipv4Rec->getNodeValue();
+                    mask =  (Ipv4Address(mask4c));
+                    intfData->setNetmask(mask);
 
-               entry->setDestination(networkAdd);
-               entry->setNetmask(intfData->getNetmask());
-               entry->setInterface(myInterface);
-               entry->setMetric(21);
-               entry->setSourceType(IRoute::IFACENETMASK);
+                    //add directly connected ip address to routing table
+                   Ipv4Address networkAdd = (Ipv4Address((intfData->getIPAddress()).getInt() & (intfData->getNetmask()).getInt()));
+                   Ipv4Route *entry = new Ipv4Route;
 
-               rt4->addRoute(entry);
+                   entry->setDestination(networkAdd);
+                   entry->setNetmask(intfData->getNetmask());
+                   entry->setInterface(myInterface);
+                   entry->setMetric(21);
+                   entry->setSourceType(IRoute::IFACENETMASK);
+
+                   rt4->addRoute(entry);
+                 }
              }
 
          }
@@ -918,7 +953,7 @@ void OSPFv3Process::rebuildRoutingTable()
 
             std::vector<Ipv4Route *> eraseEntriesIPv4;
             unsigned long routingEntryNumber = rt4->getNumRoutes();
-            // remove entries from the IPv64routing table inserted by the OSPF module
+            // remove entries from the IPv4 routing table inserted by the OSPF module
             for (i = 0; i < routingEntryNumber; i++) {
                 Ipv4Route *entry = rt4->getRoute(i);
                 if (entry->getSourceType() == IRoute::OSPF)

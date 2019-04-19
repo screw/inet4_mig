@@ -17,7 +17,7 @@
 					</Instance>
 				</Process>
 				<IPv6Address>fe80::a8bb:ccff:fe00:100/64</IPv6Address>
-				<IPv6Address>2001:db8:a::1/64</IPv6Address>
+				<IPv6Address>2001:db8:a::1/110</IPv6Address>
 			</Interface>
 			<Interface name="eth1">
 				<Process id="100">
@@ -27,7 +27,7 @@
 					</Instance>
 				</Process>
 				<IPv6Address>fe80::a8bb:ccff:fe00:110/64</IPv6Address>
-				<IPv6Address>2001:db8:1::1/64</IPv6Address>
+				<IPv6Address>2001:db8:1::1/111</IPv6Address>
 			</Interface>
 		</Interfaces>
 	</Router>
@@ -50,7 +50,7 @@
 					</Instance>
 				</Process>
 				<IPv6Address>fe80::a8bb:ccff:fe00:200/64</IPv6Address>
-				<IPv6Address>2001:db8:a::2/64</IPv6Address>
+				<IPv6Address>2001:db8:a::2/110</IPv6Address>
 			</Interface>
 			<Interface name="eth1">
 				<Process id="100">
@@ -60,7 +60,7 @@
 					</Instance>
 				</Process>
 				<IPv6Address>fe80::a8bb:ccff:fe00:210/64</IPv6Address>
-				<IPv6Address>2001:db8:2::1/64</IPv6Address>
+				<IPv6Address>2001:db8:2::1/112</IPv6Address>
 			</Interface>
 		</Interfaces>
 	</Router>
@@ -83,7 +83,7 @@
 					</Instance>
 				</Process>
 				<IPv6Address>fe80::a8bb:ccff:fe00:300/64</IPv6Address>
-				<IPv6Address>2001:db8:a::3/64</IPv6Address>
+				<IPv6Address>2001:db8:a::3/110</IPv6Address>
 			</Interface>
 			<Interface name="eth1">
 				<Process id="100">
@@ -93,7 +93,7 @@
 					</Instance>
 				</Process>
 				<IPv6Address>fe80::a8bb:ccff:fe00:310/64</IPv6Address>
-				<IPv6Address>2001:db8:3::1/64</IPv6Address>
+				<IPv6Address>2001:db8:3::1/113</IPv6Address>
 			</Interface>
 		</Interfaces>
 	</Router>
@@ -116,7 +116,7 @@
 					</Instance>
 				</Process>
 				<IPv6Address>fe80::a8bb:ccff:fe00:400/64</IPv6Address>
-				<IPv6Address>2001:db8:a::4/64</IPv6Address>
+				<IPv6Address>2001:db8:a::4/110</IPv6Address>
 			</Interface>
 			<Interface name="eth1">
 				<Process id="100">
@@ -126,7 +126,7 @@
 					</Instance>
 				</Process>
 				<IPv6Address>fe80::a8bb:ccff:fe00:410/64</IPv6Address>
-				<IPv6Address>2001:db8:4::1/64</IPv6Address>
+				<IPv6Address>2001:db8:4::1/114</IPv6Address>
 			</Interface>
 		</Interfaces>
 	</Router>
@@ -149,7 +149,7 @@
 					</Instance>
 				</Process>
 				<IPv6Address>fe80::a8bb:ccff:fe00:500/64</IPv6Address>
-				<IPv6Address>2001:db8:a::5/64</IPv6Address>
+				<IPv6Address>2001:db8:a::5/110</IPv6Address>
 			</Interface>
 			<Interface name="eth1">
 				<Process id="100">
@@ -159,7 +159,7 @@
 					</Instance>
 				</Process>
 				<IPv6Address>fe80::a8bb:ccff:fe00:510/64</IPv6Address>
-				<IPv6Address>2001:db8:5::1/64</IPv6Address>
+				<IPv6Address>2001:db8:5::1/115</IPv6Address>
 			</Interface>
 		</Interfaces>
 	</Router>
@@ -182,7 +182,7 @@
 					</Instance>
 				</Process>
 				<IPv6Address>fe80::a8bb:ccff:fe00:610/64</IPv6Address>
-				<IPv6Address>2001:db8:1::2/64</IPv6Address>
+				<IPv6Address>2001:db8:1::2/111</IPv6Address>
 			</Interface>
 			<Interface name="eth1">
 				<Process id="100">
@@ -192,7 +192,7 @@
 					</Instance>
 				</Process>
 				<IPv6Address>fe80::a8bb:ccff:fe00:620/64</IPv6Address>
-				<IPv6Address>2001:db8:10::1/64</IPv6Address>
+				<IPv6Address>2001:db8:10::1/101</IPv6Address>
 			</Interface>
 		</Interfaces>
 	</Router>
@@ -215,7 +215,7 @@
 					</Instance>
 				</Process>
 				<IPv6Address>fe80::a8bb:ccff:fe00:710/64</IPv6Address>
-				<IPv6Address>2001:db8:2::2/64</IPv6Address>
+				<IPv6Address>2001:db8:2::2/112</IPv6Address>
 			</Interface>
 			<Interface name="eth1">
 				<Process id="100">
@@ -225,7 +225,7 @@
 					</Instance>
 				</Process>
 				<IPv6Address>fe80::a8bb:ccff:fe00:720/64</IPv6Address>
-				<IPv6Address>2001:db8:20::1/64</IPv6Address>
+				<IPv6Address>2001:db8:20::1/102</IPv6Address>
 			</Interface>
 		</Interfaces>
 	</Router>
@@ -248,7 +248,7 @@
 					</Instance>
 				</Process>
 				<IPv6Address>fe80::a8bb:ccff:fe00:810/64</IPv6Address>
-				<IPv6Address>2001:db8:3::2/64</IPv6Address>
+				<IPv6Address>2001:db8:3::2/113</IPv6Address>
 			</Interface>
 			<Interface name="eth1">
 				<Process id="100">
@@ -258,7 +258,7 @@
 					</Instance>
 				</Process>
 				<IPv6Address>fe80::a8bb:ccff:fe00:820/64</IPv6Address>
-				<IPv6Address>2001:db8:30::1/64</IPv6Address>
+				<IPv6Address>2001:db8:30::1/103</IPv6Address>
 			</Interface>
 		</Interfaces>
 	</Router>
@@ -281,7 +281,7 @@
 					</Instance>
 				</Process>
 				<IPv6Address>fe80::a8bb:ccff:fe00:910/64</IPv6Address>
-				<IPv6Address>2001:db8:4::2/64</IPv6Address>
+				<IPv6Address>2001:db8:4::2/114</IPv6Address>
 			</Interface>
 			<Interface name="eth1">
 				<Process id="100">
@@ -291,7 +291,7 @@
 					</Instance>
 				</Process>
 				<IPv6Address>fe80::a8bb:ccff:fe00:920/64</IPv6Address>
-				<IPv6Address>2001:db8:40::1/64</IPv6Address>
+				<IPv6Address>2001:db8:40::1/104</IPv6Address>
 			</Interface>
 		</Interfaces>
 	</Router>
@@ -314,7 +314,7 @@
 					</Instance>
 				</Process>
 				<IPv6Address>fe80::a8bb:ccff:fe00:111/64</IPv6Address>
-				<IPv6Address>2001:db8:5::2/64</IPv6Address>
+				<IPv6Address>2001:db8:5::2/115</IPv6Address>
 			</Interface>
 			<Interface name="eth1">
 				<Process id="100">
@@ -324,7 +324,7 @@
 					</Instance>
 				</Process>
 				<IPv6Address>fe80::a8bb:ccff:fe00:121/64</IPv6Address>
-				<IPv6Address>2001:db8:50::1/64</IPv6Address>
+				<IPv6Address>2001:db8:50::1/105</IPv6Address>
 			</Interface>
 		</Interfaces>
 	</Router>

@@ -1096,11 +1096,11 @@ void OSPFv3Interface::processLSU(Packet* packet, OSPFv3Neighbor* neighbor){
                     break;
 
                 case INTER_AREA_ROUTER_LSA:
-                    //                    currentLSA = (&(lsUpdatePacket->getSummaryLSAs(i)));
+                    //  TODO
                     break;
 
                 case AS_EXTERNAL_LSA:
-                    //                    currentLSA = (&(lsUpdatePacket->getAsExternalLSAs(i)));
+                    //  TODO
                     break;
 
                 case NSSA_LSA:
@@ -1820,7 +1820,12 @@ LinkLSA* OSPFv3Interface::originateLinkLSA()
                 prefix.pBit = false;
                 prefix.xBit = false;
 
-                prefix.prefixLen=64;
+                int rIndex = this->getArea()->getInstance()->getProcess()->isInRoutingTable6(this->getArea()->getInstance()->getProcess()->rt6, ipv6);
+                if (rIndex >= 0)
+                    prefix.prefixLen = this->getArea()->getInstance()->getProcess()->rt6->getRoute(rIndex)->getPrefixLength();
+                else
+                    prefix.prefixLen = 64;
+
                 prefix.addressPrefix=ipv6.getPrefix(prefix.prefixLen);
 
                 linkLSA->setPrefixesArraySize(linkLSA->getPrefixesArraySize()+1);

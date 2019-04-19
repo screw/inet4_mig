@@ -180,11 +180,11 @@ std::ostream& operator<<(std::ostream& out, const OSPFv3RoutingTableEntry& entry
                break;
 
            case INTER_AREA_PREFIX_LSA:
-               out << "SummaryLSA_Networks";
+               out << "InterAreaPrefixLSA_Networks";
                break;
 
            case INTER_AREA_ROUTER_LSA:
-               out << "SummaryLSA_ASBoundaryRouters";
+               out << "InterAreaRouterLSA_ASBoundaryRouters";
                break;
 
            case AS_EXTERNAL_LSA:
@@ -395,11 +395,11 @@ std::ostream& operator<<(std::ostream& out, const OSPFv3IPv4RoutingTableEntry& e
                break;
 
            case INTER_AREA_PREFIX_LSA:
-               out << "SummaryLSA_Networks";
+               out << "InterAreaPrefixLSA_Networks";
                break;
 
            case INTER_AREA_ROUTER_LSA:
-               out << "SummaryLSA_ASBoundaryRouters";
+               out << "InterAreaRouterLSA_ASBoundaryRouters";
                break;
 
            case AS_EXTERNAL_LSA:

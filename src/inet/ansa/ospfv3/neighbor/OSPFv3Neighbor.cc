@@ -350,8 +350,6 @@ void OSPFv3Neighbor::retransmitUpdatePacket() //vyprsi timer Acku a zasle znovu
         OSPFv3LinkLSA *linkLSA = (lsaType == LINK_LSA) ? dynamic_cast<OSPFv3LinkLSA *>(*it) : nullptr;
         OSPFv3InterAreaPrefixLSA *interAreaPrefixLSA = (lsaType == INTER_AREA_PREFIX_LSA) ? dynamic_cast<OSPFv3InterAreaPrefixLSA *>(*it) : nullptr;
         OSPFv3IntraAreaPrefixLSA *intraAreaPrefixLSA = (lsaType == INTRA_AREA_PREFIX_LSA) ? dynamic_cast<OSPFv3IntraAreaPrefixLSA *>(*it) : nullptr;
-//        OSPFSummaryLSA *summaryLSA = ((lsaType == SUMMARYLSA_NETWORKS_TYPE) ||
-//                                      (lsaType == SUMMARYLSA_ASBOUNDARYROUTERS_TYPE)) ? dynamic_cast<OSPFSummaryLSA *>(*it) : nullptr;
 //        OSPFASExternalLSA *asExternalLSA = (lsaType == AS_EXTERNAL_LSA_TYPE) ? dynamic_cast<OSPFASExternalLSA *>(*it) : nullptr;
         long lsaSize = 0;
         bool includeLSA = false;
