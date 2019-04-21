@@ -114,7 +114,7 @@ void OSPFv3InterfaceState::changeState(OSPFv3Interface *interface, OSPFv3Interfa
 
             }
         }
-        if (interface->getType() == OSPFv3Interface::POINTTOPOINT_TYPE || (interface->getArea()->hasAnyPassiveInterface())) //TODO: LG , skontrolovoat, overit, prerobit
+        if (interface->getType() == OSPFv3Interface::POINTTOPOINT_TYPE || (interface->getArea()->hasAnyPassiveInterface()))
         {
             OSPFv3IntraAreaPrefixLSA* prefLSA  = interface->getArea()->originateIntraAreaPrefixLSA();
             if (prefLSA != nullptr)
@@ -153,7 +153,7 @@ void OSPFv3InterfaceState::changeState(OSPFv3Interface *interface, OSPFv3Interfa
                     InterfaceEntry* ie = interface->containingProcess->ift->getInterfaceById(interface->getInterfaceId());
                     Ipv6InterfaceData *ipv6int = ie->ipv6Data();
                     ipv6int->joinMulticastGroup(Ipv6Address::ALL_OSPF_DESIGNATED_ROUTERS_MCAST);
-                    ipv6int->assignAddress(Ipv6Address::ALL_OSPF_DESIGNATED_ROUTERS_MCAST, false, 0, 0);
+//                    ipv6int->assignAddress(Ipv6Address::ALL_OSPF_DESIGNATED_ROUTERS_MCAST, false, 0, 0);
 
                     interface->getArea()->floodLSA(newLSA);
                     interface->getArea()->floodLSA(prefLSA);

@@ -87,7 +87,7 @@ void OSPFv3NeighborState::changeState(OSPFv3Neighbor *neighbor, OSPFv3NeighborSt
         }
     }
 
-    OSPFv3Area * thisArea = neighbor->getInterface()->getArea();
+    OSPFv3Area* thisArea = neighbor->getInterface()->getArea();
     if (nextState == OSPFv3Neighbor::DOWN_STATE) //this neigbor was shuted down
     {
         // invalidate all LSA type 3, which I know from this neighbor
@@ -128,6 +128,19 @@ void OSPFv3NeighborState::changeState(OSPFv3Neighbor *neighbor, OSPFv3NeighborSt
                         iapLSA->getHeaderForUpdate().setLsaAge(MAX_AGE);
 //                      neighbor->getInterface()->getArea()->floodLSA(iapLSA);
                     }
+                }
+            }
+        }
+        else // invalidate only INTRA LSA
+        {
+            for (int i = 0; i < thisArea->getIntraAreaPrefixLSACount(); i++)
+            {
+                IntraAreaPrefixLSA *iapLSA = thisArea->getIntraAreaPrefixLSA(i);
+                if (neighbor->getNeighborID() == iapLSA->getHeader().getAdvertisingRouter())
+                {
+                    // invalidate INTRA LSA too
+                    iapLSA->getHeaderForUpdate().setLsaAge(MAX_AGE);
+                    thisArea->floodLSA(iapLSA);
                 }
             }
         }

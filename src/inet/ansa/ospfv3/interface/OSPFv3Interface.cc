@@ -1270,7 +1270,7 @@ void OSPFv3Interface::processLSU(Packet* packet, OSPFv3Neighbor* neighbor){
                     }
                     continue;
                 }
-                if (ackFlags.lsaIsDuplicate) {  // toto musim doplnit do ospfv3
+                if (ackFlags.lsaIsDuplicate) {
                     if (neighbor->isLinkStateRequestListEmpty(lsaKey))
                     {
                         neighbor->removeFromRetransmissionList(lsaKey);
@@ -1388,6 +1388,7 @@ void OSPFv3Interface::acknowledgeLSA(const OSPFv3LSAHeader& lsaHeader,
         ackPacket->setType(LS_ACK);
         ackPacket->setRouterID(this->getArea()->getInstance()->getProcess()->getRouterID());
         ackPacket->setAreaID(this->getArea()->getAreaID());
+        ackPacket->setInstanceID(this->getArea()->getInstance()->getInstanceID());
 
         ackPacket->setLsaHeadersArraySize(1);
         ackPacket->setLsaHeaders(0, lsaHeader);
@@ -1432,6 +1433,7 @@ void OSPFv3Interface::sendLSAcknowledgement(const OSPFv3LSAHeader *lsaHeader, Ip
     lsAckPacket->setType(LS_ACK);
     lsAckPacket->setRouterID(this->getArea()->getInstance()->getProcess()->getRouterID());
     lsAckPacket->setAreaID(this->getArea()->getAreaID());
+    lsAckPacket->setInstanceID(this->getArea()->getInstance()->getInstanceID());
 
     lsAckPacket->setLsaHeadersArraySize(1);
     lsAckPacket->setLsaHeaders(0, *lsaHeader);
@@ -2019,11 +2021,6 @@ std::string OSPFv3Interface::detailedInfo() const
 
     out << "Suppress Hello for 0 neighbor(s)\n";
 
-    out << "TOTO JE NAVYSE\n";
-    for (int index = 0; index < interfaceAddresses.size(); index++)
-    {
-        out << index << " - " <<  interfaceAddresses[index].prefix.str() << "/" << interfaceAddresses[index].prefixLength  << "\n";
-    }
 
     return out.str();
 }//detailedInfo

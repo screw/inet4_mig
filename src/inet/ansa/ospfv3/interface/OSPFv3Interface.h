@@ -156,8 +156,6 @@ class INET_API OSPFv3Interface : public cObject
     void processDDPacket(Packet* packet);
     bool preProcessDDPacket(Packet* packet, OSPFv3Neighbor* neighbor, bool inExchangeStart);
     void processLSR(Packet* packet, OSPFv3Neighbor* neighbor);
-    Packet* prepareLSUHeader();
-    Packet* prepareUpdatePacket(std::vector<OSPFv3LSA *>lsas);
     void processLSU(Packet* packet, OSPFv3Neighbor* neighbor);
     void processLSAck(Packet* packet, OSPFv3Neighbor* neighbor);
     bool floodLSA(const OSPFv3LSA* lsa, OSPFv3Interface* interface=nullptr, OSPFv3Neighbor* neighbor=nullptr);
@@ -167,6 +165,8 @@ class INET_API OSPFv3Interface : public cObject
     void ageTransmittedLSALists();
 
     Packet* prepareHello();
+    Packet* prepareLSUHeader();
+    Packet* prepareUpdatePacket(std::vector<OSPFv3LSA *>lsas);
 
     OSPFv3Neighbor* getNeighborById(Ipv4Address neighborId);
     void addNeighbor(OSPFv3Neighbor*);
@@ -254,7 +254,6 @@ class INET_API OSPFv3Interface : public cObject
 
 inline std::ostream& operator<<(std::ostream& ostr, const OSPFv3Interface& interface)
 {
-    ostr << "MIGRATION IN PROCESS\n";
     ostr << interface.detailedInfo();
     return ostr;
 }

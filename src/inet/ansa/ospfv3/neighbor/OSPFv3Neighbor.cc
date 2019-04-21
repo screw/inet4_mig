@@ -327,10 +327,9 @@ void OSPFv3Neighbor::createDatabaseSummary()
     }
 }
 
-void OSPFv3Neighbor::retransmitUpdatePacket() //vyprsi timer Acku a zasle znovu
+void OSPFv3Neighbor::retransmitUpdatePacket()
 {
     EV_DEBUG << "Retransmitting update packet\n";
-//    OSPFv3LSUpdate *updatePacket = new OSPFv3LSUpdate();
     const auto& updatePacket = makeShared<OSPFv3LSUpdate>();
 
     updatePacket->setType(LSU);
