@@ -44,7 +44,6 @@ void OSPFv3Process::initialize(int stage){
         this->setTimer(ageTimer, 1.0);
     }
 }
-//
 void OSPFv3Process::handleMessage(cMessage* msg)
 {
     if(msg->isSelfMessage())
@@ -457,8 +456,6 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
                             }
                             area->addAddressRange(ipv4addRange, true); //TODO:  add tag Advertise and exclude link-local (?)
                         }
-
-
                        EV_DEBUG << "I am " << this->getOwner()->getOwner()->getName() << " on int " << newInterface->getInterfaceLLIP() << " with area " << area->getAreaID() <<"\n";
                         area->addInterface(newInterface);
                     }
