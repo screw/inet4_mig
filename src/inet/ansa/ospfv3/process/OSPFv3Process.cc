@@ -710,7 +710,7 @@ void OSPFv3Process::sendPacket(Packet *packet, Ipv6Address destination, const ch
     InterfaceEntry *ie = this->ift->getInterfaceByName(ifName);
     Ipv6InterfaceData *ipv6int = ie->ipv6Data();
 
-    packet->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::ospf);
+    packet->addTagIfAbsent<PacketProtocolTag>()->setProtocol(&Protocol::ospfv3);
     packet->addTagIfAbsent<InterfaceReq>()->setInterfaceId(ie->getInterfaceId());
     packet->addTagIfAbsent<L3AddressReq>()->setDestAddress(destination);
     packet->addTagIfAbsent<L3AddressReq>()->setSrcAddress(ipv6int->getLinkLocalAddress());
