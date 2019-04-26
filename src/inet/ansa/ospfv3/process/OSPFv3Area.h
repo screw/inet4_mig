@@ -114,7 +114,7 @@ class INET_API OSPFv3Area : public cObject
 
     //* INTRA AREA PREFIX LSA */
     IntraAreaPrefixLSA* originateIntraAreaPrefixLSA();//this is for non-BROADCAST links
-    IntraAreaPrefixLSA* originateNetIntraAreaPrefixLSA(NetworkLSA* networkLSA, OSPFv3Interface* interface);//this originates one router LSA for one area
+    IntraAreaPrefixLSA* originateNetIntraAreaPrefixLSA(NetworkLSA* networkLSA, OSPFv3Interface* interface, bool checkDuplicate);//this originates one router LSA for one area
     void addIntraAreaPrefixLSA(IntraAreaPrefixLSA* newLSA){this->intraAreaPrefixLSAList.push_back(newLSA);}
     int getIntraAreaPrefixLSACount(){return this->intraAreaPrefixLSAList.size();}
     IntraAreaPrefixLSA* getIntraAreaPrefixLSA(int i){return this->intraAreaPrefixLSAList.at(i);}

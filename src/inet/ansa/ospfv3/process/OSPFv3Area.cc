@@ -416,7 +416,7 @@ void OSPFv3Area::ageDatabase()
                     localIntf->getType() == OSPFv3Interface::BROADCAST_TYPE)
                     {
                     NetworkLSA *netLSA = findNetworkLSA(localIntf->getInterfaceId(), this->getInstance()->getProcess()->getRouterID());
-                    newLSA = originateNetIntraAreaPrefixLSA(netLSA, localIntf);
+                    newLSA = originateNetIntraAreaPrefixLSA(netLSA, localIntf, false);
                 }
                 else // OSPFv3Interface::ROUTER_TYPE
                 {
@@ -424,7 +424,7 @@ void OSPFv3Area::ageDatabase()
                 }
 
                 if (newLSA != nullptr) {
-                    newLSA->getHeaderForUpdate().setLsaSequenceNumber(sequenceNumber + 1);
+//                    newLSA->getHeaderForUpdate().setLsaSequenceNumber(sequenceNumber + 1);
                     shouldRebuildRoutingTable |= updateIntraAreaPrefixLSA(lsa,newLSA);
                     if (lsa != newLSA)
                         delete newLSA;
@@ -484,7 +484,7 @@ void OSPFv3Area::ageDatabase()
                     localIntf->getType() == OSPFv3Interface::BROADCAST_TYPE)
                     {
                         NetworkLSA *netLSA = findNetworkLSA(localIntf->getInterfaceId(), this->getInstance()->getProcess()->getRouterID());
-                        newLSA = originateNetIntraAreaPrefixLSA(netLSA, localIntf);
+                        newLSA = originateNetIntraAreaPrefixLSA(netLSA, localIntf, false);
                     }
                     else // OSPFv3Interface::ROUTER_TYPE
                     {
@@ -1493,8 +1493,9 @@ IntraAreaPrefixLSA* OSPFv3Area::originateIntraAreaPrefixLSA() //this is for non-
     return newLsa;
 }//originateIntraAreaPrefixLSA
 
-IntraAreaPrefixLSA* OSPFv3Area::originateNetIntraAreaPrefixLSA(NetworkLSA* networkLSA, OSPFv3Interface* interface)
+IntraAreaPrefixLSA* OSPFv3Area::originateNetIntraAreaPrefixLSA(NetworkLSA* networkLSA, OSPFv3Interface* interface, bool checkDuplicate)
 {
+    EV_DEBUG << "Originate New NETWORK INTRA AREA LSA\n";
     // get IPv6 data
     InterfaceEntry *ie = this->getInstance()->getProcess()->ift->getInterfaceByName(interface->getIntName().c_str());
     Ipv6InterfaceData* ipv6int = ie->ipv6Data();
@@ -1561,12 +1562,15 @@ IntraAreaPrefixLSA* OSPFv3Area::originateNetIntraAreaPrefixLSA(NetworkLSA* netwo
     newLsa->setNumPrefixes(prefixCount);
 
     // check if created LSA type 9 would be other or same as previous
-    IntraAreaPrefixLSA* prefixLsa = IntraAreaPrefixLSAAlreadyExists(newLsa);
-    if (prefixLsa != nullptr)
+    if (checkDuplicate)
     {
-        this->subtractIntraAreaPrefixLinkStateID();
-        delete (newLsa);
-        return prefixLsa;
+        IntraAreaPrefixLSA* prefixLsa = IntraAreaPrefixLSAAlreadyExists(newLsa);
+        if (prefixLsa != nullptr)
+        {
+            this->subtractIntraAreaPrefixLinkStateID();
+            delete (newLsa);
+            return prefixLsa;
+        }
     }
     this->incrementIntraAreaPrefixSequence();
     return newLsa;

@@ -146,7 +146,7 @@ void OSPFv3InterfaceState::changeState(OSPFv3Interface *interface, OSPFv3Interfa
             shouldRebuildRoutingTable |= interface->getArea()->installNetworkLSA(newLSA);
             if (shouldRebuildRoutingTable)
             {
-                OSPFv3IntraAreaPrefixLSA* prefLSA = interface->getArea()->originateNetIntraAreaPrefixLSA(newLSA, interface);\
+                OSPFv3IntraAreaPrefixLSA* prefLSA = interface->getArea()->originateNetIntraAreaPrefixLSA(newLSA, interface, true);
                 if (prefLSA != nullptr)
                 {
                     interface->getArea()->installIntraAreaPrefixLSA(prefLSA);

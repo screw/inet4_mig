@@ -1198,19 +1198,7 @@ void OSPFv3Interface::processLSU(Packet* packet, OSPFv3Neighbor* neighbor){
                             (this->getArea()->getInstance()->getAreaCount() > 1) &&
                             (this->getArea()->getAreaID() ==  BACKBONE_AREAID))
                     {
-//                        if (ackFlags.lsaIsDuplicate) // I've already made this LSA
-
                         this->getArea()->originateInterAreaPrefixLSA(currentLSA, this->getArea());
-//                        for(int i = 0; i < this->getInstance()->getAreaCount(); i++)
-//                        {
-//                            OSPFv3Area* area = this->getInstance()->getArea(i);
-//                            if(area->getAreaID() == BACKBONE_AREAID)
-//                                continue;
-//
-//                            // here gets only nonBacbone area
-//                            ackFlags.floodedBackOut |= area->floodLSA(currentLSA);
-//
-//                        }
                     }
                     if (!ackFlags.noLSAInstanceInDatabase) {
                         LSAKeyType lsaKey;
@@ -1231,8 +1219,8 @@ void OSPFv3Interface::processLSU(Packet* packet, OSPFv3Neighbor* neighbor){
 
                     EV_INFO << "(update installed)\n";
 
-                    this->addDelayedAcknowledgement(currentLSA->getHeader());
-//                    this->acknowledgeLSA(&(currentLSA->getHeader()), ackFlags, lsUpdatePacket->getRouterID());
+//                    this->addDelayedAcknowledgement(currentLSA->getHeader());
+                    this->acknowledgeLSA(currentLSA->getHeader(), ackFlags, lsUpdatePacket->getRouterID());
                     if ((currentLSA->getHeader().getAdvertisingRouter() == this->getArea()->getInstance()->getProcess()->getRouterID()) ||
                             ((lsaType == NETWORK_LSA) &&
                             (currentLSA->getHeader().getAdvertisingRouter() == this->getArea()->getInstance()->getProcess()->getRouterID())))// &&//TODO
