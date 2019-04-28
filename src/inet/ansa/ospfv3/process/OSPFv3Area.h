@@ -78,6 +78,7 @@ class INET_API OSPFv3Area : public cObject
     RouterLSA* findRouterLSA(Ipv4Address routerID);
     void deleteRouterLSA(int index);
     void addRouterLSA(RouterLSA* newLSA){this->routerLSAList.push_back(newLSA);}
+    RouterLSA* routerLSAAlreadyExists(RouterLSA* newLsa);
 
     /*NETWORK LSA */
     void addNetworkLSA(NetworkLSA* newLSA){this->networkLSAList.push_back(newLSA);}

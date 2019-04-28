@@ -671,7 +671,6 @@ RouterLSA* OSPFv3Area::originateRouterLSA()
     lsaHeader.setLinkStateID(this->getInstance()->getProcess()->getRouterID()); //TODO this depend on number of originated Router-LSA by this process. For now, there is always only one Router-LSA from one process
     lsaHeader.setAdvertisingRouter(this->getInstance()->getProcess()->getRouterID());
     lsaHeader.setLsaSequenceNumber(this->getCurrentRouterSequence());
-    this->incrementRouterSequence();
 
     if(this->getInstance()->getAreaCount()>1)
         routerLSA->setBBit(true);
@@ -756,8 +755,52 @@ RouterLSA* OSPFv3Area::originateRouterLSA()
         }
     }
 
+//    RouterLSA *oldLSA = routerLSAAlreadyExists(routerLSA);
+//    if (oldLSA != nullptr)
+//    {
+//        delete (routerLSA);
+//        return oldLSA;
+//    }
+
+    this->incrementRouterSequence();
     return routerLSA;
 }//originateRouterLSA
+
+RouterLSA* OSPFv3Area::routerLSAAlreadyExists(RouterLSA* newLsa)
+{
+    for (auto it= this->routerLSAList.begin() ;it!=this->routerLSAList.end(); it++)
+    {
+        if ((*it)->getHeader().getAdvertisingRouter() == newLsa->getHeader().getAdvertisingRouter() &&
+                (*it)->getHeader().getLinkStateID() == newLsa->getHeader().getLinkStateID() &&
+                (*it)->getHeader().getLsaAge() != MAX_AGE &&
+                (*it)->getHeader().getLsaAge() != MAX_AGE)
+        {
+           if ((*it)->getRoutersArraySize() == newLsa->getRoutersArraySize())
+           {
+               bool same = false;
+               for (int x = 0; x < newLsa->getRoutersArraySize(); x++)
+               {
+                   if ((*it)->getRouters(x).interfaceID == newLsa->getRouters(x).interfaceID &&
+                           (*it)->getRouters(x).metric == newLsa->getRouters(x).metric &&
+                           (*it)->getRouters(x).neighborInterfaceID == newLsa->getRouters(x).neighborInterfaceID &&
+                           (*it)->getRouters(x).neighborRouterID == newLsa->getRouters(x).neighborRouterID &&
+                           (*it)->getRouters(x).type == newLsa->getRouters(x).type )
+                   {
+                       same = true;
+                   }
+                   else
+                   {
+                       same = false;
+                       break;
+                   }
+               }
+               if (same)
+                   return (*it);
+           }
+       }
+    }
+    return nullptr;
+}
 
 
 RouterLSA* OSPFv3Area::getRouterLSAbyKey(LSAKeyType LSAKey)
@@ -860,6 +903,9 @@ void OSPFv3Area::deleteRouterLSA(int index) {
        if (lsa->getReferencedAdvRtr() == routerHeader.getAdvertisingRouter() &&
                lsa->getReferencedLSID() == routerHeader.getLinkStateID() &&
                lsa->getReferencedLSType() == ROUTER_LSA) {
+           IntraAreaPrefixLSA* prefLSA = this->intraAreaPrefixLSAList[i];
+           prefLSA->getHeaderForUpdate().setLsaAge(MAX_AGE);
+           this->floodLSA(prefLSA);
            this->intraAreaPrefixLSAList.erase(this->intraAreaPrefixLSAList.begin()+i);
            EV_DEBUG << "Deleting old Router-LSA, also deleting appropriate Intra-Area-Prefix-LSA\n";
            break;

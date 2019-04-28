@@ -31,7 +31,7 @@ void OSPFv3InterfaceState::changeState(OSPFv3Interface *interface, OSPFv3Interfa
            (nextState == OSPFv3Interface::INTERFACE_STATE_POINTTOPOINT))) ||
 
          (((intfType == OSPFv3Interface::BROADCAST_TYPE) ||
-           (intfType == OSPFv3Interface::NBMA_TYPE)) && ((oldState == OSPFv3Interface::INTERFACE_STATE_WAITING) ||
+           (intfType == OSPFv3Interface::NBMA_TYPE)) && (/*(oldState == OSPFv3Interface::INTERFACE_STATE_WAITING) ||*/
            (nextState == OSPFv3Interface::INTERFACE_STATE_WAITING))))
     {
 
@@ -103,7 +103,6 @@ void OSPFv3InterfaceState::changeState(OSPFv3Interface *interface, OSPFv3Interfa
         }
 
         EV_DEBUG << "Changing state -> new Router LSA\n";
-        std::cout <<  "som v  spesl stave WAITING , " << interface->getArea()->getInstance()->getProcess()->getRouterID() << " netCount = " << interface->getArea()->getNetworkLSACount() << endl;
         RouterLSA* routerLsa = interface->getArea()->originateRouterLSA();
         if (routerLsa != nullptr)
         {
@@ -184,6 +183,13 @@ void OSPFv3InterfaceState::changeState(OSPFv3Interface *interface, OSPFv3Interfa
         }
     }
 
+    if (nextState ==  OSPFv3Interface::INTERFACE_STATE_BACKUP)
+    {
+        InterfaceEntry* ie = interface->containingProcess->ift->getInterfaceById(interface->getInterfaceId());
+        Ipv6InterfaceData *ipv6int = ie->ipv6Data();
+        ipv6int->joinMulticastGroup(Ipv6Address::ALL_OSPF_DESIGNATED_ROUTERS_MCAST);
+    }
+
     if ((oldState == OSPFv3Interface::INTERFACE_STATE_DESIGNATED )&& (nextState != OSPFv3Interface::INTERFACE_STATE_DESIGNATED)) {
         NetworkLSA *networkLSA = interface->getArea()->findNetworkLSA(interface->getInterfaceId(), interface->getArea()->getInstance()->getProcess()->getRouterID());
 //
@@ -196,6 +202,14 @@ void OSPFv3InterfaceState::changeState(OSPFv3Interface *interface, OSPFv3Interfa
 
     if (shouldRebuildRoutingTable) {
         interface->getArea()->getInstance()->getProcess()->rebuildRoutingTable();
+    }
+
+    if ((oldState == OSPFv3Interface::INTERFACE_STATE_DESIGNATED || oldState == OSPFv3Interface::INTERFACE_STATE_BACKUP) &&
+        (nextState != OSPFv3Interface::INTERFACE_STATE_DESIGNATED || nextState != OSPFv3Interface::INTERFACE_STATE_BACKUP))
+    {
+        InterfaceEntry* ie = interface->containingProcess->ift->getInterfaceById(interface->getInterfaceId());
+        Ipv6InterfaceData *ipv6int = ie->ipv6Data();
+        ipv6int->leaveMulticastGroup(Ipv6Address::ALL_OSPF_DESIGNATED_ROUTERS_MCAST);
     }
 }
 
@@ -400,6 +414,7 @@ void OSPFv3InterfaceState::calculateDesignatedRouter(OSPFv3Interface *intf){
 
     intf->setDesignatedID(declaredDesignatedRouterID);
     EV_DEBUG <<  "declaredDesignatedRouterID = " << declaredDesignatedRouterID << "\n";
+    EV_DEBUG <<  "declaredBackupID = " << declaredBackupID << "\n";
     for (int g = 0 ; g <  intf->getNeighborCount(); g++)
     {
         EV_DEBUG << "@" << g <<  "  - " <<  intf->getNeighbor(g)->getNeighborID() << " / " << intf->getNeighbor(g)->getNeighborInterfaceID()  << "\n";

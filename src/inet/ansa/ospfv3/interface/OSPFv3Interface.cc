@@ -1026,7 +1026,7 @@ void OSPFv3Interface::processLSU(Packet* packet, OSPFv3Neighbor* neighbor){
     bool rebuildRoutingTable = false;
 
     if(neighbor->getState()>=OSPFv3Neighbor::EXCHANGE_STATE) {
-        EV_DEBUG << "Processing LSU\n";
+        EV_DEBUG << "Processing LSU from " << lsUpdatePacket->getRouterID() << "\n";
         int currentType = ROUTER_LSA;
         Ipv4Address areaID = lsUpdatePacket->getAreaID();
 
@@ -1191,7 +1191,7 @@ void OSPFv3Interface::processLSU(Packet* packet, OSPFv3Neighbor* neighbor){
                     //b)immediately flood the LSA
                     EV_DEBUG << "Flooding the LSA out\n";
                     if(currentLSA->getHeader().getLsaType()!=LINK_LSA)
-                        ackFlags.floodedBackOut = this->getArea()->getInstance()->getProcess()->floodLSA(currentLSA, areaID, this, neighbor); // TODO: always true
+                        ackFlags.floodedBackOut = this->getArea()->getInstance()->getProcess()->floodLSA(currentLSA, areaID, this, neighbor);
 
                     // if this is BACKBONE area, flood Inter-Area-Prefix LSAs to other areas
                     if ((currentLSA->getHeader().getLsaType() == INTER_AREA_PREFIX_LSA) &&
@@ -1543,6 +1543,7 @@ bool OSPFv3Interface::floodLSA(const OSPFv3LSA* lsa, OSPFv3Interface* interface,
                     (this->getArea()->getExternalRoutingCapability())
             ) ||
             (
+                    // if it is BACKBONE AREA
                     (lsa->getHeader().getLsaType() != AS_EXTERNAL_LSA) &&
                     (
                             (
@@ -1565,7 +1566,7 @@ bool OSPFv3Interface::floodLSA(const OSPFv3LSA* lsa, OSPFv3Interface* interface,
         lsaKey.LSType = lsa->getHeader().getLsaType();
 
         for (long i = 0; i < neighborCount; i++) {    // (1)
-            // neighbor nie je v STATE pre posielanie LSA sprav
+            // neighbor is not in  STATE for LSA flooding
             if (this->neighbors.at(i)->getState() < OSPFv3Neighbor::EXCHANGE_STATE) {    // (1) (a)
 //                EV_DEBUG << "Skipping neighbor " << this->neighbors.at(i)->getNeighborID() << "\n";
                 continue;
@@ -1642,7 +1643,7 @@ bool OSPFv3Interface::floodLSA(const OSPFv3LSA* lsa, OSPFv3Interface* interface,
                                         dRouter->startUpdateRetransmissionTimer();
                                     }
                                 }
-                                if (backupDRouter != nullptr) {
+                                if (dRouter != backupDRouter && backupDRouter != nullptr) {
                                     backupDRouter->addToTransmittedLSAList(lsaKey);
                                     if (!backupDRouter->isUpdateRetransmissionTimerActive()) {
                                         backupDRouter->startUpdateRetransmissionTimer();

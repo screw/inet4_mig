@@ -439,7 +439,7 @@ bool Ipv6RoutingTable::isLocalAddress(const Ipv6Address& dest) const
         return true;
 
     if (isRouter() && (dest == Ipv6Address::ALL_ROUTERS_1 || dest == Ipv6Address::ALL_ROUTERS_2 || dest == Ipv6Address::ALL_ROUTERS_5 ||
-            dest == Ipv6Address::ALL_OSPF_ROUTERS_MCAST || dest == Ipv6Address::ALL_OSPF_ROUTERS_MCAST))
+            dest == Ipv6Address::ALL_OSPF_ROUTERS_MCAST || dest == Ipv6Address::ALL_OSPF_DESIGNATED_ROUTERS_MCAST))
         return true;
 
     // check for solicited-node multicast address
