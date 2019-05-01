@@ -2115,15 +2115,21 @@ void OSPFv3Area::calculateShortestPathTree(std::vector<OSPFv3RoutingTableEntry* 
     unsigned long lsaCount;
 
     if (spfTreeRoot == nullptr) {
-        RouterLSA *newLSA = originateRouterLSA();
-
-        if (installRouterLSA(newLSA))
+        RouterLSA *routerLSA = findRouterLSA(routerID);
+        if (routerLSA == nullptr)
         {
-            RouterLSA *routerLSA = findRouterLSA(routerID);
-            spfTreeRoot = routerLSA;
-            floodLSA(newLSA);       //spread LSA to whole network
-            delete newLSA;
+            RouterLSA *newLSA = originateRouterLSA();
+            if (installRouterLSA(newLSA))
+            {
+                routerLSA = findRouterLSA(routerID);
+                spfTreeRoot = routerLSA;
+                floodLSA(newLSA);       //spread LSA to whole network
+                delete newLSA;
+            }
         }
+        else
+            spfTreeRoot = routerLSA;
+
     }
     if (spfTreeRoot == nullptr)
         return;
@@ -3765,7 +3771,10 @@ std::string OSPFv3Area::detailedInfo() const
         for(auto it=this->intraAreaPrefixLSAList.begin(); it!=this->intraAreaPrefixLSAList.end(); it++) {
             OSPFv3LSAHeader& header = (*it)->getHeaderForUpdate();
             out << header.getAdvertisingRouter() << "\t\t";
-            out << header.getLsaAge() << "\t0x" << std::hex << header.getLsaSequenceNumber() << std::dec << "\t" << header.getLinkStateID().str(false) << "\t\t0x200" << (*it)->getReferencedLSType() << "\t\t" << (*it)->getReferencedLSID().str(false)<<"\n\n";
+            if ((*it)->getReferencedLSType()  == 2)
+                out << header.getLsaAge() << "\t0x" << std::hex << header.getLsaSequenceNumber() << std::dec << "\t" << header.getLinkStateID().str(false) << "\t\t0x200" << (*it)->getReferencedLSType() << "\t\t" << (*it)->getReferencedLSID().str(false)<<"\n\n";
+            else
+                out << header.getLsaAge() << "\t0x" << std::hex << header.getLsaSequenceNumber() << std::dec << "\t" << header.getLinkStateID().str(false) << "\t\t0x200" << (*it)->getReferencedLSType() << "\t\t0\n\n";
         }
     }
 
