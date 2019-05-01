@@ -466,8 +466,11 @@ void OSPFv3Area::ageDatabase()
                            for (int prefs = 0; prefs < lsa->getPrefixesArraySize(); prefs++)
                            {
                                InterAreaPrefixLSA* interLSA  = area->findInterAreaPrefixLSAbyAddress(lsa->getPrefixes(prefs).addressPrefix, lsa->getPrefixes(prefs).prefixLen);
-                               interLSA->getHeaderForUpdate().setLsaAge(MAX_AGE);
-                               area->floodLSA(interLSA);
+                               if (interLSA != nullptr)
+                               {
+                                   interLSA->getHeaderForUpdate().setLsaAge(MAX_AGE);
+                                   area->floodLSA(interLSA);
+                               }
                            }
                        }
                    }
@@ -1764,11 +1767,11 @@ bool OSPFv3Area::installIntraAreaPrefixLSA(const OSPFv3IntraAreaPrefixLSA *lsaC)
             if(prefLSA->getReferencedLSType() == NETWORK_LSA) {
                 for (int prefR = 0; prefR < lsa->getPrefixesArraySize(); prefR++) //prefixes of incoming LSA
                 {
-                    Ipv6Address routerPref = lsa->getPrefixes(prefR).addressPrefix.toIpv6();
+                    L3Address routerPref = lsa->getPrefixes(prefR).addressPrefix;
                     short routerPrefixLen = lsa->getPrefixes(prefR).prefixLen;
                     for (int prefN = 0; prefN < prefLSA->getPrefixesArraySize(); prefN++) //prefixes of stored LSA
                     {
-                        Ipv6Address netPref = prefLSA->getPrefixes(prefN).addressPrefix.toIpv6();
+                        L3Address netPref = prefLSA->getPrefixes(prefN).addressPrefix;
                         short netPrefixLen = prefLSA->getPrefixes(prefN).prefixLen;
                         if(routerPref.getPrefix(routerPrefixLen) == netPref.getPrefix(netPrefixLen)) {
                             EV_DEBUG << "Came LSA type 9 with referenced prefix of LSType 1, have one with LSType 2, doing nothing\n"; //TODO: This become relevant when there will be support for active changing of type of link
@@ -1796,11 +1799,13 @@ bool OSPFv3Area::installIntraAreaPrefixLSA(const OSPFv3IntraAreaPrefixLSA *lsaC)
         }
     }
 
-    if (lsaInDatabase != nullptr &&
-        lsaInDatabase->getHeader().getLsaSequenceNumber() <= lsa->getHeader().getLsaSequenceNumber())
+    if (lsaInDatabase != nullptr)
     {
-        this->removeFromAllRetransmissionLists(lsaKey);
-        return this->updateIntraAreaPrefixLSA(lsaInDatabase, lsa);
+        if(lsaInDatabase->getHeader().getLsaSequenceNumber() <= lsa->getHeader().getLsaSequenceNumber())
+        {
+            this->removeFromAllRetransmissionLists(lsaKey);
+            return this->updateIntraAreaPrefixLSA(lsaInDatabase, lsa);
+        }
     }
     else if (lsa->getReferencedLSType() == NETWORK_LSA || lsa->getReferencedLSType() == ROUTER_LSA)
     {
