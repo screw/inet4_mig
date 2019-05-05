@@ -7,19 +7,9 @@ OSPFv3RoutingTableEntry::OSPFv3RoutingTableEntry(IInterfaceTable *ift, Ipv6Addre
         area(BACKBONE_AREAID),
         pathType(OSPFv3RoutingTableEntry::INTRAAREA)
 {
-    this->setPrefixLength(prefixLength); //LG TODO : BOLO TU 128
+    this->setPrefixLength(prefixLength);
     this->setSourceType(IRoute::OSPF);
 }
-
-//OSPFv3RoutingTableEntry::OSPFv3RoutingTableEntry(IInterfaceTable *_ift) : Ipv6Route(Ipv6Address destPrefix, int prefixLength, int sourceType),
-//    ift(_ift),
-//    destinationType(OSPFv3RoutingTableEntry::NETWORK_DESTINATION),
-//    area(BACKBONE_AREAID),
-//    pathType(OSPFv3RoutingTableEntry::INTRAAREA)
-//{
-//    setNetmask(Ipv4Address::ALLONES_ADDRESS);
-//    setSourceType(IRoute::OSPF);
-//}
 
 OSPFv3RoutingTableEntry::OSPFv3RoutingTableEntry(const OSPFv3RoutingTableEntry& entry, Ipv6Address destPrefix, int prefixLength, SourceType sourceType) :
         Ipv6Route(destPrefix, prefixLength, sourceType),
@@ -37,12 +27,6 @@ OSPFv3RoutingTableEntry::OSPFv3RoutingTableEntry(const OSPFv3RoutingTableEntry& 
     this->setInterface(entry.getInterface());
     this->setSourceType(entry.getSourceType());
     this->setMetric(entry.getMetric());
-//    this->setDestination(entry.getDestination());
-//    setNetmask(entry.getNetmask());
-//    setGateway(entry.getGateway());
-//    setInterface(entry.getInterface());
-//    setSourceType(entry.getSourceType());
-//    setMetric(entry.getMetric());
 }
 
 void OSPFv3RoutingTableEntry::setPathType(RoutingPathType type)
@@ -222,19 +206,9 @@ OSPFv3IPv4RoutingTableEntry::OSPFv3IPv4RoutingTableEntry(IInterfaceTable *ift, I
         pathType(OSPFv3IPv4RoutingTableEntry::INTRAAREA)
 {
     this->setDestination(destPrefix);
-    this->setPrefixLength(prefixLength); //LG TODO : BOLO TU 128
+    this->setPrefixLength(prefixLength);
     this->setSourceType(sourceType);
 }
-
-//OSPFv3RoutingTableEntry::OSPFv3RoutingTableEntry(IInterfaceTable *_ift) : Ipv6Route(Ipv6Address destPrefix, int prefixLength, int sourceType),
-//    ift(_ift),
-//    destinationType(OSPFv3RoutingTableEntry::NETWORK_DESTINATION),
-//    area(BACKBONE_AREAID),
-//    pathType(OSPFv3RoutingTableEntry::INTRAAREA)
-//{
-//    setNetmask(Ipv4Address::ALLONES_ADDRESS);
-//    setSourceType(IRoute::OSPF);
-//}
 
 OSPFv3IPv4RoutingTableEntry::OSPFv3IPv4RoutingTableEntry(const OSPFv3IPv4RoutingTableEntry& entry, Ipv4Address destPrefix, int prefixLength, SourceType sourceType) :
         //Ipv6Route(destPrefix, prefixLength, sourceType),
@@ -252,12 +226,6 @@ OSPFv3IPv4RoutingTableEntry::OSPFv3IPv4RoutingTableEntry(const OSPFv3IPv4Routing
     this->setInterface(entry.getInterface());
     this->setSourceType(entry.getSourceType());
     this->setMetric(entry.getMetric());
-//    this->setDestination(entry.getDestination());
-//    setNetmask(entry.getNetmask());
-//    setGateway(entry.getGateway());
-//    setInterface(entry.getInterface());
-//    setSourceType(entry.getSourceType());
-//    setMetric(entry.getMetric());
 }
 
 void OSPFv3IPv4RoutingTableEntry::setPathType(RoutingPathType type)

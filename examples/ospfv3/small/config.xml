@@ -24,7 +24,6 @@
 					<Instance AF="IPv6">
 						<InterfaceType>Broadcast</InterfaceType>
 						<Area>0.0.0.0</Area>
-						<PassiveInterface>True</PassiveInterface>
 					</Instance>
 				</Process>
 				<IPv6Address>fe80::a8bb:ccff:fe00:110/64</IPv6Address>
@@ -58,7 +57,6 @@
 					<Instance AF="IPv6">
 						<InterfaceType>Broadcast</InterfaceType>
 						<Area>0.0.0.0</Area>
-						<PassiveInterface>True</PassiveInterface>
 					</Instance>
 				</Process>
 				<IPv6Address>fe80::a8bb:ccff:fe00:210/64</IPv6Address>
@@ -92,7 +90,6 @@
 					<Instance AF="IPv6">
 						<InterfaceType>Broadcast</InterfaceType>
 						<Area>0.0.0.0</Area>
-						<PassiveInterface>True</PassiveInterface>
 					</Instance>
 				</Process>
 				<IPv6Address>fe80::a8bb:ccff:fe00:310/64</IPv6Address>
@@ -126,7 +123,6 @@
 					<Instance AF="IPv6">
 						<InterfaceType>Broadcast</InterfaceType>
 						<Area>0.0.0.0</Area>
-						<PassiveInterface>True</PassiveInterface>
 					</Instance>
 				</Process>
 				<IPv6Address>fe80::a8bb:ccff:fe00:410/64</IPv6Address>

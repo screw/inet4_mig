@@ -19,13 +19,6 @@ network v3_2_routers
             thruputDisplayFormat = "#N";
         }
     submodules:
-//        configurator: Ipv4NetworkConfigurator {
-//            parameters:
-//                config = xml("<config>"+
-//                            "<interface among='Router1 Router2' address='10.10.10.x' netmask='255.255.255.0' />"+
-//                            "</config>");
-//                @display("p=147,54");
-//        }
         Router1: Ospfv3Router {
             parameters:
                 @display("p=90,154");

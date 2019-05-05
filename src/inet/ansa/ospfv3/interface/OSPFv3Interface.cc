@@ -234,7 +234,7 @@ Packet* OSPFv3Interface::prepareHello()
     length = 16;
 
     //Hello content
-    helloPacket->setInterfaceID(this->interfaceId);//TODO - check LG
+    helloPacket->setInterfaceID(this->interfaceId);
     helloPacket->setRouterPriority(this->getRouterPriority());
     memset(&options, 0, sizeof(OSPFv3Options));
 
@@ -887,8 +887,9 @@ void OSPFv3Interface::processLSR(Packet* packet, OSPFv3Neighbor* neighbor){
             }
         }
     }
-    else//otherwise just ignore it
-        delete(packet);
+//    else//otherwise just ignore it
+//        delete(packet);
+    delete(packet);
 }
 
 
@@ -1136,34 +1137,6 @@ void OSPFv3Interface::processLSU(Packet* packet, OSPFv3Neighbor* neighbor){
                 ackFlags.lsaReachedMaxAge = (lsAge == MAX_AGE);
                 //if LSA is not in DB, lsaInsDatabae == nullptr , and this flag is TRUE
                 ackFlags.noLSAInstanceInDatabase = (lsaInDatabase == nullptr);
-
-                // R3
-                if  (ackFlags.lsaReachedMaxAge &&
-                        this->getArea()->getInstance()->getProcess()->getRouterID() == Ipv4Address(50529027) &&
-                        this->getArea()->getInstance()->getProcess()->getProcessID() == 101 &&
-                        currentLSA->getHeader().getLsaType() == 9 &&
-                        currentLSA->getHeader().getAdvertisingRouter() == Ipv4Address(134744072)) //adv router = 8.8.8.8
-                {
-                    EV_DEBUG << "Tu mi stopni zariadenie - R3\n";
-                }
-                // R2
-                if  (
-                        this->getArea()->getInstance()->getProcess()->getRouterID() == Ipv4Address(33686018) &&
-                        this->getArea()->getInstance()->getProcess()->getProcessID() == 101 &&
-                        currentLSA->getHeader().getLsaType() == 9 &&
-                        currentLSA->getHeader().getAdvertisingRouter() == Ipv4Address(134744072))
-                {
-                    EV_DEBUG << "Tu mi stopni zariadenie - R2 + max_AGE\n";
-                }
-
-                if  (this->getArea()->getInstance()->getProcess()->getRouterID() == Ipv4Address(33686018) &&
-                        this->getArea()->getInstance()->getProcess()->getProcessID() == 101 &&
-                        currentLSA->getHeader().getLsaType() == 9 &&
-                        currentLSA->getHeader().getAdvertisingRouter() == Ipv4Address(134744072) &&
-                        currentLSA->getHeader().getLsaSequenceNumber() == 2147483651)
-                {
-                    EV_DEBUG << "Tu mi stopni zariadenie - R2\n";
-                }
 
                 //LSA has max_age, it is not in the database and no router is in exchange or loading state
                 if ((ackFlags.lsaReachedMaxAge) && (ackFlags.noLSAInstanceInDatabase) && (!ackFlags.anyNeighborInExchangeOrLoadingState)) {

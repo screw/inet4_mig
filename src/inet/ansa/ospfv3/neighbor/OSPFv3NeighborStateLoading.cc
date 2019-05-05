@@ -64,7 +64,7 @@ void OSPFv3NeighborStateLoading::processEvent(OSPFv3Neighbor *neighbor, OSPFv3Ne
     }
     if (event == OSPFv3Neighbor::REQUEST_RETRANSMISSION_TIMER) {
         EV_DEBUG << "OSPFv3Neighbor::REQUEST_RETRANSMISSION_TIMER caught StateLoading\n";
-        neighbor->sendLinkStateRequestPacket();   //TODO LG, PRECO JE TOTO ZAKOMENTOVANE ?
+        neighbor->sendLinkStateRequestPacket();
         neighbor->startRequestRetransmissionTimer();
     }
     if (event == OSPFv3Neighbor::UPDATE_RETRANSMISSION_TIMER) {

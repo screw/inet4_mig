@@ -2,7 +2,7 @@
 	<Router id="Router1">
 		<Routing6>
 			<OSPFv3>
-				<Process id="100" af="IPv6">
+				<Process id="100">
 					<RouterID>10.10.10.1</RouterID>
 				</Process>
 			</OSPFv3>
@@ -14,13 +14,10 @@
 					<Instance AF="IPv6">
 						<InterfaceType>Broadcast</InterfaceType>
 						<Area>0.0.0.0</Area>
-						<RouterPriority>10</RouterPriority>
 					</Instance>
 				</Process>
 				<IPv6Address>fe80::a8bb:ccff:fe00:100/64</IPv6Address>
-				<IPv6Address>2001:db8:a::1/110</IPv6Address>
-				<IPAddress>172.16.1.1</IPAddress>
-				<Mask>255.255.255.0</Mask>
+				<IPv6Address>2001:db8:a::1/64</IPv6Address>
 			</Interface>
 		</Interfaces>
 	</Router>
@@ -28,7 +25,7 @@
 	<Router id="Router2">
 		<Routing6>
 			<OSPFv3>
-				<Process id="100" af="IPv6">
+				<Process id="100">
 					<RouterID>10.10.10.2</RouterID>
 				</Process>
 			</OSPFv3>
@@ -43,11 +40,32 @@
 					</Instance>
 				</Process>
 				<IPv6Address>fe80::a8bb:ccff:fe00:200/64</IPv6Address>
-				<IPv6Address>2001:db8:a::2/110</IPv6Address>
-				<IPAddress>172.16.1.2</IPAddress>
-				<Mask>255.255.255.0</Mask>
+				<IPv6Address>2001:db8:a::2/64</IPv6Address>
 			</Interface>
 		</Interfaces>
 	</Router>
 	
+	<Router id="Router3">
+		<Routing6>
+			<OSPFv3>
+				<Process id="100">
+					<RouterID>10.10.10.3</RouterID>
+				</Process>
+			</OSPFv3>
+		</Routing6>
+		
+		<Interfaces>
+			<Interface name="eth0">
+				<Process id="100">
+					<Instance AF="IPv6">
+						<InterfaceType>Broadcast</InterfaceType>
+						<Area>0.0.0.0</Area>
+					</Instance>
+				</Process>
+				<IPv6Address>fe80::a8bb:ccff:fe00:300/64</IPv6Address>
+				<IPv6Address>2001:db8:a::3/64</IPv6Address>
+			</Interface>
+		</Interfaces>
+	</Router>
 </Devices>
+
