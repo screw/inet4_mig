@@ -659,6 +659,10 @@ void OSPFv3Area::ageDatabase()
 //    single AS-external-LSA for each known AS external destination.*/
 RouterLSA* OSPFv3Area::originateRouterLSA()
 {
+    if (this->getInstance()->getProcess()->getRouterID() ==  Ipv4Address(16843009))
+    {
+        std::cout << "TU MA STOPNI NA R1 1.1.1.1.\n";
+    }
     EV_DEBUG << "Originating RouterLSA (Router-LSA)\n";
     RouterLSA *routerLSA = new RouterLSA;
     OSPFv3LSAHeader& lsaHeader = routerLSA->getHeaderForUpdate();
@@ -670,7 +674,6 @@ RouterLSA* OSPFv3Area::originateRouterLSA()
     lsaHeader.setLsaAge(0);
     //The LSA Type is 0x2001
     lsaHeader.setLsaType(ROUTER_LSA);
-    lsaHeader.setLinkStateID(this->getInstance()->getProcess()->getRouterID()); //TODO this depend on number of originated Router-LSA by this process. For now, there is always only one Router-LSA from one process
     lsaHeader.setLinkStateID(this->getInstance()->getProcess()->getRouterID()); //TODO this depend on number of originated Router-LSA by this process. For now, there is always only one Router-LSA from one process
     lsaHeader.setAdvertisingRouter(this->getInstance()->getProcess()->getRouterID());
     lsaHeader.setLsaSequenceNumber(this->getCurrentRouterSequence());
@@ -709,7 +712,7 @@ RouterLSA* OSPFv3Area::originateRouterLSA()
                         routerLSABody.type=POINT_TO_POINT;
 
                         routerLSABody.interfaceID = intf->getInterfaceId();
-                        routerLSABody.metric = 1;
+                        routerLSABody.metric = METRIC;
 
                         routerLSABody.neighborInterfaceID = neighbor->getNeighborInterfaceID();
                         routerLSABody.neighborRouterID = neighbor->getNeighborID();
@@ -733,7 +736,7 @@ RouterLSA* OSPFv3Area::originateRouterLSA()
                          )
                 {
                     routerLSABody.interfaceID = intf->getInterfaceId();      // id of interface
-                    routerLSABody.metric = 1;
+                    routerLSABody.metric = METRIC;
 
                     routerLSABody.neighborInterfaceID = intf->getDesignatedIntID();
                     routerLSABody.neighborRouterID = intf->getDesignatedID();
@@ -1492,7 +1495,7 @@ IntraAreaPrefixLSA* OSPFv3Area::originateIntraAreaPrefixLSA() //this is for non-
                     Ipv4Address ipAdd = ipv4Data->getIPAddress();
                     OSPFv3LSAPrefix *prefix = new OSPFv3LSAPrefix();
                     prefix->prefixLen= ipv4Data->getNetmask().getNetmaskLength();
-                    prefix->metric=1;
+                    prefix->metric = METRIC;
                     prefix->addressPrefix=L3Address(ipAdd.getPrefix(prefix->prefixLen));
                     newLsa->setPrefixesArraySize(currentPrefix);
                     newLsa->setPrefixes(currentPrefix-1, *prefix);
@@ -1509,7 +1512,7 @@ IntraAreaPrefixLSA* OSPFv3Area::originateIntraAreaPrefixLSA() //this is for non-
                             prefix->prefixLen = this->getInstance()->getProcess()->rt6->getRoute(rIndex)->getPrefixLength();
                         else
                             prefix->prefixLen = 64;
-                        prefix->metric=1;
+                        prefix->metric = METRIC;
                         prefix->addressPrefix=ipv6.getPrefix(prefix->prefixLen);
 
                         newLsa->setPrefixesArraySize(currentPrefix);
@@ -1578,7 +1581,7 @@ IntraAreaPrefixLSA* OSPFv3Area::originateNetIntraAreaPrefixLSA(NetworkLSA* netwo
             Ipv4Address ipAdd = ipv4Data->getIPAddress();
             OSPFv3LSAPrefix *prefix = new OSPFv3LSAPrefix();
             prefix->prefixLen= ipv4Data->getNetmask().getNetmaskLength();
-            prefix->metric=1;
+            prefix->metric = METRIC;
             prefix->addressPrefix=L3Address(ipAdd.getPrefix(prefix->prefixLen));
             newLsa->setPrefixesArraySize(currentPrefix);
             newLsa->setPrefixes(currentPrefix-1, *prefix);
@@ -1597,7 +1600,7 @@ IntraAreaPrefixLSA* OSPFv3Area::originateNetIntraAreaPrefixLSA(NetworkLSA* netwo
                     prefix->prefixLen = this->getInstance()->getProcess()->rt6->getRoute(rIndex)->getPrefixLength();
                 else
                     prefix->prefixLen = 64;
-                prefix->metric=1;
+                prefix->metric = METRIC;
                 prefix->addressPrefix=ipv6.getPrefix(prefix->prefixLen);
 
                 newLsa->setPrefixesArraySize(currentPrefix);
@@ -1669,6 +1672,11 @@ IntraAreaPrefixLSA* OSPFv3Area::IntraAreaPrefixLSAAlreadyExists(OSPFv3IntraAreaP
 
 bool OSPFv3Area::installIntraAreaPrefixLSA(const OSPFv3IntraAreaPrefixLSA *lsaC)
 {
+    if  (this->getInstance()->getProcess()->getRouterID() == Ipv4Address(33686018) &&
+        this->getInstance()->getProcess()->getProcessID() == 101 &&
+        lsaC->getHeader().getAdvertisingRouter() == Ipv4Address(134744072))
+            std::cout << "Som router 2, instalujem LSA od R8, LETS GO" << endl; //LG
+
     if (this->getInstance()->getProcess()->getRouterID() == Ipv4Address(134744072) && this->getInstance()->getProcess()->getProcessID() == 101 )
             std::cout << "SOM ROUTER 8, LETS GO" << endl; //LG
     auto lsa = lsaC->dup(); // make editable copy of lsa

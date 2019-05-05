@@ -217,7 +217,7 @@ void OSPFv3Process::parseConfig(cXMLElement* interfaceConfig)
                    entry->setDestination(networkAdd);
                    entry->setNetmask(intfData->getNetmask());
                    entry->setInterface(myInterface);
-                   entry->setMetric(21);
+                   entry->setMetric(0);
                    entry->setSourceType(IRoute::IFACENETMASK);
 
                    rt4->addRoute(entry);

@@ -1077,8 +1077,7 @@ void OSPFv3Interface::processLSU(Packet* packet, OSPFv3Neighbor* neighbor){
             }
 
             for (unsigned int i = 0; i < lsaCount; i++) {
-                const OSPFv3LSA *currentLSA;
-                OSPFv3LSUpdate *updateToSend = new OSPFv3LSUpdate();
+                const OSPFv3LSA *currentLSA = nullptr;
 
                 switch (currentType) {
                 case ROUTER_LSA:
@@ -1137,6 +1136,34 @@ void OSPFv3Interface::processLSU(Packet* packet, OSPFv3Neighbor* neighbor){
                 ackFlags.lsaReachedMaxAge = (lsAge == MAX_AGE);
                 //if LSA is not in DB, lsaInsDatabae == nullptr , and this flag is TRUE
                 ackFlags.noLSAInstanceInDatabase = (lsaInDatabase == nullptr);
+
+                // R3
+                if  (ackFlags.lsaReachedMaxAge &&
+                        this->getArea()->getInstance()->getProcess()->getRouterID() == Ipv4Address(50529027) &&
+                        this->getArea()->getInstance()->getProcess()->getProcessID() == 101 &&
+                        currentLSA->getHeader().getLsaType() == 9 &&
+                        currentLSA->getHeader().getAdvertisingRouter() == Ipv4Address(134744072)) //adv router = 8.8.8.8
+                {
+                    EV_DEBUG << "Tu mi stopni zariadenie - R3\n";
+                }
+                // R2
+                if  (
+                        this->getArea()->getInstance()->getProcess()->getRouterID() == Ipv4Address(33686018) &&
+                        this->getArea()->getInstance()->getProcess()->getProcessID() == 101 &&
+                        currentLSA->getHeader().getLsaType() == 9 &&
+                        currentLSA->getHeader().getAdvertisingRouter() == Ipv4Address(134744072))
+                {
+                    EV_DEBUG << "Tu mi stopni zariadenie - R2 + max_AGE\n";
+                }
+
+                if  (this->getArea()->getInstance()->getProcess()->getRouterID() == Ipv4Address(33686018) &&
+                        this->getArea()->getInstance()->getProcess()->getProcessID() == 101 &&
+                        currentLSA->getHeader().getLsaType() == 9 &&
+                        currentLSA->getHeader().getAdvertisingRouter() == Ipv4Address(134744072) &&
+                        currentLSA->getHeader().getLsaSequenceNumber() == 2147483651)
+                {
+                    EV_DEBUG << "Tu mi stopni zariadenie - R2\n";
+                }
 
                 //LSA has max_age, it is not in the database and no router is in exchange or loading state
                 if ((ackFlags.lsaReachedMaxAge) && (ackFlags.noLSAInstanceInDatabase) && (!ackFlags.anyNeighborInExchangeOrLoadingState)) {
@@ -1211,11 +1238,22 @@ void OSPFv3Interface::processLSU(Packet* packet, OSPFv3Neighbor* neighbor){
                     }
                     //d) install LSA in the database
 
+                    bool installSuccessfull = false;
                     EV_DEBUG << "Installing the LSA\n";
                     if(currentType == LINK_LSA)
-                        rebuildRoutingTable |= this->getArea()->getInstance()->getProcess()->installLSA(currentLSA, this->getArea()->getInstance()->getInstanceID(), this->getArea()->getAreaID(), this);
+                    {
+                        installSuccessfull = this->getArea()->getInstance()->getProcess()->installLSA(currentLSA, this->getArea()->getInstance()->getInstanceID(), this->getArea()->getAreaID(), this);
+
+                    }
                     else if(currentType == ROUTER_LSA || currentType == NETWORK_LSA || currentType == INTER_AREA_PREFIX_LSA || currentType == INTRA_AREA_PREFIX_LSA)
-                        rebuildRoutingTable |= this->getArea()->getInstance()->getProcess()->installLSA(currentLSA, this->getArea()->getInstance()->getInstanceID(), this->getArea()->getAreaID());
+                    {
+                        installSuccessfull = this->getArea()->getInstance()->getProcess()->installLSA(currentLSA, this->getArea()->getInstance()->getInstanceID(), this->getArea()->getAreaID());
+                    }
+                    if ((installSuccessfull == false) && (ackFlags.lsaIsNewer == false))
+                    {
+                        ackFlags.lsaIsDuplicate = true; // it is not exactly Duplicate, but its LSU which I probably manage earlier and newer version came in less than Update Retranssmision Timer was triggered, so manage it as duplicate
+                    }
+                    rebuildRoutingTable |= installSuccessfull;
 
                     EV_INFO << "(update installed)\n";
 
@@ -1289,6 +1327,8 @@ void OSPFv3Interface::processLSU(Packet* packet, OSPFv3Neighbor* neighbor){
 
     if(rebuildRoutingTable)
         this->getArea()->getInstance()->getProcess()->rebuildRoutingTable();
+
+    delete packet;
 }//processLSU
 
 void OSPFv3Interface::processLSAck(Packet* packet, OSPFv3Neighbor* neighbor)
@@ -1324,6 +1364,7 @@ void OSPFv3Interface::processLSAck(Packet* packet, OSPFv3Neighbor* neighbor)
             neighbor->clearUpdateRetransmissionTimer();
         }
     }
+    delete packet;
 
 }//processLSAck
 

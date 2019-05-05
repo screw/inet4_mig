@@ -9,6 +9,7 @@
 namespace inet{
 // intervals values
 #define OSPFV3_START            5
+#define METRIC                  10
 #define DEFAULT_HELLO_INTERVAL  10
 #define DEFAULT_DEAD_INTERVAL   40
 #define MIN_LS_INTERVAL         5

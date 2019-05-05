@@ -28,8 +28,6 @@ void OSPFv3Splitter::initialize(int stage)
         ift = getModuleFromPar<IInterfaceTable>(par("interfaceTableModule"), this);
         registerService(Protocol::ospfv3, nullptr, gate("ipIn"));
         registerProtocol(Protocol::ospfv3, gate("ipOut"), nullptr);
-//        IPSocket ipSocket(gate("ipOut"));
-//        ipSocket.registerProtocol(IP_PROT_OSPF);
 
         this->parseConfig(par("ospfv3RoutingConfig"), par("ospfv3IntConfig"));
 
