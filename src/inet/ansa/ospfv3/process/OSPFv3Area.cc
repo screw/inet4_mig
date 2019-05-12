@@ -1524,6 +1524,18 @@ IntraAreaPrefixLSA* OSPFv3Area::originateIntraAreaPrefixLSA() //this is for non-
     if (prefixCount == 0) //check if this LSA is not without prefixes
     {
         delete (newLsa);
+
+        // there will be probably some old Intra-Area-Prefix LSAs, which need to be invalidated
+        for (auto it= this->intraAreaPrefixLSAList.begin(); it!=this->intraAreaPrefixLSAList.end(); it++)
+        {
+            if ((*it)->getHeader().getAdvertisingRouter() == this->getInstance()->getProcess()->getRouterID() &&
+                    (*it)->getReferencedLSType() == ROUTER_LSA &&
+                    (*it)->getHeader().getLsaAge() != MAX_AGE)
+            {
+              (*it)->getHeaderForUpdate().setLsaAge(MAX_AGE);
+              this->floodLSA((*it));
+            }
+        }
         return nullptr;
     }
     // check if this LSA has not been already created
