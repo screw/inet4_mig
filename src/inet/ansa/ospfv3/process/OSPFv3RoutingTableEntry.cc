@@ -188,7 +188,7 @@ std::ostream& operator<<(std::ostream& out, const OSPFv3RoutingTableEntry& entry
 
     unsigned int hopCount = entry.getNextHopCount();
     for (unsigned int i = 0; i < hopCount; i++) {
-        out << entry.getNextHop(i).hopAddress << " ";
+        out << entry.getNextHop(i).hopAddress << "/" << entry.getNextHop(i).advertisingRouter << "/" <<  entry.getNextHop(i).ifIndex << "  ";
     }
 
     return out;
@@ -387,7 +387,7 @@ std::ostream& operator<<(std::ostream& out, const OSPFv3IPv4RoutingTableEntry& e
 
     unsigned int hopCount = entry.getNextHopCount();
     for (unsigned int i = 0; i < hopCount; i++) {
-        out << entry.getNextHop(i).hopAddress << " ";
+        out << entry.getNextHop(i).hopAddress << "/" << entry.getNextHop(i).advertisingRouter << "/" <<  entry.getNextHop(i).ifIndex << "  ";
     }
 
     return out;

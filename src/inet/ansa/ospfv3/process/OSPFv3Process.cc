@@ -976,11 +976,12 @@ void OSPFv3Process::rebuildRoutingTable()
                         if (routingTableIPv6[i]->getNextHop(0).hopAddress != Ipv6Address::UNSPECIFIED_ADDRESS)
                         {
                             Ipv6Route *route = new Ipv6Route(routingTableIPv6[i]->getDestinationAsGeneric().toIpv6(), routingTableIPv6[i]->getPrefixLength(), routingTableIPv6[i]->getSourceType());
-                            route->setNextHop   (   routingTableIPv6[i]->getNextHop(0).hopAddress);
-                            route->setMetric    (       routingTableIPv6[i]->getMetric());
-                            route->setInterface (    routingTableIPv6[i]->getInterface());
-                            route->setExpiryTime(   routingTableIPv6[i]->getExpiryTime());
-                            route->setAdminDist (    routingTableIPv6[i]->getAdminDist());
+                            route->setNextHop   (routingTableIPv6[i]->getNextHop(0).hopAddress);
+                            route->setMetric    (routingTableIPv6[i]->getMetric());
+                            route->setInterface (routingTableIPv6[i]->getInterface());
+                            route->setExpiryTime(routingTableIPv6[i]->getExpiryTime());
+//                            route->setAdminDist (routingTableIPv6[i]->getAdminDist());
+                            route->setAdminDist (Ipv6Route::dOSPF);
 
                             rt6->addRoutingProtocolRoute(route);
                         }
@@ -1010,7 +1011,8 @@ void OSPFv3Process::rebuildRoutingTable()
                             route->setNextHop       (routingTableIPv4[i]->getNextHop(0).hopAddress);
                             route->setMetric        (routingTableIPv4[i]->getMetric());
                             route->setInterface     (routingTableIPv4[i]->getInterface());
-                            route->setAdminDist     (routingTableIPv4[i]->getAdminDist());
+//                            route->setAdminDist     (routingTableIPv4[i]->getAdminDist());
+                            route->setAdminDist     ((Ipv4Route::dOSPF));
                             rt4->addRoute(route);
                         }
                     }

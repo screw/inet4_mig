@@ -3225,6 +3225,19 @@ bool OSPFv3Area::hasLink(OSPFv3LSA *fromLSA, OSPFv3LSA *toLSA) const
     return false;
 }
 
+bool OSPFv3Area::nextHopAlreadyExists(std::vector<NextHop> *hops, NextHop nextHop) const
+{
+
+    for (int i=0; i < hops->size(); i++)
+    {
+        if ((*hops)[i].advertisingRouter == nextHop.advertisingRouter &&
+                       (*hops)[i].hopAddress == nextHop.hopAddress &&
+                       (*hops)[i].ifIndex == nextHop.ifIndex)
+            return true;
+    }
+    return false;
+}
+
 std::vector<NextHop> *OSPFv3Area::calculateNextHops(OSPFv3LSA *destination, OSPFv3LSA *parent) const
 {
     EV_DEBUG << "Calculating Next Hops\n";
@@ -3235,7 +3248,8 @@ std::vector<NextHop> *OSPFv3Area::calculateNextHops(OSPFv3LSA *destination, OSPF
         if (routerLSA != spfTreeRoot) {
             unsigned int nextHopCount = routerLSA->getNextHopCount();
             for (i = 0; i < nextHopCount; i++) {
-                hops->push_back(routerLSA->getNextHop(i));
+                if (!this->nextHopAlreadyExists(hops, routerLSA->getNextHop(i)))
+                    hops->push_back(routerLSA->getNextHop(i));
             }
             return hops;
         }
@@ -3269,7 +3283,9 @@ std::vector<NextHop> *OSPFv3Area::calculateNextHops(OSPFv3LSA *destination, OSPF
                                nextHop.hopAddress = linklsa->getLinkLocalInterfaceAdd();
                                nextHop.advertisingRouter = destinationRouterLSA->getHeader().getAdvertisingRouter();
 
-                               hops->push_back(nextHop);
+                               if (!this->nextHopAlreadyExists(hops, nextHop))
+                                   hops->push_back(nextHop);
+
                                break;
                            }
                        }
@@ -3300,7 +3316,8 @@ std::vector<NextHop> *OSPFv3Area::calculateNextHops(OSPFv3LSA *destination, OSPF
                             else
                                 nextHop.hopAddress = Ipv4Address::UNSPECIFIED_ADDRESS;
                             nextHop.advertisingRouter = destinationNetworkLSA->getHeader().getAdvertisingRouter();
-                            hops->push_back(nextHop);
+                            if (!this->nextHopAlreadyExists(hops, nextHop))
+                                  hops->push_back(nextHop);
                         }
                     }
                 }
@@ -3315,7 +3332,8 @@ std::vector<NextHop> *OSPFv3Area::calculateNextHops(OSPFv3LSA *destination, OSPF
            if (networkLSA->getParent() != spfTreeRoot) { //ak som network a moj parent nie je spfTreeRoot, vrat všetky nexthopy
                unsigned int nextHopCount = networkLSA->getNextHopCount();
                for (i = 0; i < nextHopCount; i++) {
-                   hops->push_back(networkLSA->getNextHop(i));
+                   if (!this->nextHopAlreadyExists(hops, networkLSA->getNextHop(i)))
+                       hops->push_back(networkLSA->getNextHop(i));
                }
                return hops;
            }
@@ -3362,9 +3380,9 @@ std::vector<NextHop> *OSPFv3Area::calculateNextHops(OSPFv3LSA *destination, OSPF
                                             nextHop.ifIndex = interfaceList[j]->getInterfaceId();
                                             nextHop.hopAddress = linklsa->getLinkLocalInterfaceAdd();
                                             nextHop.advertisingRouter = destinationRouterLSA->getHeader().getAdvertisingRouter();
-
-                                            hops->push_back(nextHop);
-                                       }
+                                            if (!this->nextHopAlreadyExists(hops, nextHop))
+                                                hops->push_back(nextHop);
+                                        }
                                    }
                                }
                            }
