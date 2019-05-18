@@ -3,7 +3,7 @@
         <disconnect src-module="Router1" src-gate="ethg$o[0]" />
         <disconnect src-module="Router2" src-gate="ethg$o[0]" />		
   	</at>
-  	<at t="300">
+  	<at t="200">
         <connect src-module="Router1" src-gate="ethg[0]"
                  dest-module="Router2" dest-gate="ethg[0]"
                  channel-type="inet.common.misc.ThruputMeteringChannel">

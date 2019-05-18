@@ -7,8 +7,6 @@ import inet.common.misc.ThruputMeteringChannel;
 import inet.node.ethernet.EtherSwitch;
 import inet.node.inet.StandardHost;
 
-import inet.common.scenario.ScenarioManager;
-
 
 network v3_square_2_areas
 {
@@ -59,9 +57,6 @@ network v3_square_2_areas
             @display("p=29,260");
             gates:
                 ethg[1];
-        }
-        scenarioManager: ScenarioManager {
-            @display("p=411,323");
         }
 
     connections:
