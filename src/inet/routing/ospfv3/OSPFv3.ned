@@ -13,7 +13,7 @@
 // along with this program.  If not, see http://www.gnu.org/licenses/.
 // 
 
-package inet.ansa.ospfv3;
+package inet.routing.ospfv3;
 
 import inet.networklayer.contract.INetworkLayer;
 import inet.routing.contract.IOspfv3;

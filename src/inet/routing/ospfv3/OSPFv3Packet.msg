@@ -1,4 +1,5 @@
 
+import inet.common.INETDefs;
 import inet.common.packet.chunk.Chunk;
 import inet.networklayer.contract.ipv4.Ipv4Address;
 import inet.networklayer.contract.ipv6.Ipv6Address;

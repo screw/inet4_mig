@@ -1,4 +1,4 @@
-package inet.ansa.ospfv3;
+package inet.routing.ospfv3;
 
 simple OSPFv3Splitter{
     parameters:								//these are parameteters which need to be filled in omnetpp.ini file
