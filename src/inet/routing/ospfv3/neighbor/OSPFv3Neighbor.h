@@ -1,11 +1,11 @@
-#ifndef __ANSA_OSPFV3NEIGHBOR_H_
-#define __ANSA_OSPFV3NEIGHBOR_H_
+#ifndef __INET_OSPFV3NEIGHBOR_H_
+#define __INET_OSPFV3NEIGHBOR_H_
 
 #include <omnetpp.h>
 
-#include "../../../routing/ospfv3/OSPFv3Common.h"
-#include "../../../routing/ospfv3/OSPFv3Packet_m.h"
-#include "../../../routing/ospfv3/OSPFv3Timers.h"
+#include "inet/routing/ospfv3/OSPFv3Common.h"
+#include "inet/routing/ospfv3/OSPFv3Packet_m.h"
+#include "inet/routing/ospfv3/OSPFv3Timers.h"
 #include "inet/common/INETDefs.h"
 #include "inet/networklayer/contract/ipv4/Ipv4Address.h"
 #include "inet/common/packet/Packet.h"

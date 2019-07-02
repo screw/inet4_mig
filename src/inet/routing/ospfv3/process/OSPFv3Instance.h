@@ -1,15 +1,15 @@
-#ifndef __ANSA_OSPFV3INSTANCE_H_
-#define __ANSA_OSPFV3INSTANCE_H_
+#ifndef __INET_OSPFV3INSTANCE_H_
+#define __INET_OSPFV3INSTANCE_H_
 
 #include <omnetpp.h>
 #include <string>
 
-#include "../../../routing/ospfv3/interface/OSPFv3Interface.h"
-#include "../../../routing/ospfv3/neighbor/OSPFv3Neighbor.h"
-#include "../../../routing/ospfv3/OSPFv3Common.h"
-#include "../../../routing/ospfv3/OSPFv3Packet_m.h"
-#include "../../../routing/ospfv3/process/OSPFv3Area.h"
-#include "../../../routing/ospfv3/process/OSPFv3Process.h"
+#include "inet/routing/ospfv3/interface/OSPFv3Interface.h"
+#include "inet/routing/ospfv3/neighbor/OSPFv3Neighbor.h"
+#include "inet/routing/ospfv3/OSPFv3Common.h"
+#include "inet/routing/ospfv3/OSPFv3Packet_m.h"
+#include "inet/routing/ospfv3/process/OSPFv3Area.h"
+#include "inet/routing/ospfv3/process/OSPFv3Process.h"
 #include "inet/common/INETDefs.h"
 #include "inet/networklayer/contract/ipv4/Ipv4Address.h"
 #include "inet/networklayer/common/L3Address.h"

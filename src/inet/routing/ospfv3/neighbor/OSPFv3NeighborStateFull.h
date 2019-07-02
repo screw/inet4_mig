@@ -1,8 +1,8 @@
-#ifndef __ANSA_OSPFV3NEIGHBORSTATEFULL_H_
-#define __ANSA_OSPFV3NEIGHBORSTATEFULL_H_
+#ifndef __INET_OSPFV3NEIGHBORSTATEFULL_H_
+#define __INET_OSPFV3NEIGHBORSTATEFULL_H_
 
-#include "../../../routing/ospfv3/neighbor/OSPFv3Neighbor.h"
-#include "../../../routing/ospfv3/neighbor/OSPFv3NeighborState.h"
+#include "inet/routing/ospfv3/neighbor/OSPFv3Neighbor.h"
+#include "inet/routing/ospfv3/neighbor/OSPFv3NeighborState.h"
 #include "inet/common/INETDefs.h"
 
 namespace inet{

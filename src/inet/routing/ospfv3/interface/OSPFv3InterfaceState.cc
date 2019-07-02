@@ -1,8 +1,8 @@
-#include "../../../routing/ospfv3/interface/OSPFv3InterfaceState.h"
+#include "inet/routing/ospfv3/interface/OSPFv3InterfaceState.h"
 
-#include "../../../routing/ospfv3/interface/OSPFv3InterfaceStateBackup.h"
-#include "../../../routing/ospfv3/interface/OSPFv3InterfaceStateDR.h"
-#include "../../../routing/ospfv3/interface/OSPFv3InterfaceStateDROther.h"
+#include "inet/routing/ospfv3/interface/OSPFv3InterfaceStateBackup.h"
+#include "inet/routing/ospfv3/interface/OSPFv3InterfaceStateDR.h"
+#include "inet/routing/ospfv3/interface/OSPFv3InterfaceStateDROther.h"
 
 namespace inet{
 void OSPFv3InterfaceState::changeState(OSPFv3Interface *interface, OSPFv3InterfaceState *newState, OSPFv3InterfaceState *currentState)

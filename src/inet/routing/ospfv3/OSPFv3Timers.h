@@ -1,5 +1,5 @@
-#ifndef __ANSA_OSPFV3TIMERS_H_
-#define __ANSA_OSPFV3TIMERS_H_
+#ifndef __INET_OSPFV3TIMERS_H_
+#define __INET_OSPFV3TIMERS_H_
 
 namespace inet{
 

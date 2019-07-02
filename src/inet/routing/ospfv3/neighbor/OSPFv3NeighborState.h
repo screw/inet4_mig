@@ -1,8 +1,8 @@
-#ifndef __ANSA_OSPFV3NEIGHBORSTATE_H_
-#define __ANSA_OSPFV3NEIGHBORSTATE_H_
+#ifndef __INET_OSPFV3NEIGHBORSTATE_H_
+#define __INET_OSPFV3NEIGHBORSTATE_H_
 
-#include "../../../routing/ospfv3/interface/OSPFv3Interface.h"
-#include "../../../routing/ospfv3/neighbor/OSPFv3Neighbor.h"
+#include "inet/routing/ospfv3/interface/OSPFv3Interface.h"
+#include "inet/routing/ospfv3/neighbor/OSPFv3Neighbor.h"
 #include "inet/common/INETDefs.h"
 
 

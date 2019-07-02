@@ -1,11 +1,11 @@
-#ifndef __ANSA_OSPFV3INTERFACESTATEDOWN_H_
-#define __ANSA_OSPFV3INTERFACESTATEDOWN_H_
+#ifndef __INET_OSPFV3INTERFACESTATEDOWN_H_
+#define __INET_OSPFV3INTERFACESTATEDOWN_H_
 
 #include <omnetpp.h>
 #include <string>
 
-#include "../../../routing/ospfv3/interface/OSPFv3InterfaceState.h"
-#include "../../../routing/ospfv3/interface/OSPFv3InterfaceStateWaiting.h"
+#include "inet/routing/ospfv3/interface/OSPFv3InterfaceState.h"
+#include "inet/routing/ospfv3/interface/OSPFv3InterfaceStateWaiting.h"
 #include "inet/common/INETDefs.h"
 
 

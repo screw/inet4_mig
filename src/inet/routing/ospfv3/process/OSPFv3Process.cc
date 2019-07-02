@@ -1,4 +1,4 @@
-#include "../../../routing/ospfv3/process/OSPFv3Process.h"
+#include "inet/routing/ospfv3/process/OSPFv3Process.h"
 
 #include "inet/common/IProtocolRegistrationListener.h"
 

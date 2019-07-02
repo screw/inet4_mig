@@ -1,5 +1,5 @@
-#ifndef __ANSA_OSPFV3SPLITTER_H_
-#define __ANSA_OSPFV3SPLITTER_H_
+#ifndef __INET_OSPFV3SPLITTER_H_
+#define __INET_OSPFV3SPLITTER_H_
 
 #include <omnetpp.h>
 //#include <cmodule.h>

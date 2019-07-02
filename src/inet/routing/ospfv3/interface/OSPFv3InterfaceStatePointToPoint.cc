@@ -1,9 +1,9 @@
-#include "../../../routing/ospfv3/interface/OSPFv3InterfaceStatePointToPoint.h"
+#include "inet/routing/ospfv3/interface/OSPFv3InterfaceStatePointToPoint.h"
 
-#include "../../../routing/ospfv3/interface/OSPFv3Interface.h"
-#include "../../../routing/ospfv3/interface/OSPFv3InterfaceStateDown.h"
-#include "../../../routing/ospfv3/interface/OSPFv3InterfaceStateLoopback.h"
-#include "../../../routing/ospfv3/OSPFv3Timers.h"
+#include "inet/routing/ospfv3/interface/OSPFv3Interface.h"
+#include "inet/routing/ospfv3/interface/OSPFv3InterfaceStateDown.h"
+#include "inet/routing/ospfv3/interface/OSPFv3InterfaceStateLoopback.h"
+#include "inet/routing/ospfv3/OSPFv3Timers.h"
 
 namespace inet{
 void OSPFv3InterfaceStatePointToPoint::processEvent(OSPFv3Interface* interface, OSPFv3Interface::OSPFv3InterfaceEvent event)

@@ -1,9 +1,9 @@
-#include "../../../routing/ospfv3/interface/OSPFv3InterfaceStateDR.h"
+#include "inet/routing/ospfv3/interface/OSPFv3InterfaceStateDR.h"
 
-#include "../../../routing/ospfv3/interface/OSPFv3Interface.h"
-#include "../../../routing/ospfv3/interface/OSPFv3InterfaceStateDown.h"
-#include "../../../routing/ospfv3/interface/OSPFv3InterfaceStateLoopback.h"
-#include "../../../routing/ospfv3/OSPFv3Timers.h"
+#include "inet/routing/ospfv3/interface/OSPFv3Interface.h"
+#include "inet/routing/ospfv3/interface/OSPFv3InterfaceStateDown.h"
+#include "inet/routing/ospfv3/interface/OSPFv3InterfaceStateLoopback.h"
+#include "inet/routing/ospfv3/OSPFv3Timers.h"
 
 
 namespace inet{

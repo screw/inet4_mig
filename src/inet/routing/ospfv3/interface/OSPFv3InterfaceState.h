@@ -1,10 +1,10 @@
-#ifndef __ANSA_OSPFV3INTERFACESTATE_H_
-#define __ANSA_OSPFV3INTERFACESTATE_H_
+#ifndef __INET_OSPFV3INTERFACESTATE_H_
+#define __INET_OSPFV3INTERFACESTATE_H_
 
 #include <omnetpp.h>
 #include <string>
 
-#include "../../../routing/ospfv3/interface/OSPFv3Interface.h"
+#include "inet/routing/ospfv3/interface/OSPFv3Interface.h"
 #include "inet/common/INETDefs.h"
 
 namespace inet{

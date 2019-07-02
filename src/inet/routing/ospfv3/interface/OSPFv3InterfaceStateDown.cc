@@ -1,10 +1,10 @@
-#include "../../../routing/ospfv3/interface/OSPFv3InterfaceStateDown.h"
+#include "inet/routing/ospfv3/interface/OSPFv3InterfaceStateDown.h"
 
-#include "../../../routing/ospfv3/interface/OSPFv3InterfacePassive.h"
-#include "../../../routing/ospfv3/interface/OSPFv3InterfaceStateDROther.h"
-#include "../../../routing/ospfv3/interface/OSPFv3InterfaceStateLoopback.h"
-#include "../../../routing/ospfv3/interface/OSPFv3InterfaceStatePointToPoint.h"
-//#include "ansa/routing/ospfv3/OSPFv3Timers.h"
+#include "inet/routing/ospfv3/interface/OSPFv3InterfacePassive.h"
+#include "inet/routing/ospfv3/interface/OSPFv3InterfaceStateDROther.h"
+#include "inet/routing/ospfv3/interface/OSPFv3InterfaceStateLoopback.h"
+#include "inet/routing/ospfv3/interface/OSPFv3InterfaceStatePointToPoint.h"
+//#include "INET/routing/ospfv3/OSPFv3Timers.h"
 //#include <cmodule.h>
 
 

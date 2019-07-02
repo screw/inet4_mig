@@ -16,9 +16,9 @@
 //
 
 
-#include "../../../routing/ospfv3/neighbor/OSPFv3NeighborState.h"
+#include "inet/routing/ospfv3/neighbor/OSPFv3NeighborState.h"
 
-#include "../../../routing/ospfv3/neighbor/OSPFv3Neighbor.h"
+#include "inet/routing/ospfv3/neighbor/OSPFv3Neighbor.h"
 
 namespace inet {
 

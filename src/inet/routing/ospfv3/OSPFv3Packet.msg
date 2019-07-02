@@ -4,9 +4,7 @@ import inet.common.packet.chunk.Chunk;
 import inet.networklayer.contract.ipv4.Ipv4Address;
 import inet.networklayer.contract.ipv6.Ipv6Address;
 import inet.networklayer.common.L3Address;
-//class noncobject Ipv4Address; 
-//class noncobject Ipv6Address;
-//class noncobject L3Address;
+
 
 namespace inet;
 enum OSPFv3PacketType

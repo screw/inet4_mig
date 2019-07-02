@@ -164,7 +164,7 @@ void OSPFv3Splitter::parseConfig(cXMLElement* routingConfig, cXMLElement* intCon
 
 void OSPFv3Splitter::addNewProcess(cXMLElement* process, cXMLElement* interfaces, int gateIndex)
 {
-    cModuleType* newProcessType = cModuleType::find("inet.ansa.ospfv3.process.OSPFv3Process");
+    cModuleType* newProcessType = cModuleType::find("inet.routing.ospfv3.process.OSPFv3Process");
     if(newProcessType==nullptr)
         throw cRuntimeError("OSPFv3Routing: OSPFv3Process module was not found");
 

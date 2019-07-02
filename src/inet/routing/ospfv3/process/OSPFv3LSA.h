@@ -1,10 +1,10 @@
-#ifndef __ANSA_OSPFV3LSA_H_
-#define __ANSA_OSPFV3LSA_H_
+#ifndef __INET_OSPFV3LSA_H_
+#define __INET_OSPFV3LSA_H_
 
 #include <omnetpp.h>
 
-#include "../../../routing/ospfv3/OSPFv3Common.h"
-#include "../../../routing/ospfv3/OSPFv3Packet_m.h"
+#include "inet/routing/ospfv3/OSPFv3Common.h"
+#include "inet/routing/ospfv3/OSPFv3Packet_m.h"
 #include "inet/common/INETDefs.h"
 
 // NexHop is defined in OSPFv3Common.h

@@ -11,15 +11,15 @@
  * 1WAY_RECEIVED - new state INIT
  * 2WAY_RECEIVED - no change
  */
-#include "../../../routing/ospfv3/neighbor/OSPFv3NeighborStateExchange.h"
+#include "inet/routing/ospfv3/neighbor/OSPFv3NeighborStateExchange.h"
 
-#include "../../../routing/ospfv3/neighbor/OSPFv3Neighbor.h"
-#include "../../../routing/ospfv3/neighbor/OSPFv3NeighborState2Way.h"
-#include "../../../routing/ospfv3/neighbor/OSPFv3NeighborStateDown.h"
-#include "../../../routing/ospfv3/neighbor/OSPFv3NeighborStateExStart.h"
-#include "../../../routing/ospfv3/neighbor/OSPFv3NeighborStateFull.h"
-#include "../../../routing/ospfv3/neighbor/OSPFv3NeighborStateInit.h"
-#include "../../../routing/ospfv3/neighbor/OSPFv3NeighborStateLoading.h"
+#include "inet/routing/ospfv3/neighbor/OSPFv3Neighbor.h"
+#include "inet/routing/ospfv3/neighbor/OSPFv3NeighborState2Way.h"
+#include "inet/routing/ospfv3/neighbor/OSPFv3NeighborStateDown.h"
+#include "inet/routing/ospfv3/neighbor/OSPFv3NeighborStateExStart.h"
+#include "inet/routing/ospfv3/neighbor/OSPFv3NeighborStateFull.h"
+#include "inet/routing/ospfv3/neighbor/OSPFv3NeighborStateInit.h"
+#include "inet/routing/ospfv3/neighbor/OSPFv3NeighborStateLoading.h"
 
 
 namespace inet{

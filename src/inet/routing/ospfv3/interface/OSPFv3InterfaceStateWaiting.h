@@ -1,10 +1,10 @@
-#ifndef __ANSA_OSPFV3INTERFACESTATEWAITING_H_
-#define __ANSA_OSPFV3INTERFACESTATEWAITING_H_
+#ifndef __INET_OSPFV3INTERFACESTATEWAITING_H_
+#define __INET_OSPFV3INTERFACESTATEWAITING_H_
 
 #include <omnetpp.h>
 #include <string>
 
-#include "../../../routing/ospfv3/interface/OSPFv3InterfaceState.h"
+#include "inet/routing/ospfv3/interface/OSPFv3InterfaceState.h"
 #include "inet/common/INETDefs.h"
 
 namespace inet{

@@ -5,11 +5,11 @@
  * INACTIVITY_TIMER - new state DOWN
  */
 
-#include "../../../routing/ospfv3/neighbor/OSPFv3NeighborStateDown.h"
+#include "inet/routing/ospfv3/neighbor/OSPFv3NeighborStateDown.h"
 
-#include "../../../routing/ospfv3/neighbor/OSPFv3Neighbor.h"
-#include "../../../routing/ospfv3/neighbor/OSPFv3NeighborStateAttempt.h"
-#include "../../../routing/ospfv3/neighbor/OSPFv3NeighborStateInit.h"
+#include "inet/routing/ospfv3/neighbor/OSPFv3Neighbor.h"
+#include "inet/routing/ospfv3/neighbor/OSPFv3NeighborStateAttempt.h"
+#include "inet/routing/ospfv3/neighbor/OSPFv3NeighborStateInit.h"
 
 
 namespace inet{

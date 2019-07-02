@@ -1,4 +1,4 @@
-#include "../../../routing/ospfv3/process/OSPFv3Area.h"
+#include "inet/routing/ospfv3/process/OSPFv3Area.h"
 
 #include <iostream>
 #include <stdio.h>

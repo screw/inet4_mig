@@ -1,15 +1,15 @@
-#ifndef __ANSA_OSPFV3PROCESS_H_
-#define __ANSA_OSPFV3PROCESS_H_
+#ifndef __INET_OSPFV3PROCESS_H_
+#define __INET_OSPFV3PROCESS_H_
 
 #include <omnetpp.h>
 #include <string>
 
-#include "../../../routing/ospfv3/OSPFv3Common.h"
-#include "../../../routing/ospfv3/OSPFv3Packet_m.h"
-#include "../../../routing/ospfv3/OSPFv3Timers.h"
-#include "../../../routing/ospfv3/process/OSPFv3Area.h"
-#include "../../../routing/ospfv3/process/OSPFv3Instance.h"
-#include "../../../routing/ospfv3/process/OSPFv3RoutingTableEntry.h"
+#include "inet/routing/ospfv3/OSPFv3Common.h"
+#include "inet/routing/ospfv3/OSPFv3Packet_m.h"
+#include "inet/routing/ospfv3/OSPFv3Timers.h"
+#include "inet/routing/ospfv3/process/OSPFv3Area.h"
+#include "inet/routing/ospfv3/process/OSPFv3Instance.h"
+#include "inet/routing/ospfv3/process/OSPFv3RoutingTableEntry.h"
 #include "inet/common/INETDefs.h"
 #include "inet/common/ModuleAccess.h"
 #include "inet/common/ProtocolTag_m.h"
